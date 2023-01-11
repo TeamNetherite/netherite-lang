@@ -90,6 +90,17 @@ impl<'a> Lexer<'a> {
         &self.contents[self.start_location.index..self.location.index]
     }
 
+    fn scan_single_line_comment(&mut self) -> IterElem<'a> {
+        self.start_location = self.location.clone();
+
+        let content = self.advance_while(|current, _| (current != '\n' && current != '\0'));
+
+        Some(Token::new(
+            RawToken::Comment(content.to_owned()),
+            Span::new(self.filename, self.start_location, self.location),
+        ))
+    }
+
     fn scan_name(&mut self) -> IterElem<'a> {
         self.start_location = self.location.clone();
         let name = self.advance_while(|current, _| current.is_alphanumeric() || current == '_');
@@ -104,6 +115,27 @@ impl<'a> Lexer<'a> {
                 Span::new(self.filename, self.start_location, self.location),
             )),
         }
+    }
+
+    fn scan_integer(&mut self) -> String {
+        self.start_location = self.location.clone();
+
+        while !self.eof() && (self.current.is_ascii_digit() || self.current == '_') {
+            self.advance();
+        }
+
+        self.contents[self.start_location.index..self.location.index].replace('_', "")
+    }
+
+    fn scan_number(&mut self) -> IterElem<'a> {
+        let int = self.scan_integer();
+
+        if self.current == '.' && self.next.is_ascii_digit() {
+            self.advance();
+            let float: f64 = (int + "." + &self.scan_integer()).parse().unwrap();
+        }
+
+        None
     }
 }
 
@@ -128,6 +160,7 @@ impl<'a> Iterator for Lexer<'a> {
             ('*', '=') => self.advance_with(RawToken::AsteriskEq),
             ('*', _) => self.advance_with(RawToken::Asterisk),
 
+            ('/', '/') => self.scan_single_line_comment(),
             ('/', '=') => self.advance_with(RawToken::SlashEq),
             ('/', _) => self.advance_with(RawToken::Slash),
 
@@ -173,7 +206,7 @@ impl<'a> Iterator for Lexer<'a> {
 
             (c, _) => {
                 if c.is_ascii_digit() {
-                    todo!("implement number scanning")
+                    return self.scan_number();
                 } else if c.is_alphanumeric() || c == '_' {
                     return self.scan_name();
                 }

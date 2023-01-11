@@ -122,6 +122,8 @@ pub enum RawToken {
     PlusPlus,
     MinusMinus,
 
+    Comment(String),
+
     EndOfFile,
     Invalid(LexerError),
 }
@@ -176,8 +178,9 @@ impl Display for RawToken {
             MinusMinus => write!(formatter, "'--'"),
             IntType(i) => write!(formatter, "'{}'", i),
             FloatType(f) => write!(formatter, "'{}'", f),
-            // Or => write!(formatter, "")
-            _ => Ok(()),
+            Comment(_) => write!(formatter, "comment"),
+            EndOfFile => write!(formatter, "end of file"),
+            Invalid(_) => write!(formatter, "invalid"),
         }
     }
 }
