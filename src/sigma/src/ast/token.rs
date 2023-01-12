@@ -1,7 +1,7 @@
 //! token.rs - defined the token which represents grammatical unit of Sigma
 //! source text.
 
-use crate::lexer::location::Span;
+use crate::ast::location::Span;
 use phf::phf_map;
 
 use std::fmt::{self, Display};
@@ -10,6 +10,16 @@ use std::fmt::{self, Display};
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum LexerError {
     UnexpectedChar(char),
+    UnterminatedWrappedIdentifierLiteral,
+    UnterminatedStringLiteral,
+    InvalidRadixPoint,
+    HasNoDigits,
+    ExponentRequiresDecimalMantissa,
+    ExponentRequiresHexadecimalMantissa,
+    ExponentHasNoDigits,
+    HexadecimalMantissaRequiresPExponent,
+    InvalidDigit,
+    UnderscoreMustSeperateSuccessiveDigits,
 }
 
 /// Represents integer type, used in RawToken::Int.
@@ -65,12 +75,21 @@ impl Display for FloatType {
     }
 }
 
+#[derive(PartialEq, Debug)]
+pub enum NumberKind {
+    Invalid,
+    Int,
+    Float,
+    Imag,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum RawToken {
     Identifier(String),
     String(String),
-    Int(u64, Option<IntegerType>),
-    Float(f64, Option<FloatType>),
+    Int(u64),
+    Float(f64),
+    Imag(f64),
     Char(char),
     Boolean(bool),
 
@@ -135,8 +154,9 @@ impl Display for RawToken {
         match self {
             Identifier(_) => write!(formatter, "identifier"),
             String(_) => write!(formatter, "string literal"),
-            Int(_, _) => write!(formatter, "integer literal"),
-            Float(_, _) => write!(formatter, "float literal"),
+            Int(_) => write!(formatter, "integer literal"),
+            Float(_) => write!(formatter, "float literal"),
+            Imag(_) => write!(formatter, "imaginary number literal"),
             Char(_) => write!(formatter, "character literal"),
             Boolean(_) => write!(formatter, "boolean literal"),
             Plus => write!(formatter, "'+'"),
@@ -210,4 +230,6 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "usize" => RawToken::IntType(IntegerType::USize),
     "true" => RawToken::Boolean(true),
     "false" => RawToken::Boolean(false),
+    "f32" => RawToken::FloatType(FloatType::F32),
+    "f64" => RawToken::FloatType(FloatType::F64),
 };

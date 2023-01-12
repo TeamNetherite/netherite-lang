@@ -26,6 +26,18 @@ impl Location {
 
         self.index += character_len;
     }
+
+    pub fn char_location<'a>(&mut self, filename: &'a Path, character_len: usize) -> Span<'a> {
+        Span {
+            filename: filename,
+            start: *self,
+            end: Location {
+                index: self.index + character_len,
+                line: self.line,
+                column: self.column + 1,
+            },
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
