@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 phf = {version = "0.11.1", features = ["macros"]}
+ariadne = "0.1.5"
+derive_more = "0.99.17"

@@ -1,58 +1,36 @@
+use std::ops::Range;
 use std::path::Path;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Location {
-    pub index: usize,
-    pub line: u32,
-    pub column: u32,
-}
 
-impl Location {
-    pub fn start() -> Self {
-        Self {
-            index: 0,
-            line: 1,
-            column: 0,
-        }
-    }
-
-    pub fn advance(&mut self, character_len: usize, newline: bool) {
-        if newline {
-            self.line += 1;
-            self.column = 0;
-        } else {
-            self.column += 1;
-        }
-
-        self.index += character_len;
-    }
-
-    pub fn char_location<'a>(&mut self, filename: &'a Path, character_len: usize) -> Span<'a> {
-        Span {
-            filename: filename,
-            start: *self,
-            end: Location {
-                index: self.index + character_len,
-                line: self.line,
-                column: self.column + 1,
-            },
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Span<'a> {
-    pub filename: &'a Path,
-    pub start: Location,
-    pub end: Location,
+    pub filename: &'a str,
+    pub range: Range<usize>,
 }
 
 impl<'a> Span<'a> {
-    pub fn new(filename: &'a Path, start: Location, end: Location) -> Self {
+    pub fn new(filename: &'a str, start: usize, end: usize) -> Self {
         Self {
             filename,
-            start,
-            end,
+            range: start..end
         }
+    }
+
+    pub fn from_location(filename: &'a str, location: usize, character_len: usize) -> Self {
+        Self {
+            filename,
+            range: location..location + character_len,
+        }
+    }
+}
+
+pub struct Spanned<'a, T> {
+    value: T,
+    span: Span<'a>,
+}
+
+impl<'a, T> Spanned<'a, T> {
+    pub fn new(value: T, span: Span<'a>) -> Self {
+        Self { value, span }
     }
 }

@@ -2,6 +2,7 @@
 //! source text.
 
 use crate::ast::location::Span;
+use derive_more::Display;
 use phf::phf_map;
 
 use std::fmt::{self, Display};
@@ -15,64 +16,43 @@ pub enum LexerError {
     InvalidRadixPoint,
     HasNoDigits,
     ExponentRequiresDecimalMantissa,
-    ExponentRequiresHexadecimalMantissa,
     ExponentHasNoDigits,
-    HexadecimalMantissaRequiresPExponent,
     InvalidDigit,
     UnderscoreMustSeperateSuccessiveDigits,
 }
 
-/// Represents integer type, used in RawToken::Int.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum IntegerType {
+/// Represents integer and float types, used in RawToken::Int.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Display)]
+pub enum PrimaryType {
+    #[display(fmt = "i8")]
     I8,
+    #[display(fmt = "i16")]
     I16,
+    #[display(fmt = "i32")]
     I32,
+    #[display(fmt = "i64")]
     I64,
+    #[display(fmt = "u8")]
     U8,
+    #[display(fmt = "u16")]
     U16,
+    #[display(fmt = "u32")]
     U32,
+    #[display(fmt = "u64")]
     U64,
 
+    #[display(fmt = "isize")]
     ISize,
+    #[display(fmt = "usize")]
     USize,
-}
 
-impl Display for IntegerType {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use IntegerType::*;
-
-        match self {
-            I8 => write!(formatter, "i8"),
-            I16 => write!(formatter, "i16"),
-            I32 => write!(formatter, "i32"),
-            I64 => write!(formatter, "i64"),
-            ISize => write!(formatter, "isize"),
-            U8 => write!(formatter, "u8"),
-            U16 => write!(formatter, "u16"),
-            U32 => write!(formatter, "u32"),
-            U64 => write!(formatter, "u64"),
-            USize => write!(formatter, "usize"),
-        }
-    }
-}
-
-/// Represents floating-point type, used in RawToken::Float.
-#[derive(Copy, Clone, Debug, PartialEq, Hash)]
-pub enum FloatType {
+    #[display(fmt = "f32")]
     F32,
+    #[display(fmt = "f64")]
     F64,
-}
 
-impl Display for FloatType {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use FloatType::*;
-
-        match self {
-            F32 => write!(formatter, "f32"),
-            F64 => write!(formatter, "f64"),
-        }
-    }
+    #[display(fmt = "complex")]
+    Complex,
 }
 
 #[derive(PartialEq, Debug)]
@@ -83,126 +63,119 @@ pub enum NumberKind {
     Imag,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Display)]
 pub enum RawToken {
+    #[display(fmt = "identifier")]
     Identifier(String),
+    #[display(fmt = "string literal")]
     String(String),
+    #[display(fmt = "integer literal")]
     Int(u64),
+    #[display(fmt = "float literal")]
     Float(f64),
+    #[display(fmt = "imaginary number literal")]
     Imag(f64),
+    #[display(fmt = "character literal")]
     Char(char),
+    #[display(fmt = "boolean literal")]
     Boolean(bool),
 
+    #[display(fmt = "'+'")]
     Plus,
+    #[display(fmt = "'-'")]
     Minus,
+    #[display(fmt = "'*'")]
     Asterisk,
+    #[display(fmt = "'/'")]
     Slash,
+    #[display(fmt = "'!'")]
     Bang,
 
-    IntType(IntegerType),
-    FloatType(FloatType),
+    #[display(fmt = "{_0}")]
+    PrimaryType(PrimaryType),
 
+    #[display(fmt = "'>'")]
     GreaterThan,
+    #[display(fmt = "'>='")]
     GreaterThanOrEq,
+    #[display(fmt = "'<'")]
     LessThan,
+    #[display(fmt = "'<='")]
     LessThanOrEq,
+    #[display(fmt = "'='")]
     Assign,
+    #[display(fmt = "'=='")]
     Eq,
+    #[display(fmt = "'!='")]
     NotEq,
 
+    #[display(fmt = "'>>'")]
     RightShift,
+    #[display(fmt = "'<<'")]
     LeftShift,
+    #[display(fmt = "'|'")]
     Or,
+    #[display(fmt = "'&'")]
     And,
+    #[display(fmt = "'^'")]
     Xor,
+    #[display(fmt = "'~'")]
     Not,
 
+    #[display(fmt = "'||'")]
     OrOr,
+    #[display(fmt = "'&&'")]
     AndAnd,
 
+    #[display(fmt = "'+='")]
     PlusEq,
+    #[display(fmt = "'-='")]
     MinusEq,
+    #[display(fmt = "'*='")]
     AsteriskEq,
+    #[display(fmt = "'/='")]
     SlashEq,
+    #[display(fmt = "'^='")]
     XorEq,
+    #[display(fmt = "'|='")]
     OrEq,
 
+    #[display(fmt = "'('")]
     OpenParent,
+    #[display(fmt = "')'")]
     CloseParent,
+    #[display(fmt = "'['")]
     OpenBracket,
+    #[display(fmt = "']'")]
     CloseBracket,
+    #[display(fmt = "'{{'")]
     OpenBrace,
+    #[display(fmt = "'}}'")]
     CloseBrace,
 
+    #[display(fmt = "','")]
     Comma,
+    #[display(fmt = "'.'")]
     Dot,
+    #[display(fmt = "';'")]
     Semicolon,
 
+    #[display(fmt = "'++'")]
     PlusPlus,
+    #[display(fmt = "'--'")]
     MinusMinus,
 
+    #[display(fmt = "namespace")]
+    Namespace,
+
+    #[display(fmt = "comment")]
     Comment(String),
 
+    #[display(fmt = "end of file")]
     EndOfFile,
+
+    #[display(fmt = "invalid")]
     Invalid(LexerError),
-}
-
-impl Display for RawToken {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use RawToken::*;
-
-        match self {
-            Identifier(_) => write!(formatter, "identifier"),
-            String(_) => write!(formatter, "string literal"),
-            Int(_) => write!(formatter, "integer literal"),
-            Float(_) => write!(formatter, "float literal"),
-            Imag(_) => write!(formatter, "imaginary number literal"),
-            Char(_) => write!(formatter, "character literal"),
-            Boolean(_) => write!(formatter, "boolean literal"),
-            Plus => write!(formatter, "'+'"),
-            Minus => write!(formatter, "'-'"),
-            Asterisk => write!(formatter, "'*'"),
-            Slash => write!(formatter, "'/'"),
-            Bang => write!(formatter, "'!'"),
-            GreaterThan => write!(formatter, "'>'"),
-            GreaterThanOrEq => write!(formatter, "'>='"),
-            LessThan => write!(formatter, "'<'"),
-            LessThanOrEq => write!(formatter, "'<='"),
-            Assign => write!(formatter, "'='"),
-            Eq => write!(formatter, "'=='"),
-            NotEq => write!(formatter, "'!='"),
-            RightShift => write!(formatter, "'>>'"),
-            LeftShift => write!(formatter, "'<<'"),
-            Or => write!(formatter, "'|'"),
-            And => write!(formatter, "'&'"),
-            Xor => write!(formatter, "'^'"),
-            Not => write!(formatter, "'~'"),
-            OrOr => write!(formatter, "'||'"),
-            AndAnd => write!(formatter, "'&&'"),
-            PlusEq => write!(formatter, "'+='"),
-            MinusEq => write!(formatter, "'-='"),
-            AsteriskEq => write!(formatter, "'*='"),
-            SlashEq => write!(formatter, "'/='"),
-            XorEq => write!(formatter, "'^='"),
-            OrEq => write!(formatter, "'|='"),
-            OpenParent => write!(formatter, "'('"),
-            CloseParent => write!(formatter, "')'"),
-            OpenBracket => write!(formatter, "'['"),
-            CloseBracket => write!(formatter, "']'"),
-            OpenBrace => write!(formatter, "'{{'"),
-            CloseBrace => write!(formatter, "'}}'"),
-            Comma => write!(formatter, "','"),
-            Dot => write!(formatter, "'.'"),
-            Semicolon => write!(formatter, "';'"),
-            PlusPlus => write!(formatter, "'++'"),
-            MinusMinus => write!(formatter, "'--'"),
-            IntType(i) => write!(formatter, "'{}'", i),
-            FloatType(f) => write!(formatter, "'{}'", f),
-            Comment(_) => write!(formatter, "comment"),
-            EndOfFile => write!(formatter, "end of file"),
-            Invalid(_) => write!(formatter, "invalid"),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -218,18 +191,17 @@ impl<'a> Token<'a> {
 }
 
 pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
-    "i8" => RawToken::IntType(IntegerType::I8),
-    "i16" => RawToken::IntType(IntegerType::I16),
-    "i32" => RawToken::IntType(IntegerType::I32),
-    "i64" => RawToken::IntType(IntegerType::I64),
-    "isize" => RawToken::IntType(IntegerType::ISize),
-    "u8" => RawToken::IntType(IntegerType::U8),
-    "u16" => RawToken::IntType(IntegerType::U16),
-    "u32" => RawToken::IntType(IntegerType::U32),
-    "u64" => RawToken::IntType(IntegerType::U64),
-    "usize" => RawToken::IntType(IntegerType::USize),
+    "i8" => RawToken::PrimaryType(PrimaryType::I8),
+    "i16" => RawToken::PrimaryType(PrimaryType::I16),
+    "i32" => RawToken::PrimaryType(PrimaryType::I32),
+    "i64" => RawToken::PrimaryType(PrimaryType::I64),
+    "isize" => RawToken::PrimaryType(PrimaryType::ISize),
+    "u8" => RawToken::PrimaryType(PrimaryType::U8),
+    "u16" => RawToken::PrimaryType(PrimaryType::U16),
+    "u32" => RawToken::PrimaryType(PrimaryType::U32),
+    "u64" => RawToken::PrimaryType(PrimaryType::U64),
+    "usize" => RawToken::PrimaryType(PrimaryType::USize),
     "true" => RawToken::Boolean(true),
     "false" => RawToken::Boolean(false),
-    "f32" => RawToken::FloatType(FloatType::F32),
-    "f64" => RawToken::FloatType(FloatType::F64),
+    "namespace" => RawToken::Namespace,
 };

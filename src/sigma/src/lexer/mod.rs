@@ -3,6 +3,7 @@
 //! Lexer implements `Iterator<Item = Token>`.
 
 use crate::ast::location::*;
+use crate::ast::token::RawToken::Comment;
 use crate::ast::token::*;
 use std::char::from_digit;
 use std::{path::Path, str::Chars};
@@ -10,22 +11,24 @@ use std::{path::Path, str::Chars};
 pub struct Lexer<'a> {
     current: char,
     next: char,
-    filename: &'a Path,
+    filename: &'a str,
     contents: &'a str,
     chars: Chars<'a>,
-    location: Location,
-    start_location: Location,
+    location: usize,
+    start_location: usize,
 }
 
+#[inline]
 fn decimal(c: char) -> bool {
     return '0' <= c && c <= '9';
 }
 
+#[inline]
 fn hexadecimal(c: char) -> bool {
     return '0' <= c && c <= '9' || 'a' <= c.to_ascii_lowercase() && c.to_ascii_lowercase() <= 'f';
 }
 
-fn invalid_seperator(buffer: String) -> i32 {
+fn invalid_separator(buffer: String) -> i32 {
     let mut x1 = ' ';
     let mut d = '.';
     let mut i = 0;
@@ -71,7 +74,7 @@ fn invalid_seperator(buffer: String) -> i32 {
 type IterElem<'a> = Option<Token<'a>>;
 
 impl<'a> Lexer<'a> {
-    pub fn new(filename: &'a Path, contents: &'a str) -> Self {
+    pub fn new(filename: &'a str, contents: &'a str) -> Self {
         let mut chars = contents.chars();
 
         let current = chars.next().unwrap_or('\0');
@@ -83,8 +86,8 @@ impl<'a> Lexer<'a> {
             filename,
             contents,
             chars,
-            location: Location::start(),
-            start_location: Location::start(),
+            location: 0,
+            start_location: 0,
         }
     }
 
@@ -104,7 +107,7 @@ impl<'a> Lexer<'a> {
         self.current = self.next;
         self.next = self.chars.next().unwrap_or('\0');
 
-        self.location.advance(previous.len_utf8(), previous == '\n');
+        self.location += previous.len_utf8();
     }
 
     fn advance_twice(&mut self) {
@@ -115,12 +118,7 @@ impl<'a> Lexer<'a> {
     fn char_location(&self, character_len: usize) -> Span<'a> {
         Span {
             filename: self.filename,
-            start: self.location,
-            end: Location {
-                index: self.location.index + character_len,
-                line: self.location.line,
-                column: self.location.column + 1,
-            },
+            range: self.location..self.location + character_len,
         }
     }
 
@@ -137,7 +135,7 @@ impl<'a> Lexer<'a> {
             self.advance();
         }
 
-        &self.contents[self.start_location.index..self.location.index]
+        &self.contents[self.start_location..self.location]
     }
 
     fn span_from_start(&self) -> Span<'a> {
@@ -217,8 +215,8 @@ impl<'a> Lexer<'a> {
     fn scan_digits(
         &mut self,
         base: i8,
-        invalid_digit_location: &mut Option<Location>,
-        digit_seperator: &mut i32,
+        invalid_digit_location: &mut Option<usize>,
+        digit_separator: &mut i32,
     ) {
         if base <= 10 {
             let max = from_digit((base - 1) as u32, 10).unwrap();
@@ -233,7 +231,7 @@ impl<'a> Lexer<'a> {
                     *invalid_digit_location = Some(self.location);
                 }
 
-                *digit_seperator |= ds;
+                *digit_separator |= ds;
                 self.advance();
             }
         } else {
@@ -244,7 +242,7 @@ impl<'a> Lexer<'a> {
                     ds = 2;
                 }
 
-                *digit_seperator |= ds;
+                *digit_separator |= ds;
                 self.advance();
             }
         }
@@ -257,9 +255,9 @@ impl<'a> Lexer<'a> {
 
         let mut base: i8 = 10;
         let mut prefix = '0';
-        let mut digit_seperator = 0;
+        let mut digit_separator = 0;
 
-        let mut invalid_digit_location: Option<Location> = None;
+        let mut invalid_digit_location: Option<usize> = None;
 
         if self.current != '.' {
             number_kind = NumberKind::Int;
@@ -286,12 +284,12 @@ impl<'a> Lexer<'a> {
                     _ => {
                         base = 8;
                         prefix = '0';
-                        digit_seperator = 1;
+                        digit_separator = 1;
                     }
                 }
             }
 
-            self.scan_digits(base, &mut invalid_digit_location, &mut digit_seperator);
+            self.scan_digits(base, &mut invalid_digit_location, &mut digit_separator);
         }
 
         // fractional part
@@ -306,10 +304,10 @@ impl<'a> Lexer<'a> {
             }
 
             self.advance();
-            self.scan_digits(base, &mut invalid_digit_location, &mut digit_seperator);
+            self.scan_digits(base, &mut invalid_digit_location, &mut digit_separator);
         }
 
-        if digit_seperator & 1 == 0 {
+        if digit_separator & 1 == 0 {
             return Some(Token::new(
                 RawToken::Invalid(LexerError::HasNoDigits),
                 self.span_from_start(),
@@ -335,7 +333,7 @@ impl<'a> Lexer<'a> {
 
             let mut ds = 0;
             self.scan_digits(10, &mut None, &mut ds);
-            digit_seperator |= ds;
+            digit_separator |= ds;
 
             if ds & 1 == 0 {
                 return Some(Token::new(
@@ -350,19 +348,17 @@ impl<'a> Lexer<'a> {
             self.advance();
         }
 
-        let buffer = &self.contents[self.start_location.index..self.location.index];
+        let buffer = &self.contents[self.start_location..self.location];
 
         if number_kind == NumberKind::Int && invalid_digit_location.is_some() {
             return Some(Token::new(
                 RawToken::Invalid(LexerError::InvalidDigit),
-                invalid_digit_location
-                    .unwrap()
-                    .char_location(self.filename, 1),
+                Span::from_location(self.filename, invalid_digit_location.unwrap(), 1),
             ));
         }
 
-        if digit_seperator & 2 != 0 {
-            if invalid_seperator(buffer.to_owned()) >= 0 {
+        if digit_separator & 2 != 0 {
+            if invalid_separator(buffer.to_owned()) >= 0 {
                 return Some(Token::new(
                     RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits),
                     self.span_from_start(),
@@ -389,6 +385,16 @@ impl<'a> Lexer<'a> {
                     RawToken::Imag(buffer[..buffer.len() - 1].parse().unwrap()),
                     self.span_from_start(),
                 ));
+            }
+        }
+    }
+
+    pub fn next_no_comments(&mut self) -> Option<Token<'a>> {
+        loop {
+            let t = self.next();
+            if let Comment(_) = t.as_ref().unwrap().raw {
+            } else {
+                return t;
             }
         }
     }
@@ -485,7 +491,7 @@ mod lexer_tests {
 
     macro_rules! def_lex {
         ($l: ident, $contents: expr) => {
-            let mut $l = Lexer::new(Path::new("<test>"), $contents);
+            let mut $l = Lexer::new("<test>", $contents);
         };
     }
 
@@ -642,6 +648,42 @@ mod lexer_tests {
     #[test]
     fn number8_test() {
         def_lex!(l, "0b_0");
+        assert_eq!(
+            l.next().unwrap().raw,
+            RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
+        );
+    }
+
+    #[test]
+    fn number9_test() {
+        def_lex!(l, "0b__0");
+        assert_eq!(
+            l.next().unwrap().raw,
+            RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
+        );
+    }
+
+    #[test]
+    fn number10_test() {
+        def_lex!(l, "0o60___0");
+        assert_eq!(
+            l.next().unwrap().raw,
+            RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
+        );
+    }
+
+    #[test]
+    fn number11_test() {
+        def_lex!(l, "10e+12_i");
+        assert_eq!(
+            l.next().unwrap().raw,
+            RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
+        );
+    }
+
+    #[test]
+    fn number12_test() {
+        def_lex!(l, "0._1");
         assert_eq!(
             l.next().unwrap().raw,
             RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
