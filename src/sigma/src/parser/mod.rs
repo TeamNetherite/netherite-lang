@@ -1,18 +1,16 @@
 use crate::ast::location::*;
 use crate::ast::token::*;
 use crate::ast::*;
-use crate::Lexer;
+use crate::lexer::Lexer;
 use ariadne::Fmt;
 use ariadne::Source;
 use ariadne::{ColorGenerator, Label, Report, ReportKind};
 use phf::phf_map;
 use std::mem;
 
-type prefixParseFunction = fn() -> Expression;
-type infixParseFunction = fn(Expression) -> Expression;
-
-pub static PREFIX_PARSE_FUNCTIONS: phf::Map<&'static str, prefixParseFunction> = phf_map! {};
-pub static INFIX_PARSE_FUNCTIONS: phf::Map<&'static str, infixParseFunction> = phf_map! {};
+pub static PREFIX_PARSE_FUNCTIONS: phf::Map<&'static str, fn() -> Expression> = phf_map! {};
+pub static INFIX_PARSE_FUNCTIONS: phf::Map<&'static str, fn(Expression) -> Expression> =
+    phf_map! {};
 
 pub struct Parser<'a> {
     filename: &'a str,
@@ -104,7 +102,7 @@ impl<'a> Parser<'a> {
         Some(Namespace { namespace })
     }
 
-    fn parse_imports(&mut self) -> Option<Vec<Spanned<'a, Import<'a>>>> {
+    fn parse_imports(&mut self) -> Option<Vec<Box<Spanned<'a, Import<'a>>>>> {
         let mut imports = vec![];
 
         while let RawToken::Import = &self.current.raw {
@@ -144,7 +142,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_name(&mut self) -> Option<Spanned<'a, String>> {
+    fn parse_name(&mut self) -> Option<Box<Spanned<'a, String>>> {
         let start = self.current.span.range.start;
 
         let mut name = String::from("");
@@ -176,23 +174,64 @@ impl<'a> Parser<'a> {
         Some(Spanned::new(name, Span::new(self.filename, start, end)))
     }
 
-    fn parse_primary_type(&mut self) -> Type {
+    fn parse_type(&mut self) -> Option<Type<'a>> {
+        match &self.current.raw {
+            RawToken::Identifier(_) => self.parse_custom_type(),
+            RawToken::Asterisk => self.parse_pointer_type(),
+            RawToken::OpenBracket => self.parse_array_type(),
+            RawToken::PrimaryType(t) => {
+                let r = Some(Type::PrimaryType(Spanned::new(
+                    *t,
+                    self.current.span.clone(),
+                )));
+                self.advance();
+                r
+            }
+            _ => {
+                Report::build(ReportKind::Error, self.filename, 0)
+                    .with_code(1)
+                    .with_message(format!("unexpected {}", self.current.raw))
+                    .with_label(
+                        Label::new((self.filename, self.current.span.range.clone()))
+                            .with_message("expected identifier, '*', '[', primary type".to_owned())
+                            .with_color(ColorGenerator::new().next()),
+                    )
+                    .finish()
+                    .print((self.filename, Source::from(self.contents)))
+                    .unwrap();
+
+                None
+            }
+        }
+    }
+
+    fn parse_custom_type(&mut self) -> Option<Type<'a>> {
+        let name = self.parse_name()?;
+        Some(Type::CustomType(name))
+    }
+
+    fn parse_array_type(&mut self) -> Option<Type<'a>> {
+        let start = self.current.span.range.start;
+
+        self.advance(); // '['
+
+        self.check_current_token(RawToken::CloseBracket, name!("array type"))?;
+        self.advance(); // ']'
+
+        let inner_type = Box::new(self.parse_type()?);
+
+        let end = self.current.span.range.end;
+
+        Some(Type::ArrayType(Spanned::new(
+            inner_type,
+            Span::new(self.filename, start, end),
+        )))
+    }
+
+    fn parse_pointer_type(&mut self) -> Option<Type<'a>> {
         todo!()
     }
 
-    fn parse_custom_type(&mut self) -> Type {
-        todo!()
-    }
-
-    fn parse_array_type(&mut self) -> Type {
-        todo!()
-    }
-
-    fn parse_pointer_type(&mut self) -> Type {
-        todo!()
-    }
-
-    #[inline]
     fn check_current_token(
         &mut self,
         expected: RawToken,
@@ -225,7 +264,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    #[inline]
     fn check_peek_token(&mut self, expected: RawToken, expected_for: Option<String>) -> Option<()> {
         let c = ColorGenerator::new().next();
 
@@ -252,5 +290,113 @@ impl<'a> Parser<'a> {
         } else {
             Some(())
         }
+    }
+}
+
+#[cfg(test)]
+mod parser_tests {
+    use crate::ast::location::*;
+    use crate::ast::token::*;
+    use crate::ast::*;
+    use crate::parser::Parser;
+
+    macro_rules! def_p {
+        ($p: ident, $contents: expr) => {
+            let mut $p = Parser::new("<test>", $contents);
+        };
+    }
+
+    #[test]
+    fn namespace_test() {
+        def_p!(p, "namespace test;");
+        assert_eq!(
+            p.parse(),
+            Some(ProgramUnit {
+                namespace: Namespace {
+                    namespace: Box::new(Spanned {
+                        value: "test".to_owned(),
+                        span: Span {
+                            filename: "<test>",
+                            range: 10..15
+                        }
+                    })
+                },
+                imports: vec![],
+                top_level_statements: vec![]
+            })
+        )
+    }
+
+    #[test]
+    fn namespace2_test() {
+        def_p!(p, "namespace test:test2:test3;");
+        assert_eq!(
+            p.parse(),
+            Some(ProgramUnit {
+                namespace: Namespace {
+                    namespace: Box::new(Spanned {
+                        value: "test:test2:test3".to_owned(),
+                        span: Span {
+                            filename: "<test>",
+                            range: 10..27
+                        }
+                    })
+                },
+                imports: vec![],
+                top_level_statements: vec![]
+            })
+        )
+    }
+
+    #[test]
+    fn import_test() {
+        def_p!(p, "namespace test;\nimport \"test\";\nimport \"test2\";\n");
+        assert_eq!(
+            p.parse(),
+            Some(ProgramUnit {
+                namespace: Namespace {
+                    namespace: Box::new(Spanned {
+                        value: "test".to_owned(),
+                        span: Span {
+                            filename: "<test>",
+                            range: 10..15
+                        }
+                    })
+                },
+                imports: vec![
+                    Box::new(Spanned {
+                        value: Import {
+                            filename: Box::new(Spanned {
+                                value: "test".to_owned(),
+                                span: Span {
+                                    filename: "<test>",
+                                    range: 23..29
+                                }
+                            })
+                        },
+                        span: Span {
+                            filename: "<test>",
+                            range: 16..37
+                        }
+                    }),
+                    Box::new(Spanned {
+                        value: Import {
+                            filename: Box::new(Spanned {
+                                value: "test2".to_owned(),
+                                span: Span {
+                                    filename: "<test>",
+                                    range: 38..45
+                                }
+                            })
+                        },
+                        span: Span {
+                            filename: "<test>",
+                            range: 31..48
+                        }
+                    })
+                ],
+                top_level_statements: vec![]
+            })
+        )
     }
 }

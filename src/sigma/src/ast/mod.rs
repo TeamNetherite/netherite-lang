@@ -4,47 +4,48 @@ pub mod token;
 use crate::ast::location::Spanned;
 use crate::ast::token::PrimaryType;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ProgramUnit<'a> {
     pub namespace: Namespace<'a>,
-    pub imports: Vec<Spanned<'a, Import<'a>>>,
-    pub top_level_statements: Vec<Spanned<'a, TopLevelStatement<'a>>>,
+    pub imports: Vec<Box<Spanned<'a, Import<'a>>>>,
+    pub top_level_statements: Vec<Box<Spanned<'a, TopLevelStatement<'a>>>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Namespace<'a> {
-    pub namespace: Spanned<'a, String>,
+    pub namespace: Box<Spanned<'a, String>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Import<'a> {
-    pub filename: Spanned<'a, String>,
+    pub filename: Box<Spanned<'a, String>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TopLevelStatement<'a> {
     FunctionDeclaration(Box<FunctionDeclaration<'a>>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration<'a> {
-    pub name: Spanned<'a, String>,
+    pub name: Box<Spanned<'a, String>>,
     pub params: Vec<FunctionParam<'a>>,
     pub return_type: Type<'a>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionParam<'a> {
-    pub name: Spanned<'a, String>,
+    pub name: Box<Spanned<'a, String>>,
     pub ty: Type<'a>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Type<'a> {
-    PrimaryType(Spanned<'a, PrimaryType>),
-    ArrayType(Spanned<'a, Box<Type<'a>>>),
-    PointerType(Spanned<'a, Box<Type<'a>>>),
+    PrimaryType(Box<Spanned<'a, PrimaryType>>),
+    ArrayType(Box<Spanned<'a, Box<Type<'a>>>>),
+    PointerType(Box<Spanned<'a, Box<Type<'a>>>>),
+    CustomType(Box<Spanned<'a, String>>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {}

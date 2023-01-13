@@ -1,12 +1,8 @@
-use std::path::Path;
-
 mod ast;
 mod lexer;
 mod parser;
 
 use crate::parser::Parser;
-use ast::token::RawToken;
-use lexer::Lexer;
 use std::{env, fs, process::exit};
 
 fn main() {
