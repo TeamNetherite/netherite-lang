@@ -123,8 +123,15 @@ impl<'a> Lexer<'a> {
     }
 
     fn advance_with(&mut self, raw: RawToken) -> IterElem<'a> {
+        let r = Some(Token::new(raw, self.char_location(1)));
         self.advance();
-        Some(Token::new(raw, self.char_location(1)))
+        r
+    }
+
+    fn advance_twice_with(&mut self, raw: RawToken) -> IterElem<'a> {
+        let r = Some(Token::new(raw, self.char_location(1)));
+        self.advance_twice();
+        r
     }
 
     fn advance_while<F>(&mut self, mut f: F) -> &'a str
@@ -411,49 +418,51 @@ impl<'a> Iterator for Lexer<'a> {
         match (self.current, self.next) {
             ('\0', _) => self.advance_with(RawToken::EndOfFile),
 
+            (':', _) => self.advance_with(RawToken::Colon),
+
             ('"', _) => self.scan_string(),
             ('`', _) => self.scan_wrapped_id(),
 
-            ('+', '+') => self.advance_with(RawToken::PlusPlus),
-            ('+', '=') => self.advance_with(RawToken::PlusEq),
+            ('+', '+') => self.advance_twice_with(RawToken::PlusPlus),
+            ('+', '=') => self.advance_twice_with(RawToken::PlusEq),
             ('+', _) => self.advance_with(RawToken::Plus),
 
-            ('-', '-') => self.advance_with(RawToken::MinusMinus),
-            ('-', '=') => self.advance_with(RawToken::MinusEq),
+            ('-', '-') => self.advance_twice_with(RawToken::MinusMinus),
+            ('-', '=') => self.advance_twice_with(RawToken::MinusEq),
             ('-', _) => self.advance_with(RawToken::Minus),
 
-            ('*', '=') => self.advance_with(RawToken::AsteriskEq),
+            ('*', '=') => self.advance_twice_with(RawToken::AsteriskEq),
             ('*', _) => self.advance_with(RawToken::Asterisk),
 
             ('/', '/') => self.scan_single_line_comment(),
-            ('/', '=') => self.advance_with(RawToken::SlashEq),
+            ('/', '=') => self.advance_twice_with(RawToken::SlashEq),
             ('/', _) => self.advance_with(RawToken::Slash),
 
-            ('!', '=') => self.advance_with(RawToken::NotEq),
+            ('!', '=') => self.advance_twice_with(RawToken::NotEq),
             ('!', _) => self.advance_with(RawToken::Bang),
 
-            ('>', '>') => self.advance_with(RawToken::RightShift),
-            ('>', '=') => self.advance_with(RawToken::GreaterThanOrEq),
+            ('>', '>') => self.advance_twice_with(RawToken::RightShift),
+            ('>', '=') => self.advance_twice_with(RawToken::GreaterThanOrEq),
             ('>', _) => self.advance_with(RawToken::GreaterThan),
 
-            ('<', '<') => self.advance_with(RawToken::LeftShift),
-            ('<', '=') => self.advance_with(RawToken::LessThanOrEq),
+            ('<', '<') => self.advance_twice_with(RawToken::LeftShift),
+            ('<', '=') => self.advance_twice_with(RawToken::LessThanOrEq),
             ('<', _) => self.advance_with(RawToken::LessThan),
 
-            ('=', '=') => self.advance_with(RawToken::Eq),
+            ('=', '=') => self.advance_twice_with(RawToken::Eq),
             ('=', _) => self.advance_with(RawToken::Assign),
 
-            ('|', '=') => self.advance_with(RawToken::OrEq),
-            ('|', '|') => self.advance_with(RawToken::OrOr),
+            ('|', '=') => self.advance_twice_with(RawToken::OrEq),
+            ('|', '|') => self.advance_twice_with(RawToken::OrOr),
             ('|', _) => self.advance_with(RawToken::Or),
 
-            ('&', '&') => self.advance_with(RawToken::AndAnd),
+            ('&', '&') => self.advance_twice_with(RawToken::AndAnd),
             ('&', _) => self.advance_with(RawToken::And),
 
-            ('^', '=') => self.advance_with(RawToken::XorEq),
+            ('^', '=') => self.advance_twice_with(RawToken::XorEq),
             ('^', _) => self.advance_with(RawToken::Xor),
 
-            ('~', '=') => self.advance_with(RawToken::NotEq),
+            ('~', '=') => self.advance_twice_with(RawToken::NotEq),
             ('~', _) => self.advance_with(RawToken::Not),
 
             ('(', _) => self.advance_with(RawToken::OpenParent),
@@ -487,7 +496,6 @@ impl<'a> Iterator for Lexer<'a> {
 mod lexer_tests {
     use crate::ast::token::*;
     use crate::lexer::Lexer;
-    use std::path::Path;
 
     macro_rules! def_lex {
         ($l: ident, $contents: expr) => {
@@ -688,5 +696,18 @@ mod lexer_tests {
             l.next().unwrap().raw,
             RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
         );
+    }
+
+    #[test]
+    fn op_test() {
+        def_lex!(l, "+");
+        assert_eq!(l.next().unwrap().raw, RawToken::Plus);
+    }
+
+    #[test]
+    fn op2_test() {
+        def_lex!(l, "++");
+        assert_eq!(l.next().unwrap().raw, RawToken::PlusPlus);
+        assert_eq!(l.next().unwrap().raw, RawToken::EndOfFile);
     }
 }

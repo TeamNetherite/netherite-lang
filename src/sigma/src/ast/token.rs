@@ -8,16 +8,25 @@ use phf::phf_map;
 use std::fmt::{self, Display};
 
 /// Represents error that lexer can fail with
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Display)]
 pub enum LexerError {
+    #[display(fmt = "unexpected character '{_0}'")]
     UnexpectedChar(char),
+    #[display(fmt = "unterminated wrapped identifier literal")]
     UnterminatedWrappedIdentifierLiteral,
+    #[display(fmt = "unterminated string literal")]
     UnterminatedStringLiteral,
+    #[display(fmt = "invalid radix point")]
     InvalidRadixPoint,
+    #[display(fmt = "has no digits")]
     HasNoDigits,
+    #[display(fmt = "exponent requires decimal mantissa")]
     ExponentRequiresDecimalMantissa,
+    #[display(fmt = "exponent has no digits")]
     ExponentHasNoDigits,
+    #[display(fmt = "invalid digit")]
     InvalidDigit,
+    #[display(fmt = "underscore must seperate successive digits")]
     UnderscoreMustSeperateSuccessiveDigits,
 }
 
@@ -159,6 +168,8 @@ pub enum RawToken {
     Dot,
     #[display(fmt = "';'")]
     Semicolon,
+    #[display(fmt = "':'")]
+    Colon,
 
     #[display(fmt = "'++'")]
     PlusPlus,
@@ -168,13 +179,16 @@ pub enum RawToken {
     #[display(fmt = "namespace")]
     Namespace,
 
+    #[display(fmt = "import")]
+    Import,
+
     #[display(fmt = "comment")]
     Comment(String),
 
     #[display(fmt = "end of file")]
     EndOfFile,
 
-    #[display(fmt = "invalid")]
+    #[display(fmt = "invalid token")]
     Invalid(LexerError),
 }
 
@@ -204,4 +218,5 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "true" => RawToken::Boolean(true),
     "false" => RawToken::Boolean(false),
     "namespace" => RawToken::Namespace,
+    "import" => RawToken::Import,
 };

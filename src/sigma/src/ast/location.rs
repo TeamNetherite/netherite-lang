@@ -1,7 +1,6 @@
 use std::ops::Range;
 use std::path::Path;
 
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Span<'a> {
     pub filename: &'a str,
@@ -12,7 +11,7 @@ impl<'a> Span<'a> {
     pub fn new(filename: &'a str, start: usize, end: usize) -> Self {
         Self {
             filename,
-            range: start..end
+            range: start..end,
         }
     }
 
@@ -24,6 +23,7 @@ impl<'a> Span<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Spanned<'a, T> {
     value: T,
     span: Span<'a>,

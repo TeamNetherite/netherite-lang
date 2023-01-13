@@ -7,18 +7,24 @@ mod parser;
 use crate::parser::Parser;
 use ast::token::RawToken;
 use lexer::Lexer;
+use std::{env, fs, process::exit};
 
 fn main() {
-    // let mut lexer = Lexer::new(Path::new("<test>"), "0.23e");
-    //
-    // loop {
-    //     let token = lexer.next();
-    //     if token.clone().unwrap().raw == RawToken::EndOfFile {
-    //         break;
-    //     }
-    //
-    //     println!("{}", token.unwrap().raw);
-    // }
-    let mut parser = Parser::new("<test>", "namespace sd;");
-    parser.parse();
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        eprintln!("usage: sigma <filename>");
+        exit(1);
+    }
+
+    let filename = args[1].as_str();
+    match fs::read_to_string(filename) {
+        Ok(content) => {
+            let mut parser = Parser::new(filename, content.as_str());
+            println!("{:?}", parser.parse());
+        }
+        Err(_) => {
+            eprintln!("unable to read file");
+            exit(1);
+        }
+    }
 }
