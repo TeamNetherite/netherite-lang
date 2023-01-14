@@ -16,7 +16,8 @@ fn main() {
     match fs::read_to_string(filename) {
         Ok(content) => {
             let mut parser = Parser::new(filename, content.as_str());
-            println!("{:?}", parser.parse());
+            parser.parse();
+            // println!("{:?}", parser.parse());
         }
         Err(_) => {
             eprintln!("unable to read file");

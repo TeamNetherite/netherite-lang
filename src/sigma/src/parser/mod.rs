@@ -50,17 +50,21 @@ impl<'a> Parser<'a> {
 
     pub fn check_scanning_error(&self) {
         if let RawToken::Invalid(e) = self.current.raw {
-            Report::build(ReportKind::Error, self.filename, 0)
-                .with_code(0)
-                .with_message("scanning error".to_owned())
-                .with_label(
-                    Label::new((self.filename, self.current.span.range.clone()))
-                        .with_message(e.to_string())
-                        .with_color(ColorGenerator::new().next()),
-                )
-                .finish()
-                .print((self.filename, Source::from(self.contents)))
-                .unwrap();
+            Report::build(
+                ReportKind::Error,
+                self.filename,
+                self.current.span.range.start,
+            )
+            .with_code(0)
+            .with_message("scanning error".to_owned())
+            .with_label(
+                Label::new((self.filename, self.current.span.range.clone()))
+                    .with_message(e.to_string())
+                    .with_color(ColorGenerator::new().next()),
+            )
+            .finish()
+            .print((self.filename, Source::from(self.contents.to_owned() + " ")))
+            .unwrap();
         }
     }
 
@@ -83,7 +87,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_namespace_declaration(&mut self) -> Option<Namespace<'a>> {
+    fn parse_namespace_declaration(&mut self) -> Option<Box<Namespace<'a>>> {
         self.check_current_token(RawToken::Namespace, name!("namespace declaration"))?;
 
         self.advance(); // namespace
@@ -99,10 +103,10 @@ impl<'a> Parser<'a> {
 
         self.advance(); // ';'
 
-        Some(Namespace { namespace })
+        Some(Box::new(Namespace { namespace }))
     }
 
-    fn parse_imports(&mut self) -> Option<Vec<Box<Spanned<'a, Import<'a>>>>> {
+    fn parse_imports(&mut self) -> Option<Vec<Box<WithSpan<'a, Import<'a>>>>> {
         let mut imports = vec![];
 
         while let RawToken::Import = &self.current.raw {
@@ -112,7 +116,7 @@ impl<'a> Parser<'a> {
 
             let span = Span::new(self.filename, start, end);
 
-            imports.push(Spanned::new(import, span));
+            imports.push(WithSpan::new(import, span));
         }
 
         Some(imports)
@@ -138,11 +142,11 @@ impl<'a> Parser<'a> {
         self.advance(); // ';'
 
         Some(Import {
-            filename: Spanned::new(value.to_owned(), span),
+            filename: WithSpan::new(value.to_owned(), span),
         })
     }
 
-    fn parse_name(&mut self) -> Option<Box<Spanned<'a, String>>> {
+    fn parse_name(&mut self) -> Option<Box<WithSpan<'a, String>>> {
         let start = self.current.span.range.start;
 
         let mut name = String::from("");
@@ -171,7 +175,7 @@ impl<'a> Parser<'a> {
 
         name.pop();
 
-        Some(Spanned::new(name, Span::new(self.filename, start, end)))
+        Some(WithSpan::new(name, Span::new(self.filename, start, end)))
     }
 
     fn parse_type(&mut self) -> Option<Type<'a>> {
@@ -180,7 +184,7 @@ impl<'a> Parser<'a> {
             RawToken::Asterisk => self.parse_pointer_type(),
             RawToken::OpenBracket => self.parse_array_type(),
             RawToken::PrimaryType(t) => {
-                let r = Some(Type::PrimaryType(Spanned::new(
+                let r = Some(Type::PrimaryType(WithSpan::new(
                     *t,
                     self.current.span.clone(),
                 )));
@@ -222,7 +226,7 @@ impl<'a> Parser<'a> {
 
         let end = self.current.span.range.end;
 
-        Some(Type::ArrayType(Spanned::new(
+        Some(Type::ArrayType(WithSpan::new(
             inner_type,
             Span::new(self.filename, start, end),
         )))
@@ -246,7 +250,7 @@ impl<'a> Parser<'a> {
                 label_message.push_str(format!(" for `{}`", expected_for.unwrap().fg(c)).as_str());
             }
 
-            Report::build(ReportKind::Error, self.filename, 0)
+            Report::build(ReportKind::Error, self.filename, self.peek.span.range.start)
                 .with_code(1)
                 .with_message(format!("unexpected {}", self.current.raw))
                 .with_label(
@@ -255,7 +259,7 @@ impl<'a> Parser<'a> {
                         .with_color(c),
                 )
                 .finish()
-                .print((self.filename, Source::from(self.contents)))
+                .print((self.filename, Source::from(self.contents.to_owned() + " ")))
                 .unwrap();
 
             None
@@ -274,7 +278,7 @@ impl<'a> Parser<'a> {
                 label_message.push_str(format!(" for {}", expected_for.unwrap()).as_str());
             }
 
-            Report::build(ReportKind::Error, self.filename, 0)
+            Report::build(ReportKind::Error, self.filename, self.peek.span.range.start)
                 .with_code(1)
                 .with_message(format!("unexpected {}", self.peek.raw))
                 .with_label(
@@ -283,7 +287,7 @@ impl<'a> Parser<'a> {
                         .with_color(c),
                 )
                 .finish()
-                .print((self.filename, Source::from(self.contents)))
+                .print((self.filename, Source::from(self.contents.to_owned() + " ")))
                 .unwrap();
 
             None
@@ -312,15 +316,15 @@ mod parser_tests {
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
-                namespace: Namespace {
-                    namespace: Box::new(Spanned {
+                namespace: Box::new(Namespace {
+                    namespace: Box::new(WithSpan {
                         value: "test".to_owned(),
                         span: Span {
                             filename: "<test>",
                             range: 10..15
                         }
                     })
-                },
+                }),
                 imports: vec![],
                 top_level_statements: vec![]
             })
@@ -333,15 +337,15 @@ mod parser_tests {
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
-                namespace: Namespace {
-                    namespace: Box::new(Spanned {
+                namespace: Box::new(Namespace {
+                    namespace: Box::new(WithSpan {
                         value: "test:test2:test3".to_owned(),
                         span: Span {
                             filename: "<test>",
                             range: 10..27
                         }
                     })
-                },
+                }),
                 imports: vec![],
                 top_level_statements: vec![]
             })
@@ -354,19 +358,19 @@ mod parser_tests {
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
-                namespace: Namespace {
-                    namespace: Box::new(Spanned {
+                namespace: Box::new(Namespace {
+                    namespace: Box::new(WithSpan {
                         value: "test".to_owned(),
                         span: Span {
                             filename: "<test>",
                             range: 10..15
                         }
                     })
-                },
+                }),
                 imports: vec![
-                    Box::new(Spanned {
+                    Box::new(WithSpan {
                         value: Import {
-                            filename: Box::new(Spanned {
+                            filename: Box::new(WithSpan {
                                 value: "test".to_owned(),
                                 span: Span {
                                     filename: "<test>",
@@ -379,9 +383,9 @@ mod parser_tests {
                             range: 16..37
                         }
                     }),
-                    Box::new(Spanned {
+                    Box::new(WithSpan {
                         value: Import {
-                            filename: Box::new(Spanned {
+                            filename: Box::new(WithSpan {
                                 value: "test2".to_owned(),
                                 span: Span {
                                     filename: "<test>",

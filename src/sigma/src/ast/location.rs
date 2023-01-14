@@ -24,12 +24,12 @@ impl<'a> Span<'a> {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Spanned<'a, T> {
+pub struct WithSpan<'a, T> {
     pub value: T,
     pub span: Span<'a>,
 }
 
-impl<'a, T> Spanned<'a, T> {
+impl<'a, T> WithSpan<'a, T> {
     pub fn new(value: T, span: Span<'a>) -> Box<Self> {
         Box::new(Self { value, span })
     }
