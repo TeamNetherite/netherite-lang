@@ -157,7 +157,7 @@ impl<'a> Parser<'a> {
     ) -> Option<Vec<Box<WithSpan<'a, TopLevelStatement<'a>>>>> {
         let mut top_level_statements = vec![];
 
-        while true {
+        loop {
             match &self.current.raw {
                 &RawToken::Fun => {
                     top_level_statements.push(self.parse_function_declaration(false)?);
@@ -172,22 +172,25 @@ impl<'a> Parser<'a> {
                         top_level_statements.push(self.parse_struct_declaration(true)?);
                     }
                     _ => {
-                        self.advance();
                         self.unexpected_token_error(
                             true,
                             &[RawToken::Fun, RawToken::Struct],
                             name!("top level declaration"),
                         );
+                        self.advance();
+                        return None;
                     }
                 },
                 &RawToken::EndOfFile => break,
                 _ => {
-                    self.advance();
+                    println!("ok");
                     self.unexpected_token_error(
                         false,
                         &[RawToken::Fun, RawToken::Struct, RawToken::Pub],
                         name!("top level declaration"),
                     );
+                    self.advance();
+                    return None;
                 }
             }
         }
@@ -234,7 +237,7 @@ impl<'a> Parser<'a> {
 
         if std::mem::discriminant(&self.current.raw) != std::mem::discriminant(&RawToken::OpenBrace)
         {
-            return_type = Some(self.parse_type()?);
+            return_type = Some(self.parse_type(true)?);
         }
 
         self.check_current_token(RawToken::OpenBrace, name!("function declaration"))?;
@@ -291,7 +294,7 @@ impl<'a> Parser<'a> {
         let span = self.current.span.clone();
         self.advance(); // name
 
-        let ty = self.parse_type()?;
+        let ty = self.parse_type(false)?;
 
         Some(FunctionParam {
             name: WithSpan::new(name, span),
@@ -325,7 +328,7 @@ impl<'a> Parser<'a> {
         Some(WithSpan::new(name, Span::new(self.filename, start, end)))
     }
 
-    fn parse_type(&mut self) -> Option<Type<'a>> {
+    fn parse_type(&mut self, return_type: bool) -> Option<Type<'a>> {
         match &self.current.raw {
             RawToken::Identifier(_) => self.parse_custom_type(),
             RawToken::Asterisk => self.parse_pointer_type(),
@@ -339,12 +342,20 @@ impl<'a> Parser<'a> {
                 r
             }
             _ => {
+                let mut _message = "";
+
+                if return_type {
+                    _message = "expected identifier, '*', '[', primary type, '{'";
+                } else {
+                    _message = "expected identifier, '*', '[', primary type";
+                }
+
                 Report::build(ReportKind::Error, self.filename, 0)
                     .with_code(1)
                     .with_message(format!("unexpected {}", self.current.raw))
                     .with_label(
                         Label::new((self.filename, self.current.span.range.clone()))
-                            .with_message("expected identifier, '*', '[', primary type".to_owned())
+                            .with_message(_message.to_owned())
                             .with_color(ColorGenerator::new().next()),
                     )
                     .finish()
@@ -369,7 +380,7 @@ impl<'a> Parser<'a> {
         self.check_current_token(RawToken::CloseBracket, name!("array type"))?;
         self.advance(); // ']'
 
-        let inner_type = Box::new(self.parse_type()?);
+        let inner_type = Box::new(self.parse_type(false)?);
 
         let end = self.current.span.range.end;
 
@@ -384,7 +395,7 @@ impl<'a> Parser<'a> {
 
         self.advance(); // '*'
 
-        let inner_type = Box::new(self.parse_type()?);
+        let inner_type = Box::new(self.parse_type(false)?);
 
         let end = self.current.span.range.end;
 
@@ -615,6 +626,44 @@ mod parser_tests {
                     })
                 ],
                 top_level_statements: vec![]
+            })
+        )
+    }
+
+    #[test]
+    fn function_decl_test() {
+        def_p!(p, "namespace main;\npub fun main() {}");
+        assert_eq!(
+            p.parse(),
+            Some(ProgramUnit {
+                namespace: Box::new(Namespace {
+                    namespace: Box::new(WithSpan {
+                        value: "main".to_owned(),
+                        span: Span {
+                            filename: "<test>",
+                            range: 10..15
+                        }
+                    })
+                }),
+                imports: vec![],
+                top_level_statements: vec![Box::new(WithSpan {
+                    value: TopLevelStatement::FunctionDeclaration(Box::new(FunctionDeclaration {
+                        public: true,
+                        name: Box::new(WithSpan {
+                            value: "main".to_owned(),
+                            span: Span {
+                                filename: "<test>",
+                                range: 24..28
+                            }
+                        }),
+                        params: vec![],
+                        return_type: None
+                    })),
+                    span: Span {
+                        filename: "<test>",
+                        range: 20..34
+                    }
+                })]
             })
         )
     }
