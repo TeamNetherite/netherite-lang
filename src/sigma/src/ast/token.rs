@@ -178,9 +178,16 @@ pub enum RawToken {
 
     #[display(fmt = "namespace")]
     Namespace,
-
     #[display(fmt = "import")]
     Import,
+    #[display(fmt = "pub")]
+    Pub,
+    #[display(fmt = "fun")]
+    Fun,
+    #[display(fmt = "struct")]
+    Struct,
+    #[display(fmt = "mut")]
+    Mut,
 
     #[display(fmt = "comment")]
     Comment(String),
@@ -219,4 +226,8 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "false" => RawToken::Boolean(false),
     "namespace" => RawToken::Namespace,
     "import" => RawToken::Import,
+    "pub" => RawToken::Pub,
+    "fun" => RawToken::Fun,
+    "struct" => RawToken::Struct,
+    "mut" => RawToken::Mut,
 };

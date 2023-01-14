@@ -323,7 +323,7 @@ impl<'a> Lexer<'a> {
 
         let l = self.current.to_ascii_lowercase();
         if l == 'e' {
-            if l == 'e' && prefix != '\0' && prefix != '0' {
+            if prefix != '\0' && prefix != '0' {
                 return Some(Token::new(
                     RawToken::Invalid(LexerError::ExponentRequiresDecimalMantissa),
                     self.span_from_start(),

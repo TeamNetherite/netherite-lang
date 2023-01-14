@@ -28,9 +28,10 @@ pub enum TopLevelStatement<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration<'a> {
+    pub public: bool,
     pub name: Box<WithSpan<'a, String>>,
-    pub params: Vec<FunctionParam<'a>>,
-    pub return_type: Type<'a>,
+    pub params: Vec<Box<WithSpan<'a, FunctionParam<'a>>>>,
+    pub return_type: Option<Type<'a>>,
 }
 
 #[derive(Debug, PartialEq)]
