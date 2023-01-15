@@ -1,3 +1,5 @@
+#![feature(box_syntax)]
+
 mod ast;
 mod lexer;
 mod parser;

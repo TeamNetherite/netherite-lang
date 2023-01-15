@@ -30,7 +30,7 @@ pub struct WithSpan<'a, T> {
 }
 
 impl<'a, T> WithSpan<'a, T> {
-    pub fn new(value: T, span: Span<'a>) -> Box<Self> {
-        Box::new(Self { value, span })
+    pub fn new(value: T, span: Span<'a>) -> Self {
+        Self { value, span }
     }
 }

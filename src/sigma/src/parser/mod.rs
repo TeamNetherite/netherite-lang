@@ -97,7 +97,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_namespace_declaration(&mut self) -> Option<Box<Namespace<'a>>> {
+    fn parse_namespace_declaration(&mut self) -> Option<WithSpan<'a, String>> {
         self.check_current_token(RawToken::Namespace, name!("namespace declaration"))?;
 
         self.advance(); // namespace
@@ -113,10 +113,10 @@ impl<'a> Parser<'a> {
 
         self.advance(); // ';'
 
-        Some(Box::new(Namespace { namespace }))
+        Some(namespace)
     }
 
-    fn parse_imports(&mut self) -> Option<Vec<Box<WithSpan<'a, Import<'a>>>>> {
+    fn parse_imports(&mut self) -> Option<Vec<WithSpan<'a, Import<'a>>>> {
         let mut imports = vec![];
 
         while let RawToken::Import = &self.current.raw {
@@ -152,15 +152,16 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_top_level_statements(
-        &mut self,
-    ) -> Option<Vec<Box<WithSpan<'a, TopLevelStatement<'a>>>>> {
+    fn parse_top_level_statements(&mut self) -> Option<Vec<WithSpan<'a, TopLevelStatement<'a>>>> {
         let mut top_level_statements = vec![];
 
         loop {
             match &self.current.raw {
                 &RawToken::Fun => {
                     top_level_statements.push(self.parse_function_declaration(false)?);
+                }
+                &RawToken::Struct => {
+                    top_level_statements.push(self.parse_struct_declaration(false)?);
                 }
                 &RawToken::Pub => match &self.peek.raw {
                     &RawToken::Fun => {
@@ -201,14 +202,57 @@ impl<'a> Parser<'a> {
     fn parse_struct_declaration(
         &mut self,
         public: bool,
-    ) -> Option<Box<WithSpan<'a, TopLevelStatement<'a>>>> {
+    ) -> Option<WithSpan<'a, TopLevelStatement<'a>>> {
+        let start = self.current.span.range.start;
+
+        self.advance(); // 'struct'
+
+        self.check_current_token(
+            RawToken::Identifier("".to_owned()),
+            name!("struct declaration"),
+        )?;
+
+        let name = unwrap_enum!(&self.current.raw, RawToken::Identifier).to_owned();
+        let name_span = self.current.span.clone();
+
+        self.advance(); // 'name'
+
+        self.check_current_token(RawToken::OpenBrace, name!("struct declaration"))?;
+
+        self.advance(); // '{'
+
+        let members = self.parse_struct_members()?;
+        let methods = self.parse_struct_methods()?;
+
+        self.check_current_token(RawToken::CloseBrace, name!("struct declaration"))?;
+
+        self.advance(); // '}'
+
+        let end = self.current.span.range.end;
+
+        Some(WithSpan::new(
+            TopLevelStatement::StructDeclaration(Box::new(StructDeclaration {
+                public,
+                name: WithSpan::new(name, name_span),
+                members,
+                methods,
+            })),
+            Span::new(self.filename, start, end),
+        ))
+    }
+
+    fn parse_struct_members(&mut self) -> Option<Vec<WithSpan<'a, StructMember<'a>>>> {
+        None
+    }
+
+    fn parse_struct_methods(&mut self) -> Option<Vec<FunctionDeclaration<'a>>> {
         None
     }
 
     fn parse_function_declaration(
         &mut self,
         public: bool,
-    ) -> Option<Box<WithSpan<'a, TopLevelStatement<'a>>>> {
+    ) -> Option<WithSpan<'a, TopLevelStatement<'a>>> {
         let start = self.current.span.range.start;
 
         self.advance(); // 'fun'
@@ -261,7 +305,7 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    fn parse_function_arguments(&mut self) -> Option<Vec<Box<WithSpan<'a, FunctionParam<'a>>>>> {
+    fn parse_function_arguments(&mut self) -> Option<Vec<WithSpan<'a, FunctionParam<'a>>>> {
         let mut arguments = vec![];
 
         if std::mem::discriminant(&self.current.raw)
@@ -302,7 +346,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_name(&mut self) -> Option<Box<WithSpan<'a, String>>> {
+    fn parse_name(&mut self) -> Option<WithSpan<'a, String>> {
         let start = self.current.span.range.start;
 
         let mut name = unwrap_enum!(&self.current.raw, RawToken::Identifier).to_owned();
@@ -542,15 +586,13 @@ mod parser_tests {
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
-                namespace: Box::new(Namespace {
-                    namespace: Box::new(WithSpan {
-                        value: "test".to_owned(),
-                        span: Span {
-                            filename: "<test>",
-                            range: 10..15
-                        }
-                    })
-                }),
+                namespace: WithSpan {
+                    value: "test".to_owned(),
+                    span: Span {
+                        filename: "<test>",
+                        range: 10..15
+                    }
+                },
                 imports: vec![],
                 top_level_statements: vec![]
             })
@@ -563,15 +605,13 @@ mod parser_tests {
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
-                namespace: Box::new(Namespace {
-                    namespace: Box::new(WithSpan {
-                        value: "test:test2:test3".to_owned(),
-                        span: Span {
-                            filename: "<test>",
-                            range: 10..27
-                        }
-                    })
-                }),
+                namespace: WithSpan {
+                    value: "test:test2:test3".to_owned(),
+                    span: Span {
+                        filename: "<test>",
+                        range: 10..27
+                    }
+                },
                 imports: vec![],
                 top_level_statements: vec![]
             })
@@ -584,46 +624,44 @@ mod parser_tests {
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
-                namespace: Box::new(Namespace {
-                    namespace: Box::new(WithSpan {
-                        value: "test".to_owned(),
-                        span: Span {
-                            filename: "<test>",
-                            range: 10..15
-                        }
-                    })
-                }),
+                namespace: WithSpan {
+                    value: "test".to_owned(),
+                    span: Span {
+                        filename: "<test>",
+                        range: 10..15
+                    }
+                },
                 imports: vec![
-                    Box::new(WithSpan {
+                    WithSpan {
                         value: Import {
-                            filename: Box::new(WithSpan {
+                            filename: WithSpan {
                                 value: "test".to_owned(),
                                 span: Span {
                                     filename: "<test>",
                                     range: 23..29
                                 }
-                            })
+                            }
                         },
                         span: Span {
                             filename: "<test>",
                             range: 16..37
                         }
-                    }),
-                    Box::new(WithSpan {
+                    },
+                    WithSpan {
                         value: Import {
-                            filename: Box::new(WithSpan {
+                            filename: WithSpan {
                                 value: "test2".to_owned(),
                                 span: Span {
                                     filename: "<test>",
                                     range: 38..45
                                 }
-                            })
+                            }
                         },
                         span: Span {
                             filename: "<test>",
                             range: 31..48
                         }
-                    })
+                    }
                 ],
                 top_level_statements: vec![]
             })
@@ -636,26 +674,24 @@ mod parser_tests {
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
-                namespace: Box::new(Namespace {
-                    namespace: Box::new(WithSpan {
-                        value: "main".to_owned(),
-                        span: Span {
-                            filename: "<test>",
-                            range: 10..15
-                        }
-                    })
-                }),
+                namespace: WithSpan {
+                    value: "main".to_owned(),
+                    span: Span {
+                        filename: "<test>",
+                        range: 10..15
+                    }
+                },
                 imports: vec![],
-                top_level_statements: vec![Box::new(WithSpan {
+                top_level_statements: vec![WithSpan {
                     value: TopLevelStatement::FunctionDeclaration(Box::new(FunctionDeclaration {
                         public: true,
-                        name: Box::new(WithSpan {
+                        name: WithSpan {
                             value: "main".to_owned(),
                             span: Span {
                                 filename: "<test>",
                                 range: 24..28
                             }
-                        }),
+                        },
                         params: vec![],
                         return_type: None
                     })),
@@ -663,7 +699,94 @@ mod parser_tests {
                         filename: "<test>",
                         range: 20..34
                     }
-                })]
+                }]
+            })
+        )
+    }
+
+    #[test]
+    fn function_decl2_test() {
+        def_p!(p, "namespace main;\npub fun sum(a i32, b i32) i32 {}");
+        assert_eq!(
+            p.parse(),
+            Some(ProgramUnit {
+                namespace: WithSpan {
+                    value: "main".to_owned(),
+                    span: Span {
+                        filename: "<test>",
+                        range: 10..15
+                    }
+                },
+                imports: vec![],
+                top_level_statements: vec![WithSpan {
+                    value: TopLevelStatement::FunctionDeclaration(Box::new(FunctionDeclaration {
+                        public: true,
+                        name: WithSpan {
+                            value: "sum".to_owned(),
+                            span: Span {
+                                filename: "<test>",
+                                range: 24..27
+                            }
+                        },
+                        params: vec![
+                            WithSpan {
+                                value: FunctionParam {
+                                    name: WithSpan {
+                                        value: "a".to_owned(),
+                                        span: Span {
+                                            filename: "<test>",
+                                            range: 28..29
+                                        }
+                                    },
+                                    ty: Type::PrimaryType(WithSpan {
+                                        value: PrimaryType::I32,
+                                        span: Span {
+                                            filename: "<test>",
+                                            range: 30..33
+                                        }
+                                    })
+                                },
+                                span: Span {
+                                    filename: "<test>",
+                                    range: 28..34
+                                }
+                            },
+                            WithSpan {
+                                value: FunctionParam {
+                                    name: WithSpan {
+                                        value: "b".to_owned(),
+                                        span: Span {
+                                            filename: "<test>",
+                                            range: 35..36
+                                        }
+                                    },
+                                    ty: Type::PrimaryType(WithSpan {
+                                        value: PrimaryType::I32,
+                                        span: Span {
+                                            filename: "<test>",
+                                            range: 37..40
+                                        }
+                                    })
+                                },
+                                span: Span {
+                                    filename: "<test>",
+                                    range: 35..41
+                                }
+                            }
+                        ],
+                        return_type: Some(Type::PrimaryType(WithSpan {
+                            value: PrimaryType::I32,
+                            span: Span {
+                                filename: "<test>",
+                                range: 42..45
+                            }
+                        }))
+                    })),
+                    span: Span {
+                        filename: "<test>",
+                        range: 20..49
+                    }
+                }]
             })
         )
     }
