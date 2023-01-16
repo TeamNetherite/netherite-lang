@@ -1,3 +1,3 @@
 namespace t;
 
-struct f { 
+pub fun main() {}

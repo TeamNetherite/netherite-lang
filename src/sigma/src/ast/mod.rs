@@ -18,8 +18,9 @@ pub struct Import<'a> {
 
 #[derive(Debug, PartialEq)]
 pub enum TopLevelStatement<'a> {
-    FunctionDeclaration(Box<FunctionDeclaration<'a>>),
-    StructDeclaration(Box<StructDeclaration<'a>>),
+    FunctionDeclaration(FunctionDeclaration<'a>),
+    StructDeclaration(StructDeclaration<'a>),
+    StructImplementation(StructImplementation<'a>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -35,6 +36,11 @@ pub struct StructDeclaration<'a> {
     pub public: bool,
     pub name: WithSpan<'a, String>,
     pub members: Vec<WithSpan<'a, StructMember<'a>>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct StructImplementation<'a> {
+    pub interface_name: Option<WithSpan<'a, String>>,
     pub methods: Vec<FunctionDeclaration<'a>>,
 }
 

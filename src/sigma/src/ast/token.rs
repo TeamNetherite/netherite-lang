@@ -5,9 +5,9 @@ use crate::ast::location::Span;
 use derive_more::Display;
 use phf::phf_map;
 
-use std::fmt::{self, Display};
+use super::location::WithSpan;
 
-/// Represents error that lexer can fail with
+/// Represents error that lexer can fail with.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Display)]
 pub enum LexerError {
     #[display(fmt = "unexpected character '{_0}'")]
@@ -30,7 +30,7 @@ pub enum LexerError {
     UnderscoreMustSeperateSuccessiveDigits,
 }
 
-/// Represents integer and float types, used in RawToken::Int.
+/// Represents low level types, which other types are constructed with. Examples: `i8`, `i16`, `i32`, `u16`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Display)]
 pub enum PrimaryType {
     #[display(fmt = "i8")]
@@ -64,6 +64,7 @@ pub enum PrimaryType {
     Complex,
 }
 
+/// Wether the number is integer, float or imaginary literal.
 #[derive(PartialEq, Debug)]
 pub enum NumberKind {
     Invalid,
@@ -72,6 +73,7 @@ pub enum NumberKind {
     Imag,
 }
 
+/// Represents token without a specific location in source text.
 #[derive(Clone, Debug, PartialEq, Display)]
 pub enum RawToken {
     #[display(fmt = "identifier")]
@@ -199,17 +201,8 @@ pub enum RawToken {
     Invalid(LexerError),
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Token<'a> {
-    pub raw: RawToken,
-    pub span: Span<'a>,
-}
-
-impl<'a> Token<'a> {
-    pub fn new(raw: RawToken, span: Span<'a>) -> Self {
-        Self { raw, span }
-    }
-}
+/// Is basically `WithSpan<'a, RawToken>`.
+pub type Token<'a> = WithSpan<'a, RawToken>;
 
 pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "i8" => RawToken::PrimaryType(PrimaryType::I8),

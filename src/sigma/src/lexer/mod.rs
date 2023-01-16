@@ -1,12 +1,28 @@
 //! lexer/mod.rs - implements lexer.
 //!
-//! Lexer implements `Iterator<Item = Token>`.
+//! Lexer is a part of parser (first stage of compilation), state machine
+//! that converts Sigma source text into `Token`s.
+//!
+//! Whitespaces are ignored during scanning process.
+//!
+//! Inherited multiline comments are not supported:
+//! This is not valid:
+//! ```sigma
+//!  /* /* test */ */
+//! ```
+//! This is valid:
+//! ```sigma
+//! /* /* test */
+//! ```
+//!
+//! Lexer is fairly standart. It implements `Iterator<Item = Token>` on each step,
+//! and stops at eof (always returns `RawToken::EOF` when it's already eof).
 
 use crate::ast::location::*;
 use crate::ast::token::RawToken::Comment;
 use crate::ast::token::*;
 use std::char::from_digit;
-use std::{path::Path, str::Chars};
+use std::str::Chars;
 
 pub struct Lexer<'a> {
     current: char,
@@ -399,7 +415,7 @@ impl<'a> Lexer<'a> {
     pub fn next_no_comments(&mut self) -> Option<Token<'a>> {
         loop {
             let t = self.next();
-            if let Comment(_) = t.as_ref().unwrap().raw {
+            if let Comment(_) = t.as_ref().unwrap().value {
             } else {
                 return t;
             }
@@ -506,20 +522,20 @@ mod lexer_tests {
     #[test]
     fn eof_test() {
         def_lex!(l, "");
-        assert_eq!(l.next().unwrap().raw, RawToken::EndOfFile);
+        assert_eq!(l.next().unwrap().value, RawToken::EndOfFile);
     }
 
     #[test]
     fn eof2_test() {
         def_lex!(l, " \t\n\r");
-        assert_eq!(l.next().unwrap().raw, RawToken::EndOfFile);
+        assert_eq!(l.next().unwrap().value, RawToken::EndOfFile);
     }
 
     #[test]
     fn identifier_test() {
         def_lex!(l, "test");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Identifier("test".to_owned())
         );
     }
@@ -528,7 +544,7 @@ mod lexer_tests {
     fn identifier2_test() {
         def_lex!(l, "привет");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Identifier("привет".to_owned())
         );
     }
@@ -537,7 +553,7 @@ mod lexer_tests {
     fn comment_test() {
         def_lex!(l, "//test comment");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Comment("test comment".to_owned())
         );
     }
@@ -546,7 +562,7 @@ mod lexer_tests {
     fn unexpected_char_test() {
         def_lex!(l, "@");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnexpectedChar('@'))
         );
     }
@@ -554,14 +570,14 @@ mod lexer_tests {
     #[test]
     fn string_test() {
         def_lex!(l, "\"test\"");
-        assert_eq!(l.next().unwrap().raw, RawToken::String("test".to_owned()));
+        assert_eq!(l.next().unwrap().value, RawToken::String("test".to_owned()));
     }
 
     #[test]
     fn string2_test() {
         def_lex!(l, "\"test");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnterminatedStringLiteral)
         );
     }
@@ -570,7 +586,7 @@ mod lexer_tests {
     fn string3_test() {
         def_lex!(l, "\"test\n");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnterminatedStringLiteral)
         );
     }
@@ -579,7 +595,7 @@ mod lexer_tests {
     fn wrapped_id_test() {
         def_lex!(l, "`test`");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Identifier("test".to_owned())
         );
     }
@@ -588,7 +604,7 @@ mod lexer_tests {
     fn wrapped_id2_test() {
         def_lex!(l, "`test");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnterminatedWrappedIdentifierLiteral)
         );
     }
@@ -597,7 +613,7 @@ mod lexer_tests {
     fn wrapped_id3_test() {
         def_lex!(l, "`test\n");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnterminatedWrappedIdentifierLiteral)
         );
     }
@@ -605,32 +621,32 @@ mod lexer_tests {
     #[test]
     fn number_test() {
         def_lex!(l, "12345");
-        assert_eq!(l.next().unwrap().raw, RawToken::Int(12345));
+        assert_eq!(l.next().unwrap().value, RawToken::Int(12345));
     }
 
     #[test]
     fn number2_test() {
         def_lex!(l, "12345.12345");
-        assert_eq!(l.next().unwrap().raw, RawToken::Float(12345.12345));
+        assert_eq!(l.next().unwrap().value, RawToken::Float(12345.12345));
     }
 
     #[test]
     fn number3_test() {
         def_lex!(l, "12345.");
-        assert_eq!(l.next().unwrap().raw, RawToken::Float(12345f64));
+        assert_eq!(l.next().unwrap().value, RawToken::Float(12345f64));
     }
 
     #[test]
     fn number4_test() {
         def_lex!(l, "1e3");
-        assert_eq!(l.next().unwrap().raw, RawToken::Float(1000f64));
+        assert_eq!(l.next().unwrap().value, RawToken::Float(1000f64));
     }
 
     #[test]
     fn number5_test() {
         def_lex!(l, "0b");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::HasNoDigits)
         );
     }
@@ -639,7 +655,7 @@ mod lexer_tests {
     fn number6_test() {
         def_lex!(l, "12.3e");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::ExponentHasNoDigits)
         );
     }
@@ -648,7 +664,7 @@ mod lexer_tests {
     fn number7_test() {
         def_lex!(l, "0x0.");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::InvalidRadixPoint)
         );
     }
@@ -657,7 +673,7 @@ mod lexer_tests {
     fn number8_test() {
         def_lex!(l, "0b_0");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
         );
     }
@@ -666,7 +682,7 @@ mod lexer_tests {
     fn number9_test() {
         def_lex!(l, "0b__0");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
         );
     }
@@ -675,7 +691,7 @@ mod lexer_tests {
     fn number10_test() {
         def_lex!(l, "0o60___0");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
         );
     }
@@ -684,7 +700,7 @@ mod lexer_tests {
     fn number11_test() {
         def_lex!(l, "10e+12_i");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
         );
     }
@@ -693,7 +709,7 @@ mod lexer_tests {
     fn number12_test() {
         def_lex!(l, "0._1");
         assert_eq!(
-            l.next().unwrap().raw,
+            l.next().unwrap().value,
             RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits)
         );
     }
@@ -701,13 +717,13 @@ mod lexer_tests {
     #[test]
     fn op_test() {
         def_lex!(l, "+");
-        assert_eq!(l.next().unwrap().raw, RawToken::Plus);
+        assert_eq!(l.next().unwrap().value, RawToken::Plus);
     }
 
     #[test]
     fn op2_test() {
         def_lex!(l, "++");
-        assert_eq!(l.next().unwrap().raw, RawToken::PlusPlus);
-        assert_eq!(l.next().unwrap().raw, RawToken::EndOfFile);
+        assert_eq!(l.next().unwrap().value, RawToken::PlusPlus);
+        assert_eq!(l.next().unwrap().value, RawToken::EndOfFile);
     }
 }

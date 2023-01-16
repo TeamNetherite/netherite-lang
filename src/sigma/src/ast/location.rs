@@ -1,6 +1,10 @@
+//! location.rs - Defines the Span struct for storing source
+//! Locations throughout the compiler. Most notably, these locations
+//! are passed around throughout the parser and are stored in each
+//! AST node.
 use std::ops::Range;
-use std::path::Path;
 
+/// Represents code block location in source text.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Span<'a> {
     pub filename: &'a str,
@@ -23,7 +27,8 @@ impl<'a> Span<'a> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+/// Represents thing `x` located in some specific `Span` (code block location).
+#[derive(Debug, PartialEq, Clone)]
 pub struct WithSpan<'a, T> {
     pub value: T,
     pub span: Span<'a>,
