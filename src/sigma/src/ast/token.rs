@@ -192,6 +192,10 @@ pub enum RawToken {
     Struct,
     #[display(fmt = "mut")]
     Mut,
+    #[display(fmt = "implement")]
+    Implement,
+    #[display(fmt = "interface")]
+    Interface,
 
     #[display(fmt = "comment")]
     Comment(String),
@@ -227,4 +231,6 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "fun" => RawToken::Fun,
     "struct" => RawToken::Struct,
     "mut" => RawToken::Mut,
+    "implement" => RawToken::Implement,
+    "interface" => RawToken::Interface,
 };

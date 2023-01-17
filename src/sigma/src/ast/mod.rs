@@ -54,11 +54,18 @@ pub enum TopLevelStatement<'a> {
     FunctionDeclaration(FunctionDeclaration<'a>),
     StructDeclaration(StructDeclaration<'a>),
     StructImplementation(StructImplementation<'a>),
+    InterfaceDeclaration(InterfaceDeclaration<'a>),
 }
 
 /// Function declaration top level statement
 #[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration<'a> {
+    pub def: FunctionDefinition<'a>,
+}
+
+/// Function definition statement
+#[derive(Debug, PartialEq)]
+pub struct FunctionDefinition<'a> {
     /// Is function public or not.
     pub public: bool,
 
@@ -112,8 +119,16 @@ pub struct StructDeclaration<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct StructImplementation<'a> {
-    pub interface_name: Option<WithSpan<'a, String>>,
+    pub name: WithSpan<'a, String>,
+    pub interfaces: Vec<WithSpan<'a, String>>,
+    pub abstracts: Vec<WithSpan<'a, String>>,
     pub methods: Vec<FunctionDeclaration<'a>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct InterfaceDeclaration<'a> {
+    pub name: WithSpan<'a, String>,
+    pub methods: Vec<WithSpan<'a, FunctionDefinition<'a>>>,
 }
 
 #[derive(Debug, PartialEq)]

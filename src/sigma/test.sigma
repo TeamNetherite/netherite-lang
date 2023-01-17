@@ -1,5 +1,5 @@
 namespace test;
 
-pub struct Point {
-    pub f [ &&&&&&&&&&&&&*i64];
+interface Dump {
+    fun dump() str;
 }

@@ -6,7 +6,7 @@ macro_rules! check_token {
             let mut label_message = format!("expected {}", $expected.to_string().fg(c));
 
             if let Some(_) = $expected_for {
-                label_message.push_str(format!(" for {}", $expected_for.unwrap()).as_str());
+                label_message.push_str(format!(" for {}", $expected_for.unwrap().fg(c)).as_str());
             }
 
             let mut builder = Report::build(ReportKind::Error, $p.filename, $p.$t.span.range.start)
@@ -42,5 +42,21 @@ macro_rules! check_token {
 macro_rules! empty_string {
     () => {
         String::from("")
+    };
+}
+
+macro_rules! unwrap_enum {
+    ($target: expr, $path: path) => {{
+        if let $path(a) = $target {
+            a
+        } else {
+            unreachable!();
+        }
+    }};
+}
+
+macro_rules! name {
+    ($s: expr) => {
+        Some($s.to_owned())
     };
 }

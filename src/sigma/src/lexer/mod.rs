@@ -145,7 +145,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn advance_twice_with(&mut self, raw: RawToken) -> IterElem<'a> {
-        let r = Some(Token::new(raw, self.char_location(1)));
+        let r = Some(Token::new(raw, self.char_location(2)));
         self.advance_twice();
         r
     }

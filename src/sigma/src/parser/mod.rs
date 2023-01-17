@@ -25,22 +25,6 @@ pub struct Parser<'a> {
     peek: Token<'a>,
 }
 
-macro_rules! unwrap_enum {
-    ($target: expr, $path: path) => {{
-        if let $path(a) = $target {
-            a
-        } else {
-            unreachable!();
-        }
-    }};
-}
-
-macro_rules! name {
-    ($s: expr) => {
-        Some($s.to_owned())
-    };
-}
-
 impl<'a> Parser<'a> {
     pub fn new(filename: &'a str, contents: &'a str) -> Self {
         let mut lexer = Lexer::new(filename, contents);
@@ -182,6 +166,9 @@ impl<'a> Parser<'a> {
                 &RawToken::Struct => {
                     top_level_statements.push(self.parse_struct_declaration(false)?);
                 }
+                &RawToken::Interface => {
+                    top_level_statements.push(self.parse_interface_declaration(false)?);
+                }
                 &RawToken::Pub => match &self.peek.value {
                     &RawToken::Fun => {
                         self.advance();
@@ -190,6 +177,10 @@ impl<'a> Parser<'a> {
                     &RawToken::Struct => {
                         self.advance();
                         top_level_statements.push(self.parse_struct_declaration(true)?);
+                    }
+                    &RawToken::Interface => {
+                        self.advance();
+                        top_level_statements.push(self.parse_interface_declaration(true)?);
                     }
                     _ => {
                         self.unexpected_token_error(
@@ -218,6 +209,57 @@ impl<'a> Parser<'a> {
         Some(top_level_statements)
     }
 
+    fn parse_interface_declaration(
+        &mut self,
+        public: bool,
+    ) -> Option<WithSpan<'a, TopLevelStatement<'a>>> {
+        let start = self.current.span.range.start;
+
+        self.advance(); // 'interface'
+
+        check_token!(
+            self,
+            current,
+            RawToken::Identifier(empty_string!()),
+            name!("interface declaration")
+        )?;
+
+        let name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
+        let name_span = self.current.span.clone();
+
+        self.advance(); // 'name'
+
+        check_token!(
+            self,
+            current,
+            RawToken::OpenBrace,
+            name!("interface declaration")
+        )?;
+
+        self.advance(); // '{'
+
+        let methods = self.parse_function_definitions()?;
+
+        check_token!(
+            self,
+            current,
+            RawToken::CloseBrace,
+            name!("interface declaration")
+        )?;
+
+        self.advance(); // '}'
+
+        let end = self.current.span.range.end;
+
+        Some(WithSpan::new(
+            TopLevelStatement::InterfaceDeclaration(InterfaceDeclaration {
+                name: WithSpan::new(name, name_span),
+                methods,
+            }),
+            Span::new(self.filename, start, end),
+        ))
+    }
+
     fn parse_struct_declaration(
         &mut self,
         public: bool,
@@ -229,7 +271,7 @@ impl<'a> Parser<'a> {
         check_token!(
             self,
             current,
-            RawToken::Identifier("".to_owned()),
+            RawToken::Identifier(empty_string!()),
             name!("struct declaration")
         )?;
 
@@ -297,7 +339,7 @@ impl<'a> Parser<'a> {
 
         self.advance();
 
-        let ty = self.parse_type(false)?;
+        let ty = self.parse_type(false, false)?;
 
         check_token!(self, current, RawToken::Semicolon, name!("struct member"))?;
 
@@ -314,6 +356,18 @@ impl<'a> Parser<'a> {
             },
             Span::new(self.filename, start, end),
         ))
+    }
+
+    fn parse_function_definitions(&mut self) -> Option<Vec<WithSpan<'a, FunctionDefinition<'a>>>> {
+        let mut methods = vec![];
+
+        while std::mem::discriminant(&self.current.value)
+            != std::mem::discriminant(&RawToken::CloseBrace)
+        {
+            methods.push(self.parse_function_definition(false)?);
+        }
+
+        Some(methods)
     }
 
     fn parse_struct_members(&mut self) -> Option<Vec<WithSpan<'a, StructMemberDefinition<'a>>>> {
@@ -339,7 +393,7 @@ impl<'a> Parser<'a> {
         check_token!(
             self,
             current,
-            RawToken::Semicolon,
+            RawToken::Identifier(empty_string!()),
             name!("function declaration")
         )?;
 
@@ -373,7 +427,7 @@ impl<'a> Parser<'a> {
         if std::mem::discriminant(&self.current.value)
             != std::mem::discriminant(&RawToken::OpenBrace)
         {
-            return_type = Some(self.parse_type(true)?);
+            return_type = Some(self.parse_type(true, false)?);
         }
 
         check_token!(
@@ -398,11 +452,83 @@ impl<'a> Parser<'a> {
 
         Some(WithSpan::new(
             TopLevelStatement::FunctionDeclaration(FunctionDeclaration {
+                def: FunctionDefinition {
+                    name: WithSpan::new(name, name_span),
+                    params: arguments,
+                    public,
+                    return_type,
+                },
+            }),
+            Span::new(self.filename, start, end),
+        ))
+    }
+
+    fn parse_function_definition(
+        &mut self,
+        public: bool,
+    ) -> Option<WithSpan<'a, FunctionDefinition<'a>>> {
+        let start = self.current.span.range.start;
+
+        self.advance(); // 'fun'
+
+        check_token!(
+            self,
+            current,
+            RawToken::Identifier(empty_string!()),
+            name!("function definition")
+        )?;
+
+        let name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
+        let name_span = self.current.span.clone();
+
+        self.advance(); // name
+
+        check_token!(
+            self,
+            current,
+            RawToken::OpenParent,
+            name!("function definition")
+        )?;
+
+        self.advance(); // '('
+
+        let arguments = self.parse_function_arguments()?;
+
+        check_token!(
+            self,
+            current,
+            RawToken::CloseParent,
+            name!("function definition")
+        )?;
+
+        self.advance(); // ')'
+
+        let mut return_type = None;
+
+        if std::mem::discriminant(&self.current.value)
+            != std::mem::discriminant(&RawToken::Semicolon)
+        {
+            return_type = Some(self.parse_type(true, true)?);
+        }
+
+        check_token!(
+            self,
+            current,
+            RawToken::Semicolon,
+            name!("function definition")
+        )?;
+
+        self.advance(); // ';'
+
+        let end = self.current.span.range.end;
+
+        Some(WithSpan::new(
+            FunctionDefinition {
                 name: WithSpan::new(name, name_span),
                 params: arguments,
                 public,
                 return_type,
-            }),
+            },
             Span::new(self.filename, start, end),
         ))
     }
@@ -444,7 +570,7 @@ impl<'a> Parser<'a> {
         let span = self.current.span.to_owned();
         self.advance(); // name
 
-        let ty = self.parse_type(false)?;
+        let ty = self.parse_type(false, false)?;
 
         Some(FunctionParam {
             name: WithSpan::new(name, span),
@@ -484,7 +610,7 @@ impl<'a> Parser<'a> {
         Some(WithSpan::new(name, Span::new(self.filename, start, end)))
     }
 
-    fn parse_type(&mut self, return_type: bool) -> Option<Type<'a>> {
+    fn parse_type(&mut self, return_type: bool, function_definition: bool) -> Option<Type<'a>> {
         match &self.current.value {
             RawToken::Identifier(_) => self.parse_custom_type(),
             RawToken::Asterisk => self.parse_pointer_type(),
@@ -501,7 +627,11 @@ impl<'a> Parser<'a> {
                 let mut _message = "";
 
                 if return_type {
-                    _message = "expected identifier, '*', '[', primary type, '{'";
+                    if function_definition {
+                        _message = "expected identifier, '*', '[', primary type, ';'";
+                    } else {
+                        _message = "expected identifier, '*', '[', primary type, '{'";
+                    }
                 } else {
                     _message = "expected identifier, '*', '[', primary type";
                 }
@@ -537,7 +667,7 @@ impl<'a> Parser<'a> {
 
         self.advance(); // ']'
 
-        let inner_type = Box::new(self.parse_type(false)?);
+        let inner_type = Box::new(self.parse_type(false, false)?);
 
         let end = self.current.span.range.end;
 
@@ -552,7 +682,7 @@ impl<'a> Parser<'a> {
 
         self.advance(); // '*'
 
-        let inner_type = Box::new(self.parse_type(false)?);
+        let inner_type = Box::new(self.parse_type(false, false)?);
 
         let end = self.current.span.range.end;
 
@@ -612,83 +742,6 @@ impl<'a> Parser<'a> {
             .finish()
             .print((self.filename, Source::from(self.contents)))
             .unwrap();
-        }
-    }
-
-    fn check_current_token(
-        &mut self,
-        expected: RawToken,
-        expected_for: Option<String>,
-    ) -> Option<()> {
-        let c = ColorGenerator::new().next();
-
-        if mem::discriminant(&self.current.value) != mem::discriminant(&expected) {
-            let mut label_message = format!("expected {}", expected.to_string().fg(c));
-
-            if let Some(_) = expected_for {
-                label_message.push_str(format!(" for `{}`", expected_for.unwrap().fg(c)).as_str());
-            }
-
-            Report::build(
-                ReportKind::Error,
-                self.filename,
-                self.current.span.range.start,
-            )
-            .with_code(1)
-            .with_message(format!("unexpected {}", self.current.value))
-            .with_label(
-                Label::new((self.filename, self.current.span.range.to_owned()))
-                    .with_message(label_message)
-                    .with_color(c),
-            )
-            .finish()
-            .print((self.filename, Source::from(self.contents)))
-            .unwrap();
-
-            None
-        } else {
-            Some(())
-        }
-    }
-
-    fn check_peek_token(&mut self, expected: RawToken, expected_for: Option<String>) -> Option<()> {
-        let c = ColorGenerator::new().next();
-
-        if mem::discriminant(&self.peek.value) != mem::discriminant(&expected) {
-            let mut label_message = format!("expected {}", expected.to_string().fg(c));
-
-            if let Some(_) = expected_for {
-                label_message.push_str(format!(" for {}", expected_for.unwrap()).as_str());
-            }
-
-            let mut add_note_1 = false;
-
-            if let &RawToken::Identifier(_) = &self.peek.value {
-                add_note_1 = true;
-            }
-
-            let mut builder =
-                Report::build(ReportKind::Error, self.filename, self.peek.span.range.start)
-                    .with_code(1)
-                    .with_message(format!("unexpected {}", self.peek.value))
-                    .with_label(
-                        Label::new((self.filename, self.peek.span.range.to_owned()))
-                            .with_message(label_message)
-                            .with_color(c),
-                    );
-
-            if add_note_1 {
-                builder = builder.with_note("Consider wrapping it inside double quotes");
-            }
-
-            builder
-                .finish()
-                .print((self.filename, Source::from(self.contents)))
-                .unwrap();
-
-            None
-        } else {
-            Some(())
         }
     }
 }
@@ -810,16 +863,18 @@ mod parser_tests {
                 imports: vec![],
                 top_level_statements: vec![WithSpan {
                     value: TopLevelStatement::FunctionDeclaration(FunctionDeclaration {
-                        public: true,
-                        name: WithSpan {
-                            value: "main".to_owned(),
-                            span: Span {
-                                filename: "<test>",
-                                range: 24..28
-                            }
-                        },
-                        params: vec![],
-                        return_type: None
+                        def: FunctionDefinition {
+                            public: true,
+                            name: WithSpan {
+                                value: "main".to_owned(),
+                                span: Span {
+                                    filename: "<test>",
+                                    range: 24..28
+                                }
+                            },
+                            params: vec![],
+                            return_type: None
+                        }
                     }),
                     span: Span {
                         filename: "<test>",
@@ -846,67 +901,69 @@ mod parser_tests {
                 imports: vec![],
                 top_level_statements: vec![WithSpan {
                     value: TopLevelStatement::FunctionDeclaration(FunctionDeclaration {
-                        public: true,
-                        name: WithSpan {
-                            value: "sum".to_owned(),
-                            span: Span {
-                                filename: "<test>",
-                                range: 24..27
-                            }
-                        },
-                        params: vec![
-                            WithSpan {
-                                value: FunctionParam {
-                                    name: WithSpan {
-                                        value: "a".to_owned(),
-                                        span: Span {
-                                            filename: "<test>",
-                                            range: 28..29
-                                        }
-                                    },
-                                    ty: Type::PrimaryType(WithSpan {
-                                        value: PrimaryType::I32,
-                                        span: Span {
-                                            filename: "<test>",
-                                            range: 30..33
-                                        }
-                                    })
-                                },
+                        def: FunctionDefinition {
+                            public: true,
+                            name: WithSpan {
+                                value: "sum".to_owned(),
                                 span: Span {
                                     filename: "<test>",
-                                    range: 28..34
+                                    range: 24..27
                                 }
                             },
-                            WithSpan {
-                                value: FunctionParam {
-                                    name: WithSpan {
-                                        value: "b".to_owned(),
-                                        span: Span {
-                                            filename: "<test>",
-                                            range: 35..36
-                                        }
+                            params: vec![
+                                WithSpan {
+                                    value: FunctionParam {
+                                        name: WithSpan {
+                                            value: "a".to_owned(),
+                                            span: Span {
+                                                filename: "<test>",
+                                                range: 28..29
+                                            }
+                                        },
+                                        ty: Type::PrimaryType(WithSpan {
+                                            value: PrimaryType::I32,
+                                            span: Span {
+                                                filename: "<test>",
+                                                range: 30..33
+                                            }
+                                        })
                                     },
-                                    ty: Type::PrimaryType(WithSpan {
-                                        value: PrimaryType::I32,
-                                        span: Span {
-                                            filename: "<test>",
-                                            range: 37..40
-                                        }
-                                    })
+                                    span: Span {
+                                        filename: "<test>",
+                                        range: 28..34
+                                    }
                                 },
+                                WithSpan {
+                                    value: FunctionParam {
+                                        name: WithSpan {
+                                            value: "b".to_owned(),
+                                            span: Span {
+                                                filename: "<test>",
+                                                range: 35..36
+                                            }
+                                        },
+                                        ty: Type::PrimaryType(WithSpan {
+                                            value: PrimaryType::I32,
+                                            span: Span {
+                                                filename: "<test>",
+                                                range: 37..40
+                                            }
+                                        })
+                                    },
+                                    span: Span {
+                                        filename: "<test>",
+                                        range: 35..41
+                                    }
+                                }
+                            ],
+                            return_type: Some(Type::PrimaryType(WithSpan {
+                                value: PrimaryType::I32,
                                 span: Span {
                                     filename: "<test>",
-                                    range: 35..41
+                                    range: 42..45
                                 }
-                            }
-                        ],
-                        return_type: Some(Type::PrimaryType(WithSpan {
-                            value: PrimaryType::I32,
-                            span: Span {
-                                filename: "<test>",
-                                range: 42..45
-                            }
-                        }))
+                            }))
+                        }
                     }),
                     span: Span {
                         filename: "<test>",
