@@ -434,6 +434,7 @@ impl<'a> Iterator for Lexer<'a> {
         match (self.current, self.next) {
             ('\0', _) => self.advance_with(RawToken::EndOfFile),
 
+            (':', ':') => self.advance_twice_with(RawToken::DoubleColon),
             (':', _) => self.advance_with(RawToken::Colon),
 
             ('"', _) => self.scan_string(),

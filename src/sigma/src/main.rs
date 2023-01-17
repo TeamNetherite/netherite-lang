@@ -1,11 +1,14 @@
 #![feature(box_syntax)]
+#![feature(let_chains)]
 
 mod ast;
 mod lexer;
 mod parser;
 
+use ariadne::{Color, Report};
+
 use crate::parser::Parser;
-use std::{env, fs, process::exit};
+use std::{env, fs, process::exit, time::Instant};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -18,11 +21,20 @@ fn main() {
     match fs::read_to_string(filename) {
         Ok(content) => {
             let mut parser = Parser::new(filename, content.as_str());
-            parser.parse();
-            // println!("{:?}", parser.parse());
+            let start = Instant::now();
+            let ast = parser.parse();
+
+            if ast.is_some() {
+                println!("{:?}", ast);
+            } else {
+                println!(
+                    "{}: cannot compile due to the previous errors.\n",
+                    Color::Red.paint("Error")
+                );
+            }
         }
         Err(_) => {
-            eprintln!("unable to read file");
+            println!("{}: cannot read the file.\n", Color::Red.paint("Error"));
             exit(1);
         }
     }

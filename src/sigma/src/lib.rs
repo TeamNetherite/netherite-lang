@@ -1,4 +1,4 @@
-#![feature(box_syntax)]
+#![feature(let_chains)]
 
 #[macro_use]
 pub mod lexer;

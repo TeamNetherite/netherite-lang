@@ -8,6 +8,9 @@ use ariadne::{ColorGenerator, Label, Report, ReportKind};
 use phf::phf_map;
 use std::mem;
 
+#[macro_use]
+mod macros;
+
 pub static PREFIX_PARSE_FUNCTIONS: phf::Map<&'static str, fn() -> Expression> = phf_map! {};
 pub static INFIX_PARSE_FUNCTIONS: phf::Map<&'static str, fn(Expression) -> Expression> =
     phf_map! {};
@@ -73,7 +76,7 @@ impl<'a> Parser<'a> {
                     .with_color(ColorGenerator::new().next()),
             )
             .finish()
-            .print((self.filename, Source::from(self.contents.to_owned() + " ")))
+            .print((self.filename, Source::from(self.contents)))
             .unwrap();
         }
     }
@@ -88,7 +91,6 @@ impl<'a> Parser<'a> {
 
     pub fn parse(&mut self) -> Option<ProgramUnit<'a>> {
         let namespace = self.parse_namespace_declaration()?;
-        // let imports = self.parse_imports();
 
         Some(ProgramUnit {
             namespace,
@@ -98,18 +100,30 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_namespace_declaration(&mut self) -> Option<WithSpan<'a, String>> {
-        self.check_current_token(RawToken::Namespace, name!("namespace declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::Namespace,
+            name!("namespace declaration")
+        )?;
 
         self.advance(); // namespace
 
-        self.check_current_token(
-            RawToken::Identifier("".to_owned()),
-            name!("namespace declaration"),
+        check_token!(
+            self,
+            current,
+            RawToken::Identifier(empty_string!()),
+            name!("namespace declaration")
         )?;
 
         let namespace = self.parse_name()?;
 
-        self.check_current_token(RawToken::Semicolon, name!("namespace declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::Semicolon,
+            name!("namespace declaration")
+        )?;
 
         self.advance(); // ';'
 
@@ -135,7 +149,12 @@ impl<'a> Parser<'a> {
     fn parse_import(&mut self) -> Option<Import<'a>> {
         self.advance(); // import
 
-        self.check_current_token(RawToken::String("".to_owned()), name!("import"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::String(empty_string!()),
+            name!("import")
+        )?;
 
         let span = self.current.span.clone();
 
@@ -143,7 +162,7 @@ impl<'a> Parser<'a> {
 
         self.advance(); // "name"
 
-        self.check_current_token(RawToken::Semicolon, name!("import"))?;
+        check_token!(self, current, RawToken::Semicolon, name!("import"));
 
         self.advance(); // ';'
 
@@ -207,9 +226,11 @@ impl<'a> Parser<'a> {
 
         self.advance(); // 'struct'
 
-        self.check_current_token(
+        check_token!(
+            self,
+            current,
             RawToken::Identifier("".to_owned()),
-            name!("struct declaration"),
+            name!("struct declaration")
         )?;
 
         let name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
@@ -217,13 +238,23 @@ impl<'a> Parser<'a> {
 
         self.advance(); // 'name'
 
-        self.check_current_token(RawToken::OpenBrace, name!("struct declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::OpenBrace,
+            name!("struct declaration")
+        )?;
 
         self.advance(); // '{'
 
         let members = self.parse_struct_members()?;
 
-        self.check_current_token(RawToken::CloseBrace, name!("struct declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::CloseBrace,
+            name!("struct declaration")
+        )?;
 
         self.advance(); // '}'
 
@@ -239,28 +270,62 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    fn parse_struct_member(&mut self) -> Option<WithSpan<'a, StructMember<'a>>> {
+    fn parse_struct_member(&mut self) -> Option<WithSpan<'a, StructMemberDefinition<'a>>> {
         let start = self.current.span.range.start;
+        let mut public = false;
+        let mut mutable = false;
 
-        self.check_current_token(
-            RawToken::Identifier("".to_owned()),
-            name!("structure member declaration"),
+        if std::mem::discriminant(&self.current.value) == std::mem::discriminant(&RawToken::Pub) {
+            public = true;
+            self.advance();
+        }
+
+        if std::mem::discriminant(&self.current.value) == std::mem::discriminant(&RawToken::Mut) {
+            mutable = true;
+            self.advance();
+        }
+
+        check_token!(
+            self,
+            current,
+            RawToken::Identifier(empty_string!()),
+            name!("struct member")
         )?;
 
         let name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
         let name_span = self.current.span.to_owned();
 
+        self.advance();
+
+        let ty = self.parse_type(false)?;
+
+        check_token!(self, current, RawToken::Semicolon, name!("struct member"))?;
+
+        self.advance(); // ';'
+
         let end = self.current.span.range.end;
 
-        None
+        Some(WithSpan::new(
+            StructMemberDefinition {
+                public,
+                mutable,
+                name: WithSpan::new(name, name_span),
+                ty,
+            },
+            Span::new(self.filename, start, end),
+        ))
     }
 
-    fn parse_struct_members(&mut self) -> Option<Vec<WithSpan<'a, StructMember<'a>>>> {
-        None
-    }
+    fn parse_struct_members(&mut self) -> Option<Vec<WithSpan<'a, StructMemberDefinition<'a>>>> {
+        let mut members = vec![];
 
-    fn parse_struct_methods(&mut self) -> Option<Vec<FunctionDeclaration<'a>>> {
-        None
+        while std::mem::discriminant(&self.current.value)
+            != std::mem::discriminant(&RawToken::CloseBrace)
+        {
+            members.push(self.parse_struct_member()?);
+        }
+
+        Some(members)
     }
 
     fn parse_function_declaration(
@@ -271,9 +336,11 @@ impl<'a> Parser<'a> {
 
         self.advance(); // 'fun'
 
-        self.check_current_token(
-            RawToken::Identifier("".to_owned()),
-            name!("function declaration"),
+        check_token!(
+            self,
+            current,
+            RawToken::Semicolon,
+            name!("function declaration")
         )?;
 
         let name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
@@ -281,13 +348,23 @@ impl<'a> Parser<'a> {
 
         self.advance(); // name
 
-        self.check_current_token(RawToken::OpenParent, name!("function declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::OpenParent,
+            name!("function declaration")
+        )?;
 
         self.advance(); // '('
 
         let arguments = self.parse_function_arguments()?;
 
-        self.check_current_token(RawToken::CloseParent, name!("function declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::CloseParent,
+            name!("function declaration")
+        )?;
 
         self.advance(); // ')'
 
@@ -299,11 +376,21 @@ impl<'a> Parser<'a> {
             return_type = Some(self.parse_type(true)?);
         }
 
-        self.check_current_token(RawToken::OpenBrace, name!("function declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::OpenBrace,
+            name!("function declaration")
+        )?;
 
         self.advance(); // '{'
 
-        self.check_current_token(RawToken::CloseBrace, name!("function declaration"))?;
+        check_token!(
+            self,
+            current,
+            RawToken::CloseBrace,
+            name!("function declaration")
+        )?;
 
         self.advance(); // '}'
 
@@ -346,10 +433,13 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function_argument(&mut self) -> Option<FunctionParam<'a>> {
-        self.check_current_token(
-            RawToken::Identifier("".to_owned()),
-            name!("function argument"),
+        check_token!(
+            self,
+            current,
+            RawToken::Identifier(empty_string!()),
+            name!("function argument")
         )?;
+
         let name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
         let span = self.current.span.to_owned();
         self.advance(); // name
@@ -366,23 +456,29 @@ impl<'a> Parser<'a> {
         let start = self.current.span.range.start;
 
         let mut name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
-        name.push(':');
+        name.push_str("::");
 
         self.advance(); // id
 
-        while let RawToken::Colon = &self.current.value {
+        while let RawToken::DoubleColon = &self.current.value {
             self.advance(); // ':'
 
-            self.check_current_token(RawToken::Identifier("".to_owned()), name!("name"))?;
+            check_token!(
+                self,
+                current,
+                RawToken::Identifier(empty_string!()),
+                name!("name")
+            )?;
 
             name.push_str(unwrap_enum!(&self.current.value, RawToken::Identifier));
-            name.push(':');
+            name.push_str("::");
 
             self.advance();
         }
 
         let end = self.current.span.range.end;
 
+        name.pop();
         name.pop();
 
         Some(WithSpan::new(name, Span::new(self.filename, start, end)))
@@ -393,7 +489,7 @@ impl<'a> Parser<'a> {
             RawToken::Identifier(_) => self.parse_custom_type(),
             RawToken::Asterisk => self.parse_pointer_type(),
             RawToken::OpenBracket => self.parse_array_type(),
-            RawToken::PrimaryType(t) => {
+            RawToken::PrimaryType(ref t) => {
                 let r = Some(Type::PrimaryType(WithSpan::new(
                     *t,
                     self.current.span.to_owned(),
@@ -437,7 +533,8 @@ impl<'a> Parser<'a> {
 
         self.advance(); // '['
 
-        self.check_current_token(RawToken::CloseBracket, name!("array type"))?;
+        check_token!(self, current, RawToken::CloseBracket, name!("array type"))?;
+
         self.advance(); // ']'
 
         let inner_type = Box::new(self.parse_type(false)?);
@@ -497,7 +594,7 @@ impl<'a> Parser<'a> {
                         .with_color(c),
                 )
                 .finish()
-                .print((self.filename, Source::from(self.contents.to_owned() + " ")))
+                .print((self.filename, Source::from(self.contents)))
                 .unwrap();
         } else {
             Report::build(
@@ -513,7 +610,7 @@ impl<'a> Parser<'a> {
                     .with_color(c),
             )
             .finish()
-            .print((self.filename, Source::from(self.contents.to_owned() + " ")))
+            .print((self.filename, Source::from(self.contents)))
             .unwrap();
         }
     }
@@ -545,7 +642,7 @@ impl<'a> Parser<'a> {
                     .with_color(c),
             )
             .finish()
-            .print((self.filename, Source::from(self.contents.to_owned() + " ")))
+            .print((self.filename, Source::from(self.contents)))
             .unwrap();
 
             None
@@ -564,16 +661,29 @@ impl<'a> Parser<'a> {
                 label_message.push_str(format!(" for {}", expected_for.unwrap()).as_str());
             }
 
-            Report::build(ReportKind::Error, self.filename, self.peek.span.range.start)
-                .with_code(1)
-                .with_message(format!("unexpected {}", self.peek.value))
-                .with_label(
-                    Label::new((self.filename, self.peek.span.range.to_owned()))
-                        .with_message(label_message)
-                        .with_color(c),
-                )
+            let mut add_note_1 = false;
+
+            if let &RawToken::Identifier(_) = &self.peek.value {
+                add_note_1 = true;
+            }
+
+            let mut builder =
+                Report::build(ReportKind::Error, self.filename, self.peek.span.range.start)
+                    .with_code(1)
+                    .with_message(format!("unexpected {}", self.peek.value))
+                    .with_label(
+                        Label::new((self.filename, self.peek.span.range.to_owned()))
+                            .with_message(label_message)
+                            .with_color(c),
+                    );
+
+            if add_note_1 {
+                builder = builder.with_note("Consider wrapping it inside double quotes");
+            }
+
+            builder
                 .finish()
-                .print((self.filename, Source::from(self.contents.to_owned() + " ")))
+                .print((self.filename, Source::from(self.contents)))
                 .unwrap();
 
             None
@@ -617,15 +727,15 @@ mod parser_tests {
 
     #[test]
     fn namespace2_test() {
-        def_p!(p, "namespace test:test2:test3;");
+        def_p!(p, "namespace test::test2::test3;");
         assert_eq!(
             p.parse(),
             Some(ProgramUnit {
                 namespace: WithSpan {
-                    value: "test:test2:test3".to_owned(),
+                    value: "test::test2::test3".to_owned(),
                     span: Span {
                         filename: "<test>",
-                        range: 10..27
+                        range: 10..29
                     }
                 },
                 imports: vec![],

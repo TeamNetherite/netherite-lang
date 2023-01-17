@@ -1,4 +1,4 @@
-//! token.rs - defined the token which represents grammatical unit of Sigma
+//! token.rs - defines the token which represents grammatical unit of Sigma
 //! source text.
 
 use crate::ast::location::Span;
@@ -172,6 +172,8 @@ pub enum RawToken {
     Semicolon,
     #[display(fmt = "':'")]
     Colon,
+    #[display(fmt = "'::'")]
+    DoubleColon,
 
     #[display(fmt = "'++'")]
     PlusPlus,
@@ -201,9 +203,9 @@ pub enum RawToken {
     Invalid(LexerError),
 }
 
-/// Is basically `WithSpan<'a, RawToken>`.
 pub type Token<'a> = WithSpan<'a, RawToken>;
 
+/// List of reserved Sigma names: keywords, boolean literals & etc..
 pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "i8" => RawToken::PrimaryType(PrimaryType::I8),
     "i16" => RawToken::PrimaryType(PrimaryType::I16),
