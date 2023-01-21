@@ -25,39 +25,57 @@
 
 </td><td width=33% valign=top>
 
-- [Type system]()
-  - [Boolean type]()
-  - [Numeric type]()
-  - [Pointer type]()
-  - [Struct type]()
-  - [Function type]()
-  - [Interface type]()
-- [Basic syntax]()
-  - [Top-level statements]()
-    - [Imports]()
-    - [Function declarations]()
-    - [Structure declarations]()
-  - [Statements]()
-    - [Expression statements]()
-    - [Variable declaration statement]()
-    - [If-else statements]()
-    - [Switch statements]()
-    - [For statements]()
-    - [Return statements]()
-    - [Break statements]()
-    - [Return statements]()
-    - [Continue statements]()
+- [Basic syntax](#basic-syntax)
+  - [Top-level statements](#top-level-statements)
+    - [Imports](#imports)
+    - [Function declarations](#function-declarations)
+    - [Structure declarations](#struct-declarations)
+  - [Statements](#statements)
+    - [Expression statements](#expression-statement)
+    - [Variable declaration statement](#variable-declaration-statement)
+    - [If-else statements](#if-else-statement)
+    - [Switch statements](#switch-statement)
+    - [For statements](#for-statement)
+    - [Return statements](#return-statement)
+    - [Break statements](#break-statement)
+    - [Return statements](#return-statement)
+    - [Continue statements](#continue-statement)
 
+</td></tr><tr><td valign=top>
+
+- [Memory managment system](#memory-managment-system)
+  - [Stack and heap](#stack-and-heap)
+  - [Heap allocations `new` and `destroy`](#heap-allocations)
+  - [Garbage collection](#garbage-collection)
+  - [Memory managment and OOP and `[nogc]`](#memory-managment-and-oop)
+- [Type system](#type-system)
+  - [Boolean type](#boolean-type)
+  - [Numeric types](#numeric-types)
+  - [Pointer type](#pointer-type)
+  - [Struct type](#struct-type)
+  - [Function type](#function-type)
+  - [Interface type](#interface-type)
+  - [Slice type](#slice-type)
+  - [Option type](#option-type)
+  - [Result type](#result-type)
+- [Package managment system]()
+  - [Module system](#module-system)
+  - [Adding dependencies]()
+  - [C interop]()
 
 </td><td valign=top>
 
-- [Memory managment system]()
-  - [Stack and heap]()
-  - [Heap allocations `new` and `destroy`]()
-  - [Memory managment and OOP]()
-- [Error handling]()
-  - [Default error handler `handle`]()
-  - [Custom error handlers]()
+- [Compiler tags]()
+  - [`[nogc]`]()
+  - [`[ignore(...)]`]()
+  - [`[critical(...)]`]()
+- [Preprocessor]()
+  - [Defining a macro using `@macro`](#macro)
+  - [Macro arguments](#macro-arguments)
+  - [Macro typed arguments](#typed-macro-arguments)
+  - [`@ifdef` and `@if`](#if-def)
+  - [Basic preprocessor constants (`@file`, `@line`, `@WIN32`)](#macro-constants)
+- [Name mangling]()
 
 </td></tr>
 </table>
@@ -378,4 +396,58 @@ Examples:
 1E6i
 .25i
 .12345E+5i
+```
+
+## Basic syntax
+
+### Top level statements
+
+Sigma source file is represented as a list of imports (must be at the beginning of the file) and top level statements:
+```ebnf
+SourceFile = { Import } { TopLevelStatement } .
+```
+
+Top level statements are:
+```ebnf
+TopLevelStatement = FunctionDeclaration | StructDeclaration 
+                    | StructImplementation | InterfaceDeclaration .
+```
+
+#### Imports
+Import declaration states that the source file depends on the functionality of imported package and enables access to exported entities of given package:
+```ebnf
+Import = "import" string .
+```
+
+#### Function declarations
+```ebnf
+FunctionDeclaration = Flags 
+                      ["pub"] "fun" id ["<" Type ">"] "(" FunctionArguments ")" 
+                      ":" Type "{" StatementsBlock "}" .
+```
+
+#### Struct declarations
+```ebnf
+StructDeclaration       = Flags 
+                          ["pub"] "struct" id ["<" Type ">"]
+                          "{" { StructMethodDeclaration } "}" .
+StructMethodDeclaration = Flags 
+                          "fun" id ["<" Type ">"] "(" FunctionArguments ")" 
+                          ":" Type "{" StatementsBlock "}" .
+```
+
+## Module system
+Project written in Sigma has the structure that looks something like this:
+
+```
+compiler
+|__ lexer
+    |__ token.sigma
+        package.sigma
+    parser
+    |__ ast.sigma
+        package.sigma
+    llvm-frontend
+    |__ package.sigma
+spm.toml
 ```

@@ -194,7 +194,6 @@ impl<'a> Parser<'a> {
                 },
                 &RawToken::EndOfFile => break,
                 _ => {
-                    println!("ok");
                     self.unexpected_token_error(
                         false,
                         &[RawToken::Fun, RawToken::Struct, RawToken::Pub],
