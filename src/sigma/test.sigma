@@ -1,3 +1,10 @@
 namespace test;
 
-0b021
+pub interface Dumper {
+    fun dump() string;
+}
+
+pub struct Token {
+    pub literal string;
+    pub location Dumper<T>;
+}

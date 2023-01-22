@@ -6,7 +6,9 @@ use ariadne::Fmt;
 use ariadne::Source;
 use ariadne::{ColorGenerator, Label, Report, ReportKind};
 use phf::phf_map;
-use std::mem;
+use std::mem::discriminant;
+
+mod statement;
 
 #[macro_use]
 mod macros;
@@ -23,6 +25,8 @@ pub struct Parser<'a> {
 
     current: Token<'a>,
     peek: Token<'a>,
+
+    scanning_error: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -38,15 +42,16 @@ impl<'a> Parser<'a> {
             lexer,
             current,
             peek,
+            scanning_error: false,
         };
-
-        parser.check_scanning_error();
 
         parser
     }
 
-    pub fn check_scanning_error(&self) {
+    pub fn check_scanning_error(&mut self) {
         if let RawToken::Invalid(e) = self.current.value {
+            self.scanning_error = true;
+
             Report::build(
                 ReportKind::Error,
                 self.filename,
@@ -67,10 +72,9 @@ impl<'a> Parser<'a> {
 
     #[inline]
     pub fn advance(&mut self) {
-        self.current = self.peek.to_owned();
-        self.peek = self.lexer.next_no_comments().unwrap();
-
         self.check_scanning_error();
+
+        self.current = std::mem::replace(&mut self.peek, self.lexer.next_no_comments().unwrap());
     }
 
     pub fn parse(&mut self) -> Option<ProgramUnit<'a>> {
@@ -237,7 +241,7 @@ impl<'a> Parser<'a> {
 
         self.advance(); // '{'
 
-        let methods = self.parse_function_definitions()?;
+        let methods = self.parse_interface_method_definitions()?;
 
         check_token!(
             self,
@@ -252,6 +256,7 @@ impl<'a> Parser<'a> {
 
         Some(WithSpan::new(
             TopLevelStatement::InterfaceDeclaration(InterfaceDeclaration {
+                public,
                 name: WithSpan::new(name, name_span),
                 methods,
             }),
@@ -316,12 +321,12 @@ impl<'a> Parser<'a> {
         let mut public = false;
         let mut mutable = false;
 
-        if std::mem::discriminant(&self.current.value) == std::mem::discriminant(&RawToken::Pub) {
+        if discriminant(&self.current.value) == discriminant(&RawToken::Pub) {
             public = true;
             self.advance();
         }
 
-        if std::mem::discriminant(&self.current.value) == std::mem::discriminant(&RawToken::Mut) {
+        if discriminant(&self.current.value) == discriminant(&RawToken::Mut) {
             mutable = true;
             self.advance();
         }
@@ -357,28 +362,92 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    fn parse_function_definitions(&mut self) -> Option<Vec<WithSpan<'a, FunctionDefinition<'a>>>> {
-        let mut methods = vec![];
-
-        while std::mem::discriminant(&self.current.value)
-            != std::mem::discriminant(&RawToken::CloseBrace)
-        {
-            methods.push(self.parse_function_definition(false)?);
-        }
-
-        Some(methods)
-    }
-
     fn parse_struct_members(&mut self) -> Option<Vec<WithSpan<'a, StructMemberDefinition<'a>>>> {
         let mut members = vec![];
 
-        while std::mem::discriminant(&self.current.value)
-            != std::mem::discriminant(&RawToken::CloseBrace)
-        {
+        while discriminant(&self.current.value) != discriminant(&RawToken::CloseBrace) {
             members.push(self.parse_struct_member()?);
         }
 
         Some(members)
+    }
+
+    fn parse_interface_method_definitions(
+        &mut self,
+    ) -> Option<Vec<WithSpan<'a, InterfaceMethodDefinition<'a>>>> {
+        let mut definitions = vec![];
+
+        while discriminant(&RawToken::Fun) == discriminant(&self.current.value) {
+            definitions.push(self.parse_interface_method_definition()?);
+        }
+
+        Some(definitions)
+    }
+
+    fn parse_interface_method_definition(
+        &mut self,
+    ) -> Option<WithSpan<'a, InterfaceMethodDefinition<'a>>> {
+        let start = self.current.span.range.start;
+
+        self.advance(); // 'fun'
+
+        check_token!(
+            self,
+            current,
+            RawToken::Identifier(empty_string!()),
+            name!("interface method definition")
+        )?;
+
+        let name = unwrap_enum!(&self.current.value, RawToken::Identifier).to_owned();
+        let name_span = self.current.span.clone();
+
+        self.advance(); // name
+
+        check_token!(
+            self,
+            current,
+            RawToken::OpenParent,
+            name!("interface method definition")
+        )?;
+
+        self.advance(); // '('
+
+        let arguments = self.parse_function_arguments()?;
+
+        check_token!(
+            self,
+            current,
+            RawToken::CloseParent,
+            name!("interface method definition")
+        )?;
+
+        self.advance(); // ')'
+
+        let mut return_type = None;
+
+        if discriminant(&self.current.value) != discriminant(&RawToken::Semicolon) {
+            return_type = Some(self.parse_type(true, true)?);
+        }
+
+        check_token!(
+            self,
+            current,
+            RawToken::Semicolon,
+            name!("interface method definition")
+        )?;
+
+        self.advance(); // ';'
+
+        let end = self.current.span.range.end;
+
+        Some(WithSpan::new(
+            InterfaceMethodDefinition {
+                name: WithSpan::new(name, name_span),
+                params: arguments,
+                return_type,
+            },
+            Span::new(self.filename, start, end),
+        ))
     }
 
     fn parse_function_declaration(
@@ -423,9 +492,7 @@ impl<'a> Parser<'a> {
 
         let mut return_type = None;
 
-        if std::mem::discriminant(&self.current.value)
-            != std::mem::discriminant(&RawToken::OpenBrace)
-        {
+        if discriminant(&self.current.value) != discriminant(&RawToken::OpenBrace) {
             return_type = Some(self.parse_type(true, false)?);
         }
 
@@ -504,9 +571,7 @@ impl<'a> Parser<'a> {
 
         let mut return_type = None;
 
-        if std::mem::discriminant(&self.current.value)
-            != std::mem::discriminant(&RawToken::Semicolon)
-        {
+        if discriminant(&self.current.value) != discriminant(&RawToken::Semicolon) {
             return_type = Some(self.parse_type(true, true)?);
         }
 
@@ -535,9 +600,7 @@ impl<'a> Parser<'a> {
     fn parse_function_arguments(&mut self) -> Option<Vec<WithSpan<'a, FunctionParam<'a>>>> {
         let mut arguments = vec![];
 
-        if std::mem::discriminant(&self.current.value)
-            == std::mem::discriminant(&RawToken::CloseParent)
-        {
+        if discriminant(&self.current.value) == discriminant(&RawToken::CloseParent) {
             return Some(arguments);
         }
 
@@ -547,9 +610,7 @@ impl<'a> Parser<'a> {
             let end = self.current.span.range.end;
             arguments.push(WithSpan::new(arg, Span::new(self.filename, start, end)));
 
-            if std::mem::discriminant(&self.current.value)
-                != std::mem::discriminant(&RawToken::Comma)
-            {
+            if discriminant(&self.current.value) != discriminant(&RawToken::Comma) {
                 return Some(arguments);
             }
 
@@ -654,7 +715,33 @@ impl<'a> Parser<'a> {
 
     fn parse_custom_type(&mut self) -> Option<Type<'a>> {
         let name = self.parse_name()?;
-        Some(Type::CustomType(name))
+        Some(Type::CustomType(name, self.parse_type_generic_part()?))
+    }
+
+    fn parse_type_generic_part(&mut self) -> Option<Vec<Type<'a>>> {
+        if discriminant(&self.current.value) == discriminant(&RawToken::LessThan) {
+            self.advance();
+
+            let mut generic_part = vec![];
+
+            if discriminant(&self.current.value) == discriminant(&RawToken::GreaterThan) {
+                self.advance();
+                return Some(vec![]);
+            }
+
+            generic_part.push(self.parse_type(false, false)?);
+
+            while discriminant(&self.current.value) == discriminant(&RawToken::Comma) {
+                self.advance();
+                generic_part.push(self.parse_type(false, false)?);
+            }
+
+            self.advance();
+
+            Some(generic_part)
+        } else {
+            Some(vec![])
+        }
     }
 
     fn parse_array_type(&mut self) -> Option<Type<'a>> {

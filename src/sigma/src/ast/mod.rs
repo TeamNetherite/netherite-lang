@@ -119,16 +119,39 @@ pub struct StructDeclaration<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct StructImplementation<'a> {
-    pub name: WithSpan<'a, String>,
-    pub interfaces: Vec<WithSpan<'a, String>>,
-    pub abstracts: Vec<WithSpan<'a, String>>,
+    pub wh: WithSpan<'a, String>,
+    pub impl_for: WithSpan<'a, String>,
     pub methods: Vec<FunctionDeclaration<'a>>,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct InterfaceDeclaration<'a> {
+    pub public: bool,
     pub name: WithSpan<'a, String>,
-    pub methods: Vec<WithSpan<'a, FunctionDefinition<'a>>>,
+    pub methods: Vec<WithSpan<'a, InterfaceMethodDefinition<'a>>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct InterfaceMethodDefinition<'a> {
+    /// Name of the method
+    ///
+    /// ```sigma
+    /// fun factorial(n i64) { ... }
+    ///         ^^^^^^^^^ Span
+    /// ```
+    pub name: WithSpan<'a, String>,
+
+    /// Method params.
+    ///
+    /// ```sigma
+    /// pub fun div(a f64, b f64) {}
+    ///             ^^^^^ Span of 1st param
+    ///                    ^^^^^ Span of 2st param
+    /// ```
+    pub params: Vec<WithSpan<'a, FunctionParam<'a>>>,
+
+    /// Return type (can be None, because there are no `void` types in Sigma).
+    pub return_type: Option<Type<'a>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -150,7 +173,19 @@ pub enum Type<'a> {
     PrimaryType(WithSpan<'a, PrimaryType>),
     ArrayType(WithSpan<'a, Box<Type<'a>>>),
     PointerType(WithSpan<'a, Box<Type<'a>>>),
-    CustomType(WithSpan<'a, String>),
+    CustomType(WithSpan<'a, String>, Vec<Type<'a>>),
+}
+
+pub type StatementsBlock<'a> = Vec<Statement<'a>>;
+
+#[derive(Debug, PartialEq)]
+pub enum Statement<'a> {
+    ReturnStatement(WithSpan<'a, ReturnStatement>),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ReturnStatement {
+    pub ret: Expression,
 }
 
 #[derive(Debug, PartialEq)]

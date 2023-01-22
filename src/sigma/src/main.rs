@@ -5,7 +5,7 @@ mod ast;
 mod lexer;
 mod parser;
 
-use ariadne::{Color, Report};
+use ariadne::Color;
 
 use crate::parser::Parser;
 use std::{env, fs, process::exit, time::Instant};
@@ -25,6 +25,7 @@ fn main() {
             let ast = parser.parse();
 
             if ast.is_some() {
+                println!("parsed in {:?}", start.elapsed());
                 println!("{:?}", ast);
             } else {
                 println!(

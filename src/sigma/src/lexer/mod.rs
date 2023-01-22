@@ -210,7 +210,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn scan_single_line_comment(&mut self) -> IterElem<'a> {
-        self.advance_twice();
+        self.advance_twice(); // '//'
 
         self.start_location = self.location;
 
@@ -243,7 +243,6 @@ impl<'a> Lexer<'a> {
     ) {
         if base <= 10 {
             let max = from_digit((base - 1) as u32, 10).unwrap();
-            // let ds = 1;
 
             while decimal(self.current) || self.current == '_' {
                 let mut ds = 1;

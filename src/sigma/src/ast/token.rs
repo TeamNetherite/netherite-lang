@@ -180,6 +180,9 @@ pub enum RawToken {
     #[display(fmt = "'--'")]
     MinusMinus,
 
+    #[display(fmt = "'`'")]
+    Backtick,
+
     #[display(fmt = "namespace")]
     Namespace,
     #[display(fmt = "import")]

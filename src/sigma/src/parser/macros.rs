@@ -1,6 +1,8 @@
 macro_rules! check_token {
     ($p: ident, $t: ident, $expected: expr, $expected_for: expr) => {
-        if mem::discriminant(&$p.$t.value) != mem::discriminant(&$expected) {
+        if $p.scanning_error {
+            Some(())
+        } else if discriminant(&$p.$t.value) != discriminant(&$expected) {
             let c = ColorGenerator::new().next();
 
             let mut label_message = format!("expected {}", $expected.to_string().fg(c));
