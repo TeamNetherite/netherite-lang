@@ -8,14 +8,6 @@ use crate::ast::token::PrimaryType;
 /// Represents Sigma source file.
 #[derive(Debug, PartialEq)]
 pub struct ProgramUnit<'a> {
-    /// Namespace declaration
-    ///
-    /// ```sigma
-    /// namespace test::test2;
-    ///           ^^^^^^^^^^^ Span
-    /// ```
-    pub namespace: WithSpan<'a, String>,
-
     /// Represents list of imports.
     ///
     /// ```sigma

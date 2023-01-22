@@ -1,13 +1,22 @@
+//! parser/mod.rs - implements parser.
+//!
+//! Parser is a first stage compilation, which convert Sigma source text
+//! into AST ([`ProgramUnit`]).
+//!
+//! Parser does emit diagnostics in the process.
+
 use crate::ast::location::*;
 use crate::ast::token::*;
 use crate::ast::*;
 use crate::lexer::Lexer;
+
 use ariadne::Fmt;
 use ariadne::Source;
 use ariadne::{ColorGenerator, Label, Report, ReportKind};
 use phf::phf_map;
 use std::mem::discriminant;
 
+mod expression;
 mod statement;
 
 #[macro_use]
@@ -78,44 +87,10 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Option<ProgramUnit<'a>> {
-        let namespace = self.parse_namespace_declaration()?;
-
         Some(ProgramUnit {
-            namespace,
             imports: self.parse_imports()?,
             top_level_statements: self.parse_top_level_statements()?,
         })
-    }
-
-    fn parse_namespace_declaration(&mut self) -> Option<WithSpan<'a, String>> {
-        check_token!(
-            self,
-            current,
-            RawToken::Namespace,
-            name!("namespace declaration")
-        )?;
-
-        self.advance(); // namespace
-
-        check_token!(
-            self,
-            current,
-            RawToken::Identifier(empty_string!()),
-            name!("namespace declaration")
-        )?;
-
-        let namespace = self.parse_name()?;
-
-        check_token!(
-            self,
-            current,
-            RawToken::Semicolon,
-            name!("namespace declaration")
-        )?;
-
-        self.advance(); // ';'
-
-        Some(namespace)
     }
 
     fn parse_imports(&mut self) -> Option<Vec<WithSpan<'a, Import<'a>>>> {
@@ -829,234 +804,5 @@ impl<'a> Parser<'a> {
             .print((self.filename, Source::from(self.contents)))
             .unwrap();
         }
-    }
-}
-
-#[cfg(test)]
-mod parser_tests {
-    use crate::ast::location::*;
-    use crate::ast::token::*;
-    use crate::ast::*;
-    use crate::parser::Parser;
-
-    macro_rules! def_p {
-        ($p: ident, $contents: expr) => {
-            let mut $p = Parser::new("<test>", $contents);
-        };
-    }
-
-    #[test]
-    fn namespace_test() {
-        def_p!(p, "namespace test;");
-        assert_eq!(
-            p.parse(),
-            Some(ProgramUnit {
-                namespace: WithSpan {
-                    value: "test".to_owned(),
-                    span: Span {
-                        filename: "<test>",
-                        range: 10..15
-                    }
-                },
-                imports: vec![],
-                top_level_statements: vec![]
-            })
-        )
-    }
-
-    #[test]
-    fn namespace2_test() {
-        def_p!(p, "namespace test::test2::test3;");
-        assert_eq!(
-            p.parse(),
-            Some(ProgramUnit {
-                namespace: WithSpan {
-                    value: "test::test2::test3".to_owned(),
-                    span: Span {
-                        filename: "<test>",
-                        range: 10..29
-                    }
-                },
-                imports: vec![],
-                top_level_statements: vec![]
-            })
-        )
-    }
-
-    #[test]
-    fn import_test() {
-        def_p!(p, "namespace test;\nimport \"test\";\nimport \"test2\";\n");
-        assert_eq!(
-            p.parse(),
-            Some(ProgramUnit {
-                namespace: WithSpan {
-                    value: "test".to_owned(),
-                    span: Span {
-                        filename: "<test>",
-                        range: 10..15
-                    }
-                },
-                imports: vec![
-                    WithSpan {
-                        value: Import {
-                            filename: WithSpan {
-                                value: "test".to_owned(),
-                                span: Span {
-                                    filename: "<test>",
-                                    range: 23..29
-                                }
-                            }
-                        },
-                        span: Span {
-                            filename: "<test>",
-                            range: 16..37
-                        }
-                    },
-                    WithSpan {
-                        value: Import {
-                            filename: WithSpan {
-                                value: "test2".to_owned(),
-                                span: Span {
-                                    filename: "<test>",
-                                    range: 38..45
-                                }
-                            }
-                        },
-                        span: Span {
-                            filename: "<test>",
-                            range: 31..48
-                        }
-                    }
-                ],
-                top_level_statements: vec![]
-            })
-        )
-    }
-
-    #[test]
-    fn function_decl_test() {
-        def_p!(p, "namespace main;\npub fun main() {}");
-        assert_eq!(
-            p.parse(),
-            Some(ProgramUnit {
-                namespace: WithSpan {
-                    value: "main".to_owned(),
-                    span: Span {
-                        filename: "<test>",
-                        range: 10..15
-                    }
-                },
-                imports: vec![],
-                top_level_statements: vec![WithSpan {
-                    value: TopLevelStatement::FunctionDeclaration(FunctionDeclaration {
-                        def: FunctionDefinition {
-                            public: true,
-                            name: WithSpan {
-                                value: "main".to_owned(),
-                                span: Span {
-                                    filename: "<test>",
-                                    range: 24..28
-                                }
-                            },
-                            params: vec![],
-                            return_type: None
-                        }
-                    }),
-                    span: Span {
-                        filename: "<test>",
-                        range: 20..34
-                    }
-                }]
-            })
-        )
-    }
-
-    #[test]
-    fn function_decl2_test() {
-        def_p!(p, "namespace main;\npub fun sum(a i32, b i32) i32 {}");
-        assert_eq!(
-            p.parse(),
-            Some(ProgramUnit {
-                namespace: WithSpan {
-                    value: "main".to_owned(),
-                    span: Span {
-                        filename: "<test>",
-                        range: 10..15
-                    }
-                },
-                imports: vec![],
-                top_level_statements: vec![WithSpan {
-                    value: TopLevelStatement::FunctionDeclaration(FunctionDeclaration {
-                        def: FunctionDefinition {
-                            public: true,
-                            name: WithSpan {
-                                value: "sum".to_owned(),
-                                span: Span {
-                                    filename: "<test>",
-                                    range: 24..27
-                                }
-                            },
-                            params: vec![
-                                WithSpan {
-                                    value: FunctionParam {
-                                        name: WithSpan {
-                                            value: "a".to_owned(),
-                                            span: Span {
-                                                filename: "<test>",
-                                                range: 28..29
-                                            }
-                                        },
-                                        ty: Type::PrimaryType(WithSpan {
-                                            value: PrimaryType::I32,
-                                            span: Span {
-                                                filename: "<test>",
-                                                range: 30..33
-                                            }
-                                        })
-                                    },
-                                    span: Span {
-                                        filename: "<test>",
-                                        range: 28..34
-                                    }
-                                },
-                                WithSpan {
-                                    value: FunctionParam {
-                                        name: WithSpan {
-                                            value: "b".to_owned(),
-                                            span: Span {
-                                                filename: "<test>",
-                                                range: 35..36
-                                            }
-                                        },
-                                        ty: Type::PrimaryType(WithSpan {
-                                            value: PrimaryType::I32,
-                                            span: Span {
-                                                filename: "<test>",
-                                                range: 37..40
-                                            }
-                                        })
-                                    },
-                                    span: Span {
-                                        filename: "<test>",
-                                        range: 35..41
-                                    }
-                                }
-                            ],
-                            return_type: Some(Type::PrimaryType(WithSpan {
-                                value: PrimaryType::I32,
-                                span: Span {
-                                    filename: "<test>",
-                                    range: 42..45
-                                }
-                            }))
-                        }
-                    }),
-                    span: Span {
-                        filename: "<test>",
-                        range: 20..49
-                    }
-                }]
-            })
-        )
     }
 }

@@ -1,7 +1,11 @@
 use crate::parser::*;
 
 impl<'a> Parser<'a> {
-    pub fn parse_statements_block() {}
+    fn parse_statements_block() {
+        todo!()
+    }
 
-    pub fn parse_statement() {}
+    fn parse_statement() {
+        todo!()
+    }
 }

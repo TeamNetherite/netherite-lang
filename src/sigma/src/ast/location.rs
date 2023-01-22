@@ -27,7 +27,7 @@ impl<'a> Span<'a> {
     }
 }
 
-/// Represents thing `x` located in some specific `Span` (code block location).
+/// Represents thing `x` located in some specific [`Span`] (code block location).
 #[derive(Debug, PartialEq, Clone)]
 pub struct WithSpan<'a, T> {
     pub value: T,

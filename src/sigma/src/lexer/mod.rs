@@ -1,7 +1,7 @@
 //! lexer/mod.rs - implements lexer.
 //!
 //! Lexer is a part of parser (first stage of compilation), state machine
-//! that converts Sigma source text into `Token`s.
+//! that converts Sigma source text into [`Token`]s.
 //!
 //! Whitespaces are ignored during scanning process.
 //!
@@ -10,13 +10,25 @@
 //! ```sigma
 //!  /* /* test */ */
 //! ```
-//! This is valid:
-//! ```sigma
-//! /* /* test */
-//! ```
 //!
 //! Lexer is fairly standart. It implements `Iterator<Item = Token>` on each step,
-//! and stops at eof (always returns `RawToken::EOF` when it's already eof).
+//! and stops at eof (always returns [`RawToken::EndOfFile`] when it's already eof).
+//! ```
+//! let lexer = Lexer::new("<test>", "");
+//!
+//! assert_eq!(lexer.next(), Some(RawToken::EndOfFile));
+//! assert_eq!(lexer.next(), Some(RawToken::EndOfFile)); // ok
+//! ```
+//!
+//! If error appeared in the process, it will return [`RawToken::Invalid`]:
+//!
+//! ```
+//! let lexer = Lexer::new("<test>", "$");
+//!
+//! assert_eq!(lexer.next(), RawToken::Invalid(LexerError::UnexpectedChar('$')));
+//! ```
+//!
+//! Lexer doesn't emit diagnostics in the process.
 
 use crate::ast::location::*;
 use crate::ast::token::RawToken::Comment;
