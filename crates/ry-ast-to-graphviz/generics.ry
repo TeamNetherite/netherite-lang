@@ -1,0 +1,31 @@
+import "@std/string.ry";
+
+pub enum T { t0, t1, t2 }
+
+pub struct C<A, B> {}
+
+pub interface ToString {
+    pub fun to_string() string;
+}
+
+pub fun lol<S ToString>(msg S) {
+    println("%s", msg.to_string());
+}
+
+pub fun test<T number>() T? {
+    var c = 0 as T;
+    defer lol(":3");
+
+    while a < 2 as T {
+        var b = if a > 3 as T {
+            some(2 as T)
+        } else {
+            none
+        }?;
+
+        c += b;
+    }
+
+    some(c)
+}
+

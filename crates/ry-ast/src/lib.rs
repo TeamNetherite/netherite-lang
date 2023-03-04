@@ -169,10 +169,9 @@ pub enum RawExpression {
 
 impl RawExpression {
     pub fn must_have_semicolon_at_the_end(&self) -> bool {
-        match self {
-            RawExpression::If(_, _, _) => false,
-            RawExpression::While(_, _) => false,
-            _ => true,
-        }
+        !matches!(
+            self,
+            RawExpression::If(_, _, _) | RawExpression::While(_, _)
+        )
     }
 }

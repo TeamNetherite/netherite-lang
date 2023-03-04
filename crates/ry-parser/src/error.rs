@@ -86,7 +86,7 @@ impl<'source> Reporter<'source> for ParserError {
             }
             Self::ImportAfterTopLevelStatement(name) => {
                 Diagnostic::error()
-                    .with_message(format!("import statement is found after top level statement(-s)"))
+                    .with_message("import statement is found after top level statement(-s)".to_owned())
                     .with_code("E003")
                     .with_labels(vec![
                         Label::primary(file_id, name.range.clone()).with_message("this import statement must not be here")

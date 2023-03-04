@@ -26,9 +26,9 @@ impl Span {
     }
 }
 
-impl Into<Span> for Range<usize> {
-    fn into(self) -> Span {
-        Span::from(self)
+impl From<Range<usize>> for Span {
+    fn from(val: Range<usize>) -> Self {
+        Span::from(val)
     }
 }
 
@@ -45,8 +45,8 @@ impl<T> WithSpan<T> {
     }
 }
 
-impl<T> Into<WithSpan<T>> for (T, Span) {
-    fn into(self) -> WithSpan<T> {
-        WithSpan::new(self.0, self.1)
+impl<T> From<(T, Span)> for WithSpan<T> {
+    fn from(val: (T, Span)) -> Self {
+        WithSpan::new(val.0, val.1)
     }
 }
