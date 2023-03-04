@@ -95,45 +95,53 @@ impl<'c> Parser<'c> {
         self.check_scanning_error()?;
 
         match &self.current.value {
-            RawToken::Int(_) => {
-                let i = self.current.value.int().unwrap();
+            RawToken::Int(i) => {
+                let value = *i;
                 let span = self.current.span.clone();
 
                 self.advance()?; // int
 
-                Ok((Box::new(RawExpression::Int(i)), span).into())
+                Ok((Box::new(RawExpression::Int(value)), span).into())
             }
-            RawToken::Float(_) => {
-                let f = self.current.value.float().unwrap();
+            RawToken::Float(f) => {
+                let value = *f;
                 let span = self.current.span.clone();
 
                 self.advance()?; // float
 
-                Ok((Box::new(RawExpression::Float(f)), span).into())
+                Ok((Box::new(RawExpression::Float(value)), span).into())
             }
-            RawToken::Imag(_) => {
-                let i = self.current.value.imag().unwrap();
+            RawToken::Imag(i) => {
+                let value = *i;
                 let span = self.current.span.clone();
 
                 self.advance()?; // imag
 
-                Ok((Box::new(RawExpression::Imag(i)), span).into())
+                Ok((Box::new(RawExpression::Imag(value)), span).into())
             }
-            RawToken::String(_) => {
-                let s = self.current.value.string().unwrap();
+            RawToken::String(s) => {
+                let value = s.to_owned();
                 let span = self.current.span.clone();
 
                 self.advance()?; // string
 
-                Ok((Box::new(RawExpression::String(s)), span).into())
+                Ok((Box::new(RawExpression::String(value)), span).into())
             }
-            RawToken::Bool(_) => {
-                let b = self.current.value.bool().unwrap();
+            RawToken::Char(c) => {
+                let value = *c;
+                let span = self.current.span.clone();
+
+                self.advance()?; // char
+
+                Ok((Box::new(RawExpression::Char(value)), span).into())
+            }
+            RawToken::Bool(b) => {
+                let value = *b;
                 let span = self.current.span.clone();
 
                 self.advance()?; // bool
 
-                Ok((Box::new(RawExpression::Bool(b)), span).into())
+                Ok((Box::new(RawExpression::Bool(value)), span).into())
             }
             RawToken::Bang
             | RawToken::Not

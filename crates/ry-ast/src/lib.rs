@@ -145,6 +145,7 @@ pub enum RawExpression {
     Float(f64),
     Imag(f64),
     Bool(bool),
+    Char(char),
     StaticName(String),
     List(Vec<Expression>),
     Binary(Expression, Token, Expression),

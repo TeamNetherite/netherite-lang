@@ -42,6 +42,10 @@ pub enum LexerError {
     ExpectedDigitInByteEscapeSequence,
     #[display(fmt = "such byte does not exists")]
     InvalidByteEscapeSequence,
+    #[display(fmt = "empty character literal")]
+    EmptyCharLiteral,
+    #[display(fmt = "unterminated character literal")]
+    UnterminatedCharLiteral,
     #[display(fmt = "invalid radix point")]
     InvalidRadixPoint,
     #[display(fmt = "has no digits")]
@@ -338,6 +342,14 @@ impl RawToken {
     pub fn int(&self) -> Option<u64> {
         if let RawToken::Int(i) = self {
             Some(*i)
+        } else {
+            None
+        }
+    }
+
+    pub fn char(&self) -> Option<char> {
+        if let RawToken::Char(c) = self {
+            Some(*c)
         } else {
             None
         }

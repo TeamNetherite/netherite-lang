@@ -229,6 +229,56 @@ impl<'c> Lexer<'c> {
         r
     }
 
+    fn scan_char(&mut self) -> IterElem {
+        self.start_location = self.location;
+
+        self.advance(); // '\''
+
+        let c = self.current;
+
+        if c == '\'' {
+            return Some(
+                (
+                    RawToken::Invalid(LexerError::EmptyCharLiteral),
+                    self.span_from_start(),
+                )
+                    .into(),
+            );
+        }
+
+        let mut result = '\0';
+
+        if c == '\\' {
+            self.start_location = self.location;
+
+            let e = self.scan_escape();
+
+            if let Err(e) = e {
+                return Some((RawToken::Invalid(e.0), e.1).into());
+            } else if let Ok(c) = e {
+                result = c;
+            }
+        } else {
+            result = c;
+        }
+
+        self.advance(); // c
+
+        if self.current != '\'' {
+            return Some(
+                (
+                    RawToken::Invalid(LexerError::UnterminatedCharLiteral),
+                    self.span_from_start(),
+                )
+                    .into(),
+            );
+        }
+
+        self.advance(); // '\''
+
+        Some((RawToken::Char(result), self.span_from_start()).into())
+    }
+
     fn scan_string(&mut self) -> IterElem {
         self.start_location = self.location;
 
@@ -393,6 +443,7 @@ impl<'c> Iterator for Lexer<'c> {
             ('@', _) => self.advance_with(RawToken::AtSign),
 
             ('"', _) => self.scan_string(),
+            ('\'', _) => self.scan_char(),
             ('`', _) => self.scan_wrapped_id(),
 
             ('+', '+') => self.advance_twice_with(RawToken::PlusPlus),
