@@ -39,39 +39,54 @@ impl<'c> Parser<'c> {
         Ok(stmts)
     }
 
-    fn parse_defer_statement(&mut self) -> ParserResult<Statement> {
-        self.advance()?; // defer
-
-        let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
-
-        Ok(Statement::Defer(expr))
-    }
-
-    fn parse_return_statement(&mut self) -> ParserResult<Statement> {
-        self.advance()?; // return
-
-        let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
-
-        Ok(Statement::Return(expr))
-    }
-
-    fn parse_expression_statement(&mut self) -> ParserResult<Statement> {
-        let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
-
-        Ok(Statement::Expression(expr))
-    }
-
     fn parse_statement(&mut self) -> ParserResult<(Statement, bool)> {
         let mut last_statement_in_block = false;
-        let mut must_have_semicolon_at_the_end = false;
+        let mut must_have_semicolon_at_the_end = true;
 
         let statement = match self.current.value {
-            RawToken::Return => self.parse_return_statement(),
-            RawToken::Defer => self.parse_defer_statement(),
-            _ => {
-                let expression_statement = self.parse_expression_statement()?;
+            RawToken::Return => {
+                self.advance()?; // return
 
-                let expression = expression_statement.expression().unwrap();
+                let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
+
+                Ok(Statement::Return(expr))
+            }
+            RawToken::Defer => {
+                self.advance()?; // defer
+
+                let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
+
+                Ok(Statement::Defer(expr))
+            }
+            RawToken::Var => {
+                self.advance()?; // var
+
+                check_token0!(self, "identifier", RawToken::Identifier(_), "var statement")?;
+
+                let name = (
+                    self.current.value.ident().unwrap(),
+                    self.current.span.clone(),
+                )
+                    .into();
+
+                self.advance()?; // id
+
+                let mut r#type = None;
+
+                if !self.current.value.is(&RawToken::Assign) {
+                    r#type = Some(self.parse_type(false, false)?);
+                }
+
+                check_token!(self, RawToken::Assign, "var statement")?;
+
+                self.advance()?; // '='
+
+                let value = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
+
+                Ok(Statement::Var(name, r#type, value))
+            }
+            _ => {
+                let expression = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
 
                 must_have_semicolon_at_the_end =
                     expression.value.deref().must_have_semicolon_at_the_end();

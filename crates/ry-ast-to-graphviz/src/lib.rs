@@ -240,6 +240,28 @@ impl GraphvizTranslatorState {
 
                 node
             }
+            Statement::Var(name, r#type, value) => {
+                let node = self.add_node("VarStatement");
+
+                let name_node_root = self.add_node("Name");
+                let name_node = self.add_node(&name.value);
+
+                self.add_node_connections(&[node, name_node_root, name_node]);
+
+                if let Some(t) = r#type {
+                    let type_node_root = self.add_node("Type");
+                    let type_node = self.create_type_node(t.value.deref());
+
+                    self.add_node_connections(&[node, type_node_root, type_node]);
+                }
+
+                let value_node_root = self.add_node("Value");
+                let value_node = self.create_expression_node(value.value.deref());
+
+                self.add_node_connections(&[node, value_node_root, value_node]);
+
+                node
+            }
         }
     }
 
@@ -450,29 +472,35 @@ impl GraphvizTranslatorState {
                 let root = self.add_node("IfExpr");
 
                 let if_node = self.add_node("If");
-                let if_cond_node_root = self.add_node("Condition");
-                let if_cond_node = self.create_expression_node(r#if.0.value.deref());
-                let if_statement_block = self.create_statements_block_node(&r#if.1);
+                let if_condition_node_root = self.add_node("Condition");
+                let if_condition_node = self.create_expression_node(r#if.0.value.deref());
+                let if_statements_block = self.create_statements_block_node(&r#if.1);
 
-                self.add_node_connections(&[root, if_node, if_cond_node_root, if_cond_node]);
-                self.add_node_connections(&[if_node, if_statement_block]);
+                self.add_node_connections(&[
+                    root,
+                    if_node,
+                    if_condition_node_root,
+                    if_condition_node,
+                ]);
+                self.add_node_connections(&[if_node, if_statements_block]);
 
                 if !elseifs.is_empty() {
                     let elseifs_root = self.add_node("IfElseChain");
 
                     for elseif in elseifs {
                         let elseif_node = self.add_node("ElseIf");
-                        let elseif_cond_node_root = self.add_node("Condition");
-                        let elseif_cond_node = self.create_expression_node(elseif.0.value.deref());
-                        let elseif_statement_block = self.create_statements_block_node(&elseif.1);
+                        let elseif_condition_node_root = self.add_node("Condition");
+                        let elseif_condition_node =
+                            self.create_expression_node(elseif.0.value.deref());
+                        let elseif_statements_block = self.create_statements_block_node(&elseif.1);
 
                         self.add_node_connections(&[
                             elseifs_root,
                             elseif_node,
-                            elseif_cond_node_root,
-                            elseif_cond_node,
+                            elseif_condition_node_root,
+                            elseif_condition_node,
                         ]);
-                        self.add_node_connections(&[elseif_node, elseif_statement_block]);
+                        self.add_node_connections(&[elseif_node, elseif_statements_block]);
                     }
 
                     self.add_node_connections(&[root, elseifs_root]);
@@ -480,11 +508,24 @@ impl GraphvizTranslatorState {
 
                 if r#else.is_some() {
                     let else_node = self.add_node("Else");
-                    let else_statement_block =
+                    let else_statements_block =
                         self.create_statements_block_node(r#else.as_ref().unwrap());
 
-                    self.add_node_connections(&[root, else_node, else_statement_block]);
+                    self.add_node_connections(&[root, else_node, else_statements_block]);
                 }
+
+                root
+            }
+            RawExpression::While(condition, statements_block) => {
+                let root = self.add_node("WhileExpr");
+
+                let condition_node_root = self.add_node("Condition");
+                let condition_node = self.create_expression_node(condition.value.deref());
+
+                let statements_block_node = self.create_statements_block_node(statements_block);
+
+                self.add_node_connections(&[root, condition_node_root, condition_node]);
+                self.add_node_connections(&[root, statements_block_node]);
 
                 root
             }

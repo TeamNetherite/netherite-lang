@@ -44,26 +44,32 @@ macro_rules! check_token0 {
 }
 
 macro_rules! parse_list_of_smth {
-    ($p: ident, $list: ident, $closing_token: expr, $fn: expr) => {
-        parse_list_of_smth!($p, $list, $closing_token, $fn, )
+    ($p: ident, $closing_token: expr, $fn: expr) => {
+        parse_list_of_smth!($p, $closing_token, $fn, )
     };
-    ($p: ident, $list: ident, $closing_token: expr, $fn: expr, $($fn_arg:expr)*) => {
-        if !$p.current.value.is($closing_token) {
-            loop {
-                $list.push($fn($($fn_arg)*)?);
+    ($p: ident, $closing_token: expr, $fn: expr, $($fn_arg:expr)*) => {
+        {
+            let mut result = vec![];
 
-                if $p.current.value.is($closing_token) {
-                    break
-                } else {
-                    check_token0!($p, format!("`,` or {:?}", $closing_token), RawToken::Comma, "enum variant")?;
-
-                    $p.advance()?; // ','
+            if !$p.current.value.is($closing_token) {
+                loop {
+                    result.push($fn($($fn_arg)*)?);
 
                     if $p.current.value.is($closing_token) {
                         break
+                    } else {
+                        check_token0!($p, format!("`,` or {:?}", $closing_token), RawToken::Comma, "enum variant")?;
+
+                        $p.advance()?; // ','
+
+                        if $p.current.value.is($closing_token) {
+                            break
+                        }
                     }
                 }
             }
+
+            result
         }
     };
 }

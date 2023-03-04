@@ -32,9 +32,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let mut arguments = vec![];
-
-        parse_list_of_smth!(self, arguments, &RawToken::CloseParent, || self
+        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, || self
             .parse_function_argument());
 
         self.advance()?; // ')'

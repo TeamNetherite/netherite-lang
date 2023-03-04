@@ -124,6 +124,7 @@ pub enum Statement {
     ExpressionWithoutSemicolon(Expression),
     Return(Expression),
     Defer(Expression),
+    Var(WithSpan<String>, Option<Type>, Expression),
 }
 
 impl Statement {
@@ -161,12 +162,14 @@ pub enum RawExpression {
         Vec<(Expression, Vec<Statement>)>,
         Option<Vec<Statement>>,
     ),
+    While(Expression, StatementsBlock),
 }
 
 impl RawExpression {
     pub fn must_have_semicolon_at_the_end(&self) -> bool {
         match self {
             RawExpression::If(_, _, _) => false,
+            RawExpression::While(_, _) => false,
             _ => true,
         }
     }

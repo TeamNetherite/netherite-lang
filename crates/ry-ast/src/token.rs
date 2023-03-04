@@ -164,6 +164,8 @@ pub enum RawToken {
     Else,
     #[display(fmt = "`while`")]
     While,
+    #[display(fmt = "`var`")]
+    Var,
 
     #[display(fmt = "`?`")]
     QuestionMark,
@@ -390,4 +392,5 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "if" => RawToken::If,
     "else" => RawToken::Else,
     "while" => RawToken::While,
+    "var" => RawToken::Var,
 };

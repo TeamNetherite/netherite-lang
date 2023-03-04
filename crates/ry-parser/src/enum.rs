@@ -29,9 +29,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '{'
 
-        let mut variants = vec![];
-
-        parse_list_of_smth!(self, variants, &RawToken::CloseBrace, || {
+        let variants = parse_list_of_smth!(self, &RawToken::CloseBrace, || {
             check_token0!(self, "identifier", RawToken::Identifier(_), "enum variant")?;
 
             let variant = (

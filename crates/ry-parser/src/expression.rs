@@ -145,8 +145,7 @@ impl<'c> Parser<'c> {
                 let start = self.current.span.range.start;
                 self.advance()?; // '['
 
-                let mut list = vec![];
-                parse_list_of_smth!(self, list, &RawToken::CloseBracket, || {
+                let list = parse_list_of_smth!(self, &RawToken::CloseBracket, || {
                     self.parse_expression(Precedence::Lowest.to_i8().unwrap())
                 });
 
@@ -196,6 +195,22 @@ impl<'c> Parser<'c> {
                         else_if_chains,
                         else_statements_block,
                     )),
+                    (start..end).into(),
+                )
+                    .into())
+            }
+            RawToken::While => {
+                let start = self.current.span.range.start;
+
+                self.advance()?; // 'while'
+
+                let condition = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
+                let block = self.parse_statements_block(false)?;
+
+                let end = self.current.span.range.end;
+
+                Ok((
+                    Box::new(RawExpression::While(condition, block)),
                     (start..end).into(),
                 )
                     .into())

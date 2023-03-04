@@ -1,7 +1,7 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::*;
 use ry_ast::location::WithSpan;
+use ry_ast::*;
 use ry_ast::{location::Span, token::RawToken};
 
 impl<'c> Parser<'c> {
@@ -102,9 +102,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let mut arguments = vec![];
-
-        parse_list_of_smth!(self, arguments, &RawToken::CloseParent, || self
+        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, || self
             .parse_function_argument());
 
         check_token!(self, RawToken::CloseParent, "interface method definition")?;

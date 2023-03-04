@@ -1,9 +1,4 @@
 pub fun div<T number>(a T, b T) T? {
-    // debug here
-    if b == 2 {
-        println(b);
-    }
-
     if b == 0 {
         none
     } else {
