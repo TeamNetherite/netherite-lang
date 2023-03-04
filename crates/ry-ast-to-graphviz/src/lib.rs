@@ -214,8 +214,8 @@ impl GraphvizTranslatorState {
 
                 node
             }
-            Statement::LastReturn(e) => {
-                let node = self.add_node("LastReturnExpression");
+            Statement::ExpressionWithoutSemicolon(e) => {
+                let node = self.add_node("ExpressionStatementWithoutSemicolon");
                 let expr_node = self.create_expression_node(e.value.deref());
 
                 self.add_node_connections(&[node, expr_node]);
