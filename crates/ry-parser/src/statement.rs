@@ -81,7 +81,7 @@ impl<'c> Parser<'c> {
                 }
 
                 if last_statement_in_block || !must_have_semicolon_at_the_end {
-                    Ok(Statement::LastReturn(expression))
+                    Ok(Statement::ExpressionWithoutSemicolon(expression))
                 } else {
                     Ok(Statement::Expression(expression))
                 }

@@ -84,11 +84,46 @@ impl<'c> Parser<'c> {
         self.check_scanning_error()?;
 
         match &self.current.value {
-            RawToken::Int(_) => self.parse_integer(),
-            RawToken::Float(_) => self.parse_float(),
-            RawToken::Imag(_) => self.parse_imag(),
-            RawToken::String(_) => self.parse_string(),
-            RawToken::Bool(_) => self.parse_boolean(),
+            RawToken::Int(_) => {
+                let i = self.current.value.int().unwrap();
+                let span = self.current.span.clone();
+
+                self.advance()?; // int
+
+                Ok((Box::new(RawExpression::Int(i)), span).into())
+            }
+            RawToken::Float(_) => {
+                let f = self.current.value.float().unwrap();
+                let span = self.current.span.clone();
+
+                self.advance()?; // float
+
+                Ok((Box::new(RawExpression::Float(f)), span).into())
+            }
+            RawToken::Imag(_) => {
+                let i = self.current.value.imag().unwrap();
+                let span = self.current.span.clone();
+
+                self.advance()?; // imag
+
+                Ok((Box::new(RawExpression::Imag(i)), span).into())
+            }
+            RawToken::String(_) => {
+                let s = self.current.value.string().unwrap();
+                let span = self.current.span.clone();
+
+                self.advance()?; // string
+
+                Ok((Box::new(RawExpression::String(s)), span).into())
+            }
+            RawToken::Bool(_) => {
+                let b = self.current.value.bool().unwrap();
+                let span = self.current.span.clone();
+
+                self.advance()?; // bool
+
+                Ok((Box::new(RawExpression::Bool(b)), span).into())
+            }
             RawToken::Bang
             | RawToken::Not
             | RawToken::PlusPlus
@@ -301,50 +336,5 @@ impl<'c> Parser<'c> {
             (start..end).into(),
         )
             .into())
-    }
-
-    fn parse_boolean(&mut self) -> ParserResult<Expression> {
-        let b = self.current.value.bool().unwrap();
-        let span = self.current.span.clone();
-
-        self.advance()?; // bool
-
-        Ok((Box::new(RawExpression::Bool(b)), span).into())
-    }
-
-    fn parse_integer(&mut self) -> ParserResult<Expression> {
-        let i = self.current.value.int().unwrap();
-        let span = self.current.span.clone();
-
-        self.advance()?; // int
-
-        Ok((Box::new(RawExpression::Int(i)), span).into())
-    }
-
-    fn parse_string(&mut self) -> ParserResult<Expression> {
-        let s = self.current.value.string().unwrap();
-        let span = self.current.span.clone();
-
-        self.advance()?; // string
-
-        Ok((Box::new(RawExpression::String(s)), span).into())
-    }
-
-    fn parse_float(&mut self) -> ParserResult<Expression> {
-        let f = self.current.value.float().unwrap();
-        let span = self.current.span.clone();
-
-        self.advance()?; // float
-
-        Ok((Box::new(RawExpression::Float(f)), span).into())
-    }
-
-    fn parse_imag(&mut self) -> ParserResult<Expression> {
-        let i = self.current.value.imag().unwrap();
-        let span = self.current.span.clone();
-
-        self.advance()?; // imag
-
-        Ok((Box::new(RawExpression::Imag(i)), span).into())
     }
 }

@@ -121,8 +121,8 @@ pub type StatementsBlock = Vec<Statement>;
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Expression),
+    ExpressionWithoutSemicolon(Expression),
     Return(Expression),
-    LastReturn(Expression),
     Defer(Expression),
 }
 
