@@ -38,7 +38,7 @@ impl GraphvizTranslatorState {
 
     fn create_top_level_stmt_node(&mut self, stmt: &TopLevelStatement) -> u32 {
         match stmt {
-            TopLevelStatement::FunctionDecl(ref f) => {
+            TopLevelStatement::FunctionDecl(f) => {
                 let root = self.add_node("FunDecl");
                 let name_node_root = self.add_node("Name");
                 let name_node = self.add_node(&f.def.name.value);
@@ -72,7 +72,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            TopLevelStatement::StructDecl(ref sd) => {
+            TopLevelStatement::StructDecl(sd) => {
                 let root = self.add_node("StructDecl");
 
                 let name_node_root = self.add_node("Name");
@@ -120,7 +120,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            TopLevelStatement::InterfaceDecl(ref i) => {
+            TopLevelStatement::InterfaceDecl(i) => {
                 let root = self.add_node("InterfaceDecl");
 
                 let name_node_root = self.add_node("Name");
@@ -186,7 +186,38 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            _ => unimplemented!(),
+            TopLevelStatement::EnumDecl(e) => {
+                let root = self.add_node("EnumDecl");
+                let name_node_root = self.add_node("Name");
+                let name_node = self.add_node(&e.name.value);
+
+                self.add_node_connections(&[root, name_node_root, name_node]);
+
+                if e.public.is_some() {
+                    let public_node = self.add_node("Public");
+                    self.add_node_connections(&[root, public_node]);
+                }
+
+                if !e.variants.is_empty() {
+                    let variants_node_root = self.add_node("Variants");
+
+                    for variant in &e.variants {
+                        let variant_node_root = self.add_node("Variant");
+                        let variant_node = self.add_node(&variant.value);
+
+                        self.add_node_connections(&[
+                            variants_node_root,
+                            variant_node_root,
+                            variant_node,
+                        ]);
+                    }
+
+                    self.add_node_connections(&[root, variants_node_root]);
+                }
+
+                root
+            }
+            _ => todo!(),
         }
     }
 
@@ -526,6 +557,20 @@ impl GraphvizTranslatorState {
 
                 self.add_node_connections(&[root, condition_node_root, condition_node]);
                 self.add_node_connections(&[root, statements_block_node]);
+
+                root
+            }
+            RawExpression::As(left, r#type) => {
+                let root = self.add_node("AsExpr");
+
+                let left_node_root = self.add_node("Left");
+                let left_node = self.create_expression_node(left.value.deref());
+
+                let right_node_root = self.add_node("Type");
+                let right_node = self.create_type_node(r#type.value.deref());
+
+                self.add_node_connections(&[root, left_node_root, left_node]);
+                self.add_node_connections(&[root, right_node_root, right_node]);
 
                 root
             }

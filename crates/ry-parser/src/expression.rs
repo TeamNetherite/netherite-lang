@@ -45,9 +45,18 @@ impl<'c> Parser<'c> {
                 | RawToken::MinusMinus
                 | RawToken::BangBang => self.parse_postfix(left)?,
                 RawToken::Dollar => {
-                    self.advance()?;
+                    self.advance()?; // $
 
                     self.parse_call_with_generics(left)?
+                }
+                RawToken::As => {
+                    self.advance()?; // as
+
+                    let r#type = self.parse_type(false, false)?;
+
+                    let span = (left.span.range.start..self.current.span.range.end).into();
+
+                    (Box::new(RawExpression::As(left, r#type)), span).into()
                 }
                 _ => break,
             };

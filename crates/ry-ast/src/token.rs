@@ -166,6 +166,8 @@ pub enum RawToken {
     While,
     #[display(fmt = "`var`")]
     Var,
+    #[display(fmt = "`as`")]
+    As,
 
     #[display(fmt = "`?`")]
     QuestionMark,
@@ -302,6 +304,7 @@ impl RawToken {
             | Self::Bang
             | Self::QuestionMark
             | Self::BangBang => Precedence::PrefixOrPostfix,
+            Self::As => Precedence::As,
             _ => Precedence::Lowest,
         }
         .to_i8()
@@ -393,4 +396,5 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "else" => RawToken::Else,
     "while" => RawToken::While,
     "var" => RawToken::Var,
+    "as" => RawToken::As,
 };

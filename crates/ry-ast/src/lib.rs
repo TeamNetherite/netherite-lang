@@ -148,6 +148,7 @@ pub enum RawExpression {
     StaticName(String),
     List(Vec<Expression>),
     Binary(Expression, Token, Expression),
+    As(Expression, Type),
     PrefixOrPostfix(Token, Expression),
     Property(Expression, WithSpan<String>),
     Struct(
