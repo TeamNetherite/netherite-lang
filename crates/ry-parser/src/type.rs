@@ -40,7 +40,7 @@ impl<'c> Parser<'c> {
         &mut self,
         return_type: bool,
         function_definition: bool,
-    ) -> ParserResult<WithSpan<Box<Type>>> {
+    ) -> ParserResult<Type> {
         let start = self.current.span.range.start;
 
         let mut lhs = match &self.current.value {
@@ -50,7 +50,10 @@ impl<'c> Parser<'c> {
             RawToken::Impls => self.parse_impls_type(),
             RawToken::PrimaryType(t) => {
                 let r = Ok(WithSpan::new(
-                    Box::new(Type::Primary(WithSpan::new(*t, self.current.span.clone()))),
+                    Box::new(RawType::Primary(WithSpan::new(
+                        *t,
+                        self.current.span.clone(),
+                    ))),
                     self.current.span.clone(),
                 ));
                 self.advance()?;
@@ -83,7 +86,7 @@ impl<'c> Parser<'c> {
 
         while self.current.value.is(&RawToken::QuestionMark) {
             lhs = WithSpan::new(
-                Box::new(Type::Option(lhs)),
+                Box::new(RawType::Option(lhs)),
                 Span::new(start, self.current.span.range.end),
             );
             self.advance()?;
@@ -92,7 +95,7 @@ impl<'c> Parser<'c> {
         Ok(lhs)
     }
 
-    fn parse_custom_type(&mut self) -> ParserResult<WithSpan<Box<Type>>> {
+    fn parse_custom_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.range.end;
         let name = self.parse_name()?;
         let generic_part = self.parse_type_generic_part()?;
@@ -103,7 +106,7 @@ impl<'c> Parser<'c> {
         }
 
         Ok(WithSpan::new(
-            Box::new(Type::Custom(
+            Box::new(RawType::Custom(
                 name,
                 if let Some(v) = generic_part {
                     v
@@ -115,9 +118,7 @@ impl<'c> Parser<'c> {
         ))
     }
 
-    pub(crate) fn parse_type_generic_part(
-        &mut self,
-    ) -> ParserResult<Option<Vec<WithSpan<Box<Type>>>>> {
+    pub(crate) fn parse_type_generic_part(&mut self) -> ParserResult<Option<Vec<Type>>> {
         if self.current.value.is(&RawToken::LessThan) {
             self.advance()?;
 
@@ -142,7 +143,7 @@ impl<'c> Parser<'c> {
         }
     }
 
-    fn parse_array_type(&mut self) -> ParserResult<WithSpan<Box<Type>>> {
+    fn parse_array_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.range.start;
 
         self.advance()?; // '['
@@ -156,12 +157,12 @@ impl<'c> Parser<'c> {
         self.advance()?; // ']'
 
         Ok(WithSpan::new(
-            Box::new(Type::Array(inner_type)),
+            Box::new(RawType::Array(inner_type)),
             Span::new(start, end),
         ))
     }
 
-    fn parse_pointer_type(&mut self) -> ParserResult<WithSpan<Box<Type>>> {
+    fn parse_pointer_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.range.start;
 
         self.advance()?; // '*'
@@ -171,12 +172,12 @@ impl<'c> Parser<'c> {
         let end = self.current.span.range.end;
 
         Ok(WithSpan::new(
-            Box::new(Type::Pointer(inner_type)),
+            Box::new(RawType::Pointer(inner_type)),
             Span::new(start, end),
         ))
     }
 
-    fn parse_impls_type(&mut self) -> ParserResult<WithSpan<Box<Type>>> {
+    fn parse_impls_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.range.start;
 
         self.advance()?; // '*'
@@ -186,7 +187,7 @@ impl<'c> Parser<'c> {
         let end = self.current.span.range.end;
 
         Ok(WithSpan::new(
-            Box::new(Type::Impls(inner_type)),
+            Box::new(RawType::Impls(inner_type)),
             Span::new(start, end),
         ))
     }

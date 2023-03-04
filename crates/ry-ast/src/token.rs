@@ -158,6 +158,12 @@ pub enum RawToken {
     Impls,
     #[display(fmt = "`enum`")]
     Enum,
+    #[display(fmt = "`if`")]
+    If,
+    #[display(fmt = "`else`")]
+    Else,
+    #[display(fmt = "`while`")]
+    While,
 
     #[display(fmt = "`?`")]
     QuestionMark,
@@ -381,4 +387,7 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "defer" => RawToken::Defer,
     "impl" => RawToken::Impl,
     "enum" => RawToken::Enum,
+    "if" => RawToken::If,
+    "else" => RawToken::Else,
+    "while" => RawToken::While,
 };

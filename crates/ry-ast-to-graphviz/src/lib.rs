@@ -276,7 +276,7 @@ impl GraphvizTranslatorState {
 
     fn create_generic_annotations_node(
         &mut self,
-        annotations: &Vec<(WithSpan<String>, Option<WithSpan<Box<Type>>>)>,
+        annotations: &Vec<(WithSpan<String>, Option<Type>)>,
     ) -> u32 {
         let generics_node = self.add_node("Generics");
 
@@ -289,9 +289,9 @@ impl GraphvizTranslatorState {
         generics_node
     }
 
-    fn create_expression_node(&mut self, expression: &Expression) -> u32 {
+    fn create_expression_node(&mut self, expression: &RawExpression) -> u32 {
         match expression {
-            Expression::Int(i) => {
+            RawExpression::Int(i) => {
                 let root = self.add_node("Int");
                 let node = self.add_node(&i.to_string());
 
@@ -299,7 +299,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::Float(f) => {
+            RawExpression::Float(f) => {
                 let root = self.add_node("Float");
                 let node = self.add_node(&f.to_string());
 
@@ -307,7 +307,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::Imag(f) => {
+            RawExpression::Imag(f) => {
                 let root = self.add_node("Imag");
                 let node = self.add_node(&f.to_string());
 
@@ -315,7 +315,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::String(str) => {
+            RawExpression::String(str) => {
                 let root = self.add_node("String");
                 let node = self.add_node(&str.to_string());
 
@@ -323,7 +323,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::Bool(b) => {
+            RawExpression::Bool(b) => {
                 let root = self.add_node("Bool");
                 let node = self.add_node(&b.to_string());
 
@@ -331,7 +331,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::List(l) => {
+            RawExpression::List(l) => {
                 let root = self.add_node("ListExpr");
 
                 for expr in l {
@@ -343,7 +343,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::StaticName(name) => {
+            RawExpression::StaticName(name) => {
                 let root = self.add_node("StaticName");
                 let node = self.add_node(name);
 
@@ -351,7 +351,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::Binary(lhs, op, rhs) => {
+            RawExpression::Binary(lhs, op, rhs) => {
                 let root = self.add_node("BinaryExpr");
                 let op_node_root = self.add_node("Op");
                 let op_node = self.add_node(&op.value.to_string());
@@ -369,7 +369,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::Call(generics, caller, params) => {
+            RawExpression::Call(generics, caller, params) => {
                 let root = self.add_node("Call");
 
                 let caller_node_root = self.add_node("Caller");
@@ -409,7 +409,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::Index(lhs, rhs) => {
+            RawExpression::Index(lhs, rhs) => {
                 let root = self.add_node("IndexExpr");
 
                 let lhs_node = self.create_expression_node(lhs.value.deref());
@@ -422,7 +422,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::Property(lhs, rhs) => {
+            RawExpression::Property(lhs, rhs) => {
                 let root = self.add_node("PropertyAccess");
 
                 let lhs_node = self.create_expression_node(lhs.value.deref());
@@ -435,7 +435,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Expression::PrefixOrPostfix(t, e) => {
+            RawExpression::PrefixOrPostfix(t, e) => {
                 let root = self.add_node("PrefixOrPostfix");
 
                 let op_node = self.add_node(&t.value.to_string());
@@ -446,13 +446,56 @@ impl GraphvizTranslatorState {
 
                 root
             }
+            RawExpression::If(r#if, elseifs, r#else) => {
+                let root = self.add_node("IfExpr");
+
+                let if_node = self.add_node("If");
+                let if_cond_node_root = self.add_node("Condition");
+                let if_cond_node = self.create_expression_node(r#if.0.value.deref());
+                let if_statement_block = self.create_statements_block_node(&r#if.1);
+
+                self.add_node_connections(&[root, if_node, if_cond_node_root, if_cond_node]);
+                self.add_node_connections(&[if_node, if_statement_block]);
+
+                if !elseifs.is_empty() {
+                    let elseifs_root = self.add_node("IfElseChain");
+
+                    for elseif in elseifs {
+                        let elseif_node = self.add_node("ElseIf");
+                        let elseif_cond_node_root = self.add_node("Condition");
+                        let elseif_cond_node = self.create_expression_node(elseif.0.value.deref());
+                        let elseif_statement_block = self.create_statements_block_node(&elseif.1);
+
+                        self.add_node_connections(&[
+                            elseifs_root,
+                            elseif_node,
+                            elseif_cond_node_root,
+                            elseif_cond_node,
+                        ]);
+                        self.add_node_connections(&[elseif_node, elseif_statement_block]);
+                    }
+
+                    self.add_node_connections(&[root, elseifs_root]);
+                }
+
+                if r#else.is_some() {
+                    let else_node = self.add_node("Else");
+                    let else_statement_block =
+                        self.create_statements_block_node(r#else.as_ref().unwrap());
+
+                    self.add_node_connections(&[root, else_node, else_statement_block]);
+                }
+
+                root
+            }
+            _ => todo!(),
         }
     }
 
     // Returns root node
-    fn create_type_node(&mut self, r#type: &Type) -> u32 {
+    fn create_type_node(&mut self, r#type: &RawType) -> u32 {
         match r#type {
-            Type::Primary(p) => {
+            RawType::Primary(p) => {
                 let root = self.add_node("PrimaryType");
                 let node = self.add_node(&p.value.to_string());
 
@@ -460,7 +503,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Type::Array(a) => {
+            RawType::Array(a) => {
                 let root = self.add_node("ArrayType");
                 let node = self.create_type_node(a.value.deref());
 
@@ -468,7 +511,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Type::Pointer(p) => {
+            RawType::Pointer(p) => {
                 let root = self.add_node("PointerType");
                 let node = self.create_type_node(p.value.deref());
 
@@ -476,7 +519,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Type::Custom(c, generics) => {
+            RawType::Custom(c, generics) => {
                 let root = self.add_node("DefinedType");
                 let node = self.add_node(&c.value);
 
@@ -501,7 +544,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Type::Generic(g) => {
+            RawType::Generic(g) => {
                 let root = self.add_node("GenericType");
                 let node = self.add_node(&g.value);
 
@@ -509,7 +552,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Type::Impls(t) => {
+            RawType::Impls(t) => {
                 let root = self.add_node("ImplsType");
                 let node = self.create_type_node(t.value.deref());
 
@@ -517,7 +560,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            Type::Option(t) => {
+            RawType::Option(t) => {
                 let root = self.add_node("OptionType");
                 let node = self.create_type_node(t.value.deref());
 

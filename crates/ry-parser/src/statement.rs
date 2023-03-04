@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
 use num_traits::ToPrimitive;
@@ -61,25 +63,32 @@ impl<'c> Parser<'c> {
 
     fn parse_statement(&mut self) -> ParserResult<(Statement, bool)> {
         let mut last_statement_in_block = false;
+        let mut must_have_semicolon_at_the_end = false;
 
         let statement = match self.current.value {
             RawToken::Return => self.parse_return_statement(),
             RawToken::Defer => self.parse_defer_statement(),
             _ => {
-                let expr = self.parse_expression_statement()?;
+                let expression_statement = self.parse_expression_statement()?;
 
-                if !self.current.value.is(&RawToken::Semicolon) {
+                let expression = expression_statement.expression().unwrap();
+
+                must_have_semicolon_at_the_end =
+                    expression.value.deref().must_have_semicolon_at_the_end();
+
+                if !self.current.value.is(&RawToken::Semicolon) && must_have_semicolon_at_the_end {
                     last_statement_in_block = true;
                 }
 
-                Ok(match expr {
-                    Statement::Expression(e) => Statement::LastReturn(e),
-                    _ => panic!("parse_expression_statement() returned not Statement::Expression"),
-                })
+                if last_statement_in_block || !must_have_semicolon_at_the_end {
+                    Ok(Statement::LastReturn(expression))
+                } else {
+                    Ok(Statement::Expression(expression))
+                }
             }
         }?;
 
-        if !last_statement_in_block {
+        if !last_statement_in_block && must_have_semicolon_at_the_end {
             check_token!(self, RawToken::Semicolon, "end of the statement")?;
             self.advance()?; // ';'
         }
