@@ -24,6 +24,7 @@ mod macros;
 
 pub struct Parser<'c> {
     lexer: Lexer<'c>,
+    previous: Option<Token>,
     current: Token,
     docstring_buffer: String,
 }
@@ -38,6 +39,7 @@ impl<'c> Parser<'c> {
 
         Self {
             lexer,
+            previous: None,
             current,
             docstring_buffer: "".to_owned(),
         }
@@ -56,6 +58,7 @@ impl<'c> Parser<'c> {
     fn advance0(&mut self) -> ParserResult<()> {
         self.check_scanning_error()?;
 
+        self.previous = Some(take(&mut self.current));
         self.current = self.lexer.next().unwrap();
 
         Ok(())
@@ -64,6 +67,7 @@ impl<'c> Parser<'c> {
     fn advance(&mut self) -> ParserResult<()> {
         self.check_scanning_error()?;
 
+        self.previous = Some(take(&mut self.current));
         self.current = self.lexer.next_no_comments().unwrap();
 
         Ok(())

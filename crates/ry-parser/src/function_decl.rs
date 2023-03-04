@@ -32,15 +32,13 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, || self
+        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
             .parse_function_argument());
-
-        self.advance()?; // ')'
 
         let mut return_type = None;
 
         if !self.current.value.is(&RawToken::OpenBrace) {
-            return_type = Some(self.parse_type(true, false)?);
+            return_type = Some(self.parse_type()?);
         }
 
         let stmts = self.parse_statements_block(true)?;
@@ -72,7 +70,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // name
 
-        let ty = self.parse_type(false, false)?;
+        let ty = self.parse_type()?;
 
         let mut default_value = None;
 

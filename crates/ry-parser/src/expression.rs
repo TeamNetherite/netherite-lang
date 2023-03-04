@@ -52,9 +52,11 @@ impl<'c> Parser<'c> {
                 RawToken::As => {
                     self.advance()?; // as
 
-                    let r#type = self.parse_type(false, false)?;
+                    let r#type = self.parse_type()?;
 
-                    let span = (left.span.range.start..self.current.span.range.end).into();
+                    let span = (left.span.range.start
+                        ..self.previous.as_ref().unwrap().span.range.end)
+                        .into();
 
                     (Box::new(RawExpression::As(left, r#type)), span).into()
                 }
@@ -154,12 +156,10 @@ impl<'c> Parser<'c> {
                 let start = self.current.span.range.start;
                 self.advance()?; // '['
 
-                let list = parse_list_of_smth!(self, &RawToken::CloseBracket, || {
-                    self.parse_expression(Precedence::Lowest.to_i8().unwrap())
-                });
+                let list = parse_list_of_smth!(self, &RawToken::CloseBracket, false, || self
+                    .parse_expression(Precedence::Lowest.to_i8().unwrap()));
 
-                let end = self.current.span.range.end;
-                self.advance()?; // ']'
+                let end = self.previous.as_ref().unwrap().span.range.end;
 
                 Ok((Box::new(RawExpression::List(list)), (start..end).into()).into())
             }
@@ -279,28 +279,6 @@ impl<'c> Parser<'c> {
             .into())
     }
 
-    fn parse_function_arguments_expressions(&mut self) -> ParserResult<Vec<Expression>> {
-        let mut l = vec![];
-
-        self.advance()?; // '('
-
-        if self.current.value.is(&RawToken::CloseParent) {
-            return Ok(l);
-        }
-
-        l.push(self.parse_expression(Precedence::Lowest.to_i8().unwrap())?);
-
-        while self.current.value.is(&RawToken::Comma) {
-            self.advance()?;
-
-            l.push(self.parse_expression(Precedence::Lowest.to_i8().unwrap())?);
-        }
-
-        check_token!(self, RawToken::CloseParent, "arguments")?;
-
-        Ok(l)
-    }
-
     fn parse_index(&mut self, left: Expression) -> ParserResult<Expression> {
         let start = left.span.range.start;
 
@@ -324,10 +302,12 @@ impl<'c> Parser<'c> {
     fn parse_call(&mut self, left: Expression) -> ParserResult<Expression> {
         let start = left.span.range.start;
 
-        let arguments = self.parse_function_arguments_expressions()?;
-        let end = self.current.span.range.end;
+        self.advance()?; // '('
 
-        self.advance()?; // ')'
+        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
+            .parse_expression(Precedence::Lowest.to_i8().unwrap()));
+
+        let end = self.previous.as_ref().unwrap().span.range.end;
 
         Ok((
             Box::new(RawExpression::Call(vec![], left, arguments)),
@@ -339,17 +319,14 @@ impl<'c> Parser<'c> {
     fn parse_call_with_generics(&mut self, left: Expression) -> ParserResult<Expression> {
         let start = left.span.range.start;
 
+        self.advance()?; // '('
+
         let generics = self.parse_type_generic_part()?;
 
-        if generics.is_some() {
-            self.advance()?; // '>'
-        }
+        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
+            .parse_expression(Precedence::Lowest.to_i8().unwrap()));
 
-        let arguments = self.parse_function_arguments_expressions()?;
-
-        let end = self.current.span.range.end;
-
-        self.advance()?; // ')'
+        let end = self.previous.as_ref().unwrap().span.range.end;
 
         Ok((
             Box::new(RawExpression::Call(

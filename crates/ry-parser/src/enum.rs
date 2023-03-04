@@ -29,23 +29,24 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '{'
 
-        let variants = parse_list_of_smth!(self, &RawToken::CloseBrace, || {
-            check_token0!(self, "identifier", RawToken::Identifier(_), "enum variant")?;
+        let variants = parse_list_of_smth!(
+            self,
+            &RawToken::CloseBrace,
+            true, // top level
+            || {
+                check_token0!(self, "identifier", RawToken::Identifier(_), "enum variant")?;
 
-            let variant = (
-                self.current.value.ident().unwrap(),
-                self.current.span.clone(),
-            )
-                .into();
+                let variant = (
+                    self.current.value.ident().unwrap(),
+                    self.current.span.clone(),
+                )
+                    .into();
 
-            self.advance()?; // id
+                self.advance()?; // id
 
-            Ok(variant)
-        });
-
-        check_token!(self, RawToken::CloseBrace, "enum declaration")?;
-
-        self.advance0()?; // '}'
+                Ok(variant)
+            }
+        );
 
         Ok(TopLevelStatement::EnumDecl(EnumDecl {
             public,

@@ -102,17 +102,13 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, || self
+        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
             .parse_function_argument());
-
-        check_token!(self, RawToken::CloseParent, "interface method definition")?;
-
-        self.advance()?; // ')'
 
         let mut return_type = None;
 
         if !self.current.value.is(&RawToken::Semicolon) {
-            return_type = Some(self.parse_type(true, true)?);
+            return_type = Some(self.parse_type()?);
         }
 
         check_token!(self, RawToken::Semicolon, "interface method definition")?;

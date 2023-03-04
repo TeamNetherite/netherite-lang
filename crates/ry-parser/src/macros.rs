@@ -44,10 +44,10 @@ macro_rules! check_token0 {
 }
 
 macro_rules! parse_list_of_smth {
-    ($p: ident, $closing_token: expr, $fn: expr) => {
-        parse_list_of_smth!($p, $closing_token, $fn, )
+    ($p: ident, $closing_token: expr, $top_level: expr, $fn: expr) => {
+        parse_list_of_smth!($p, $closing_token, $top_level, $fn, )
     };
-    ($p: ident, $closing_token: expr, $fn: expr, $($fn_arg:expr)*) => {
+    ($p: ident, $closing_token: expr, $top_level: expr, $fn: expr, $($fn_arg:expr)*) => {
         {
             let mut result = vec![];
 
@@ -67,6 +67,12 @@ macro_rules! parse_list_of_smth {
                         }
                     }
                 }
+            }
+
+            if $top_level {
+                $p.advance0()?; // $closing_token
+            } else {
+                $p.advance()?; // $closing_token
             }
 
             result

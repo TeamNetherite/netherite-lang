@@ -63,21 +63,18 @@ impl<'c> Parser<'c> {
         let name = (
             self.current.value.ident().unwrap(),
             self.current.span.clone(),
-        ).into();
+        )
+            .into();
 
         self.advance()?;
 
-        let ty = self.parse_type(false, false)?;
+        let ty = self.parse_type()?;
 
         check_token!(self, RawToken::Semicolon, "struct member definition")?;
 
         self.advance()?; // ';'
 
-        Ok(StructMemberDef {
-            public,
-            name,
-            ty,
-        })
+        Ok(StructMemberDef { public, name, ty })
     }
 
     fn parse_struct_members(&mut self) -> ParserResult<Vec<StructMemberDef>> {

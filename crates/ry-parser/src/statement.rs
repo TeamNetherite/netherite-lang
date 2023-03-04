@@ -74,7 +74,7 @@ impl<'c> Parser<'c> {
                 let mut r#type = None;
 
                 if !self.current.value.is(&RawToken::Assign) {
-                    r#type = Some(self.parse_type(false, false)?);
+                    r#type = Some(self.parse_type()?);
                 }
 
                 check_token!(self, RawToken::Assign, "var statement")?;

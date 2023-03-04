@@ -36,11 +36,7 @@ impl<'c> Parser<'c> {
         Ok((name, (start..end).into()).into())
     }
 
-    pub(crate) fn parse_type(
-        &mut self,
-        return_type: bool,
-        function_definition: bool,
-    ) -> ParserResult<Type> {
+    pub(crate) fn parse_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.range.start;
 
         let mut lhs = match &self.current.value {
@@ -59,29 +55,11 @@ impl<'c> Parser<'c> {
                 self.advance()?;
                 r
             }
-            _ => {
-                if return_type {
-                    if !function_definition {
-                        Err(ParserError::UnexpectedToken(
-                            self.current.clone(),
-                            "function return type or '{'".into(),
-                            None,
-                        ))
-                    } else {
-                        Err(ParserError::UnexpectedToken(
-                            self.current.clone(),
-                            "return type or '{'".into(),
-                            None,
-                        ))
-                    }
-                } else {
-                    Err(ParserError::UnexpectedToken(
-                        self.current.clone(),
-                        "type".into(),
-                        None,
-                    ))
-                }
-            }
+            _ => Err(ParserError::UnexpectedToken(
+                self.current.clone(),
+                "type".into(),
+                None,
+            )),
         }?;
 
         while self.current.value.is(&RawToken::QuestionMark) {
@@ -98,11 +76,11 @@ impl<'c> Parser<'c> {
     fn parse_custom_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.range.end;
         let name = self.parse_name()?;
+        let mut end = self.current.span.range.end;
         let generic_part = self.parse_type_generic_part()?;
-        let end = self.current.span.range.end;
 
         if generic_part.is_some() {
-            self.advance()?; // '>'
+            end = self.previous.as_ref().unwrap().span.range.end;
         }
 
         Ok(WithSpan::new(
@@ -120,24 +98,14 @@ impl<'c> Parser<'c> {
 
     pub(crate) fn parse_type_generic_part(&mut self) -> ParserResult<Option<Vec<Type>>> {
         if self.current.value.is(&RawToken::LessThan) {
-            self.advance()?;
+            self.advance()?; // '<'
 
-            let mut generic_part = vec![];
-
-            if self.current.value.is(&RawToken::GreaterThan) {
-                return Ok(Some(vec![]));
-            }
-
-            generic_part.push(self.parse_type(false, false)?);
-
-            while self.current.value.is(&RawToken::Comma) {
-                self.advance()?;
-                generic_part.push(self.parse_type(false, false)?);
-            }
-
-            check_token!(self, RawToken::GreaterThan, "generic annotations")?;
-
-            Ok(Some(generic_part))
+            Ok(Some(parse_list_of_smth!(
+                self,
+                &RawToken::GreaterThan,
+                false,
+                || self.parse_type()
+            )))
         } else {
             Ok(None)
         }
@@ -148,7 +116,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '['
 
-        let inner_type = self.parse_type(false, false)?;
+        let inner_type = self.parse_type()?;
 
         check_token!(self, RawToken::CloseBracket, "array type")?;
 
@@ -167,7 +135,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '*'
 
-        let inner_type = self.parse_type(false, false)?;
+        let inner_type = self.parse_type()?;
 
         let end = self.current.span.range.end;
 
@@ -182,7 +150,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '*'
 
-        let inner_type = self.parse_type(false, false)?;
+        let inner_type = self.parse_type()?;
 
         let end = self.current.span.range.end;
 
@@ -221,7 +189,7 @@ impl<'c> Parser<'c> {
             if !self.current.value.is(&RawToken::Comma)
                 && !self.current.value.is(&RawToken::GreaterThan)
             {
-                constraint = Some(self.parse_type(false, false)?);
+                constraint = Some(self.parse_type()?);
             }
 
             generics.push((generic, constraint));
