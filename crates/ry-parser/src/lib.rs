@@ -39,7 +39,7 @@ impl<'c> Parser<'c> {
         Self {
             lexer,
             current,
-            docstring_buffer: "".into(),
+            docstring_buffer: "".to_owned(),
         }
     }
 
@@ -147,7 +147,7 @@ impl<'c> Parser<'c> {
                             _ => {
                                 return Err(ParserError::UnexpectedToken(
                                     self.current.clone(),
-                                    "top level declaration after `pub`".into(),
+                                    "top level declaration after `pub`".to_owned(),
                                     None,
                                 ));
                             }
@@ -169,7 +169,7 @@ impl<'c> Parser<'c> {
                     _ => {
                         let err = Err(ParserError::UnexpectedToken(
                             self.current.clone(),
-                            "top level declaration".into(),
+                            "top level declaration".to_owned(),
                             None,
                         ));
                         self.advance()?;

@@ -55,7 +55,7 @@ mod tests {
         assert_eq!(
             vec![Import {
                 filename: WithSpan {
-                    value: "test".into(),
+                    value: "test".to_owned(),
                     span: Span { range: 7..13 }
                 }
             }],
@@ -73,19 +73,19 @@ mod tests {
             vec![
                 Import {
                     filename: WithSpan {
-                        value: "test".into(),
+                        value: "test".to_owned(),
                         span: Span { range: 7..13 }
                     }
                 },
                 Import {
                     filename: WithSpan {
-                        value: "test2".into(),
+                        value: "test2".to_owned(),
                         span: Span { range: 22..29 }
                     }
                 },
                 Import {
                     filename: WithSpan {
-                        value: "test3".into(),
+                        value: "test3".to_owned(),
                         span: Span { range: 38..45 }
                     }
                 }

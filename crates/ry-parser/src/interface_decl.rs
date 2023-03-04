@@ -1,6 +1,7 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
 use ry_ast::*;
+use ry_ast::location::WithSpan;
 use ry_ast::{location::Span, token::RawToken};
 
 impl<'c> Parser<'c> {
@@ -17,10 +18,12 @@ impl<'c> Parser<'c> {
             "interface declaration"
         )?;
 
-        let (name, name_span) = (
+        let name: WithSpan<String> = (
             self.current.value.ident().unwrap(),
             self.current.span.clone(),
-        );
+        )
+            .into();
+
         self.advance()?; // 'name'
 
         let generic_annotations = self.parse_generic_annotations()?;
@@ -29,7 +32,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '{'
 
-        let methods = self.parse_interface_method_definitions(name_span.clone())?;
+        let methods = self.parse_interface_method_definitions(name.span.clone())?;
 
         check_token!(self, RawToken::CloseBrace, "interface declaration")?;
 
@@ -38,7 +41,7 @@ impl<'c> Parser<'c> {
         Ok(TopLevelStatement::InterfaceDecl(InterfaceDecl {
             public,
             generic_annotations,
-            name: (name, name_span).into(),
+            name,
             methods,
         }))
     }

@@ -60,10 +60,10 @@ impl<'c> Parser<'c> {
             "struct definition"
         )?;
 
-        let (name, name_span) = (
+        let name = (
             self.current.value.ident().unwrap(),
             self.current.span.clone(),
-        );
+        ).into();
 
         self.advance()?;
 
@@ -75,7 +75,7 @@ impl<'c> Parser<'c> {
 
         Ok(StructMemberDef {
             public,
-            name: (name, name_span).into(),
+            name,
             ty,
         })
     }

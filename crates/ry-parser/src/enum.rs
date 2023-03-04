@@ -45,21 +45,6 @@ impl<'c> Parser<'c> {
             Ok(variant)
         });
 
-        while let RawToken::Identifier(variant) = self.current.value.clone() {
-            variants.push((variant, self.current.span.clone()).into());
-
-            self.advance()?; // id
-
-            match self.current.value {
-                RawToken::CloseBrace => break,
-                _ => {
-                    check_token0!(self, "`,` or `}`", RawToken::Comma, "enum variant")?;
-
-                    self.advance()?; // ','
-                }
-            }
-        }
-
         check_token!(self, RawToken::CloseBrace, "enum declaration")?;
 
         self.advance0()?; // '}'
