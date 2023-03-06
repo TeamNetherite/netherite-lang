@@ -18,10 +18,10 @@ pub enum ParserError {
     /// is `Some(String)`.
     UnexpectedTokenExpectedX(Token, RawToken, Option<String>),
 
-    /// Appears when you try to define interface method as public.
+    /// Appears when you try to define trait method as public.
     /// 1-st [`Span`] is location of `pub` keyword.
     /// 2-nd [`Span`] is location of method name.
-    /// 3-rd [`Span`] is location of interface name in which method is defined.
+    /// 3-rd [`Span`] is location of trait name in which method is defined.
     UnnecessaryVisibilityQualifier(Span, Span, Span),
 
     /// Appears when `import` keyword is found after top level statement(-s)
@@ -52,29 +52,29 @@ impl<'source> Reporter<'source> for ParserError {
                         Label::primary(file_id, got.span.range.clone()).with_message(label_message)
                     ])
             }
-            Self::UnnecessaryVisibilityQualifier(ref pub_span, ref method_name_span ,ref interface_name_span) => {
+            Self::UnnecessaryVisibilityQualifier(ref pub_span, ref method_name_span ,ref trait_name_span) => {
                 Diagnostic::error()
                     .with_message(
-                        "unnecessary visibility qualifier in interface method definition".to_owned(),
+                        "unnecessary visibility qualifier in trait method definition".to_owned(),
                     )
                     .with_labels(vec![
                         Label::primary(file_id, pub_span.range.clone())
                             .with_message("consider removing `pub`"),
                         Label::secondary(file_id, method_name_span.range.clone())
                             .with_message("in this method definition"),
-                        Label::secondary(file_id, interface_name_span.range.clone())
-                            .with_message("method is defined in this interface"),
+                        Label::secondary(file_id, trait_name_span.range.clone())
+                            .with_message("method is defined in this trait"),
                     ])
                     .with_code("E002")
                     .with_notes(vec![
-                        "note: methods in interface are by default public. this is why their declarations\ndo not require using `pub` keyword in the beginning".to_owned()
+                        "note: methods in trait are by default public. this is why their declarations\ndo not require using `pub` keyword in the beginning".to_owned()
                     ])
             }
             Self::UnexpectedTokenExpectedX(ref got, ref expected, ref node_name) => {
                 let mut label_message = format!("expected {expected}");
 
                 if let Some(node_name_s) = node_name {
-                    label_message.push_str(format!(" in {node_name_s}").as_str());
+                    label_message.push_str(format!(" for {node_name_s}").as_str());
                 }
 
                 Diagnostic::error()

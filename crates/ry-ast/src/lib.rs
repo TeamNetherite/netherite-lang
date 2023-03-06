@@ -6,7 +6,7 @@ pub mod token;
 use std::collections::HashMap;
 
 use location::{Span, WithSpan};
-use token::{PrimaryType, Token};
+use token::Token;
 
 /// Represents Ry source file.
 #[derive(Debug, PartialEq)]
@@ -26,7 +26,7 @@ pub struct Import {
 pub enum TopLevelStatement {
     FunctionDecl(FunctionDecl),
     StructDecl(StructDecl),
-    InterfaceDecl(InterfaceDecl),
+    TraitDecl(TraitDecl),
     Impl(Impl),
     EnumDecl(EnumDecl),
 }
@@ -67,19 +67,20 @@ pub struct Impl {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct InterfaceDecl {
+pub struct TraitDecl {
     pub public: Option<Span>,
     pub generic_annotations: GenericAnnotations,
     pub name: WithSpan<String>,
-    pub methods: Vec<InterfaceMethodDef>,
+    pub methods: Vec<(String, TraitMethod)>,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct InterfaceMethodDef {
+pub struct TraitMethod {
     pub name: WithSpan<String>,
     pub generic_annotations: GenericAnnotations,
     pub params: Vec<FunctionParam>,
     pub return_type: Option<Type>,
+    pub body: Option<StatementsBlock>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -107,12 +108,10 @@ pub type Type = WithSpan<Box<RawType>>;
 
 #[derive(Debug, PartialEq)]
 pub enum RawType {
-    Primary(WithSpan<PrimaryType>),
     Array(Type),
     Pointer(Type),
-    Custom(WithSpan<String>, Vec<Type>),
+    Primary(WithSpan<String>, Vec<Type>),
     Generic(WithSpan<String>),
-    Impls(Type),
     Option(Type),
 }
 

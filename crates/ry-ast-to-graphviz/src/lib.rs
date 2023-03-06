@@ -120,8 +120,8 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            TopLevelStatement::InterfaceDecl(i) => {
-                let root = self.add_node("InterfaceDecl");
+            TopLevelStatement::TraitDecl(i) => {
+                let root = self.add_node("TraitDecl");
 
                 let name_node_root = self.add_node("Name");
                 let name_node = self.add_node(&i.name.value);
@@ -143,6 +143,7 @@ impl GraphvizTranslatorState {
                     let methods_node = self.add_node("Methods");
 
                     for method in &i.methods {
+                        let method = &method.1;
                         let method_node = self.add_node("Method");
 
                         let name_node_root = self.add_node("Name");
@@ -589,14 +590,6 @@ impl GraphvizTranslatorState {
     // Returns root node
     fn create_type_node(&mut self, r#type: &RawType) -> u32 {
         match r#type {
-            RawType::Primary(p) => {
-                let root = self.add_node("PrimaryType");
-                let node = self.add_node(&p.value.to_string());
-
-                self.add_node_connections(&[root, node]);
-
-                root
-            }
             RawType::Array(a) => {
                 let root = self.add_node("ArrayType");
                 let node = self.create_type_node(a.value.deref());
@@ -613,9 +606,9 @@ impl GraphvizTranslatorState {
 
                 root
             }
-            RawType::Custom(c, generics) => {
-                let root = self.add_node("DefinedType");
-                let node = self.add_node(&c.value);
+            RawType::Primary(p, generics) => {
+                let root = self.add_node("PrimaryType");
+                let node = self.add_node(&p.value);
 
                 if !generics.is_empty() {
                     let generics_node_root = self.add_node("Generics");
@@ -641,14 +634,6 @@ impl GraphvizTranslatorState {
             RawType::Generic(g) => {
                 let root = self.add_node("GenericType");
                 let node = self.add_node(&g.value);
-
-                self.add_node_connections(&[root, node]);
-
-                root
-            }
-            RawType::Impls(t) => {
-                let root = self.add_node("ImplsType");
-                let node = self.create_type_node(t.value.deref());
 
                 self.add_node_connections(&[root, node]);
 

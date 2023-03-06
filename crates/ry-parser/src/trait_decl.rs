@@ -5,17 +5,17 @@ use ry_ast::*;
 use ry_ast::{location::Span, token::RawToken};
 
 impl<'c> Parser<'c> {
-    pub(crate) fn parse_interface_declaration(
+    pub(crate) fn parse_trait_declaration(
         &mut self,
         public: Option<Span>,
     ) -> ParserResult<TopLevelStatement> {
-        self.advance()?; // 'interface'
+        self.advance()?; // 'trait'
 
         check_token0!(
             self,
-            "identifier for interface name",
+            "identifier for trait name",
             RawToken::Identifier(_),
-            "interface declaration"
+            "trait declaration"
         )?;
 
         let name: WithSpan<String> = (
@@ -28,17 +28,17 @@ impl<'c> Parser<'c> {
 
         let generic_annotations = self.parse_generic_annotations()?;
 
-        check_token!(self, RawToken::OpenBrace, "interface declaration")?;
+        check_token!(self, RawToken::OpenBrace, "trait declaration")?;
 
-        self.advance()?; // '{'
+        self.advance0()?; // '{'
 
-        let methods = self.parse_interface_method_definitions(name.span.clone())?;
+        let methods = self.parse_trait_methods(name.span.clone())?;
 
-        check_token!(self, RawToken::CloseBrace, "interface declaration")?;
+        check_token!(self, RawToken::CloseBrace, "trait declaration")?;
 
         self.advance0()?; // '}'
 
-        Ok(TopLevelStatement::InterfaceDecl(InterfaceDecl {
+        Ok(TopLevelStatement::TraitDecl(TraitDecl {
             public,
             generic_annotations,
             name,
@@ -46,29 +46,31 @@ impl<'c> Parser<'c> {
         }))
     }
 
-    fn parse_interface_method_definitions(
+    fn parse_trait_methods(
         &mut self,
-        interface_name_span: Span,
-    ) -> ParserResult<Vec<InterfaceMethodDef>> {
+        trait_name_span: Span,
+    ) -> ParserResult<Vec<(String, TraitMethod)>> {
         let mut definitions = vec![];
 
         let mut unnecessary_qualifier_error_span = None;
 
         while !self.current.value.is(&RawToken::CloseBrace) {
+            self.consume_statement_docstring()?;
+
             if self.current.value.is(&RawToken::Pub) {
                 unnecessary_qualifier_error_span = Some(self.current.span.clone());
                 self.advance()?;
             }
 
-            let interface_def = self.parse_interface_method_definition()?;
-            let name_span = interface_def.name.span.clone();
-            definitions.push(interface_def);
+            let trait_def = self.parse_trait_method()?;
+            let name_span = trait_def.name.span.clone();
+            definitions.push((self.take_docstring(), trait_def));
 
             if let Some(s) = unnecessary_qualifier_error_span {
                 return Err(ParserError::UnnecessaryVisibilityQualifier(
                     s,
                     name_span,
-                    interface_name_span,
+                    trait_name_span,
                 ));
             }
         }
@@ -76,8 +78,8 @@ impl<'c> Parser<'c> {
         Ok(definitions)
     }
 
-    fn parse_interface_method_definition(&mut self) -> ParserResult<InterfaceMethodDef> {
-        check_token!(self, RawToken::Fun, "interface method definition")?;
+    fn parse_trait_method(&mut self) -> ParserResult<TraitMethod> {
+        check_token!(self, RawToken::Fun, "trait method")?;
 
         self.advance()?; // 'fun'
 
@@ -85,7 +87,7 @@ impl<'c> Parser<'c> {
             self,
             "identifier for method name",
             RawToken::Identifier(_),
-            "interface method definition"
+            "trait method"
         )?;
 
         let name = (
@@ -98,13 +100,13 @@ impl<'c> Parser<'c> {
 
         let generic_annotations = self.parse_generic_annotations()?;
 
-        check_token!(self, RawToken::OpenParent, "interface method definition")?;
+        check_token!(self, RawToken::OpenParent, "trait method")?;
 
         self.advance()?; // '('
 
         let arguments = parse_list!(
             self,
-            "interface method arguments",
+            "trait method arguments",
             &RawToken::CloseParent,
             false,
             || self.parse_function_argument()
@@ -112,19 +114,34 @@ impl<'c> Parser<'c> {
 
         let mut return_type = None;
 
-        if !self.current.value.is(&RawToken::Semicolon) {
+        if !self.current.value.is(&RawToken::Semicolon)
+            && !self.current.value.is(&RawToken::OpenBrace)
+        {
             return_type = Some(self.parse_type()?);
         }
 
-        check_token!(self, RawToken::Semicolon, "interface method definition")?;
+        let mut body = None;
 
-        self.advance()?; // ';'
+        match self.current.value {
+            RawToken::Semicolon => self.advance0()?,
+            RawToken::OpenBrace => {
+                body = Some(self.parse_statements_block(true)?);
+            }
+            _ => {
+                return Err(ParserError::UnexpectedToken(
+                    self.current.clone(),
+                    "`;` (for method definition) or `{` (for method declaration)".to_owned(),
+                    Some("trait method".to_owned()),
+                ));
+            }
+        }
 
-        Ok(InterfaceMethodDef {
+        Ok(TraitMethod {
             name,
             generic_annotations,
             params: arguments,
             return_type,
+            body,
         })
     }
 }

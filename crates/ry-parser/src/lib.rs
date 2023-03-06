@@ -14,9 +14,9 @@ mod expression;
 mod function_decl;
 mod r#impl;
 mod imports;
-mod interface_decl;
 mod statement;
 mod struct_decl;
+mod trait_decl;
 mod r#type;
 
 #[macro_use]
@@ -73,7 +73,7 @@ impl<'c> Parser<'c> {
         Ok(())
     }
 
-    fn consume_fst_docstring(&mut self) -> ParserResult<String> {
+    pub(crate) fn consume_fst_docstring(&mut self) -> ParserResult<String> {
         let mut module_docstring = "".to_owned();
         loop {
             if let RawToken::Comment(s) = &self.current.value {
@@ -94,7 +94,7 @@ impl<'c> Parser<'c> {
         }
     }
 
-    fn consume_statement_docstring(&mut self) -> ParserResult<()> {
+    pub(crate) fn consume_statement_docstring(&mut self) -> ParserResult<()> {
         loop {
             if let RawToken::Comment(s) = &self.current.value {
                 if let Some(stripped) = s.strip_prefix('/') {
@@ -108,6 +108,10 @@ impl<'c> Parser<'c> {
 
             self.advance0()?;
         }
+    }
+
+    pub(crate) fn take_docstring(&mut self) -> String {
+        take(&mut self.docstring_buffer)
     }
 
     pub fn parse(&mut self) -> ParserResult<ProgramUnit> {
@@ -127,7 +131,7 @@ impl<'c> Parser<'c> {
                 match self.current.value {
                     RawToken::Fun => self.parse_function_declaration(None)?,
                     RawToken::Struct => self.parse_struct_declaration(None)?,
-                    RawToken::Interface => self.parse_interface_declaration(None)?,
+                    RawToken::Trait => self.parse_trait_declaration(None)?,
                     RawToken::Enum => self.parse_enum_declaration(None)?,
                     RawToken::Impl => self.parse_impl()?,
                     RawToken::Pub => {
@@ -142,8 +146,8 @@ impl<'c> Parser<'c> {
                             RawToken::Struct => {
                                 self.parse_struct_declaration(Some(self.current.span.clone()))?
                             }
-                            RawToken::Interface => {
-                                self.parse_interface_declaration(Some(self.current.span.clone()))?
+                            RawToken::Trait => {
+                                self.parse_trait_declaration(Some(self.current.span.clone()))?
                             }
                             RawToken::Enum => {
                                 self.parse_enum_declaration(Some(self.current.span.clone()))?
@@ -180,7 +184,7 @@ impl<'c> Parser<'c> {
                         return err;
                     }
                 },
-                take(&mut self.docstring_buffer),
+                self.take_docstring(),
             ));
 
             self.consume_statement_docstring()?;

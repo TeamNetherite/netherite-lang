@@ -40,21 +40,9 @@ impl<'c> Parser<'c> {
         let start = self.current.span.range.start;
 
         let mut lhs = match &self.current.value {
-            RawToken::Identifier(_) => self.parse_custom_type(),
+            RawToken::Identifier(_) => self.parse_primary_type(),
             RawToken::Asterisk => self.parse_pointer_type(),
             RawToken::OpenBracket => self.parse_array_type(),
-            RawToken::Impls => self.parse_impls_type(),
-            RawToken::PrimaryType(t) => {
-                let r = Ok(WithSpan::new(
-                    Box::new(RawType::Primary(WithSpan::new(
-                        *t,
-                        self.current.span.clone(),
-                    ))),
-                    self.current.span.clone(),
-                ));
-                self.advance()?;
-                r
-            }
             _ => Err(ParserError::UnexpectedToken(
                 self.current.clone(),
                 "type".into(),
@@ -73,7 +61,7 @@ impl<'c> Parser<'c> {
         Ok(lhs)
     }
 
-    fn parse_custom_type(&mut self) -> ParserResult<Type> {
+    fn parse_primary_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.range.end;
         let name = self.parse_name()?;
         let mut end = self.current.span.range.end;
@@ -84,7 +72,7 @@ impl<'c> Parser<'c> {
         }
 
         Ok(WithSpan::new(
-            Box::new(RawType::Custom(
+            Box::new(RawType::Primary(
                 name,
                 if let Some(v) = generic_part {
                     v
@@ -142,21 +130,6 @@ impl<'c> Parser<'c> {
 
         Ok(WithSpan::new(
             Box::new(RawType::Pointer(inner_type)),
-            Span::new(start, end),
-        ))
-    }
-
-    fn parse_impls_type(&mut self) -> ParserResult<Type> {
-        let start = self.current.span.range.start;
-
-        self.advance()?; // '*'
-
-        let inner_type = self.parse_type()?;
-
-        let end = self.current.span.range.end;
-
-        Ok(WithSpan::new(
-            Box::new(RawType::Impls(inner_type)),
             Span::new(start, end),
         ))
     }

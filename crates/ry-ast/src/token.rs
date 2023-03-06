@@ -64,40 +64,6 @@ pub enum LexerError {
     UnderscoreMustSeperateSuccessiveDigits,
 }
 
-/// Represents low level types, which other types are constructed with. Examples: `i8`, `i16`, `i32`, `u16`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Display)]
-pub enum PrimaryType {
-    #[display(fmt = "i8")]
-    I8,
-    #[display(fmt = "i16")]
-    I16,
-    #[display(fmt = "i32")]
-    I32,
-    #[display(fmt = "i64")]
-    I64,
-    #[display(fmt = "u8")]
-    U8,
-    #[display(fmt = "u16")]
-    U16,
-    #[display(fmt = "u32")]
-    U32,
-    #[display(fmt = "u64")]
-    U64,
-
-    #[display(fmt = "isize")]
-    ISize,
-    #[display(fmt = "usize")]
-    USize,
-
-    #[display(fmt = "f32")]
-    F32,
-    #[display(fmt = "f64")]
-    F64,
-
-    #[display(fmt = "complex")]
-    Complex,
-}
-
 /// Wether the number is integer, float or imaginary literal.
 #[derive(PartialEq, Debug)]
 pub enum NumberKind {
@@ -139,9 +105,6 @@ pub enum RawToken {
     #[display(fmt = "`!!`")]
     BangBang,
 
-    #[display(fmt = "{_0}")]
-    PrimaryType(PrimaryType),
-
     #[display(fmt = "`import`")]
     Import,
     #[display(fmt = "`pub`")]
@@ -152,8 +115,8 @@ pub enum RawToken {
     Struct,
     #[display(fmt = "`implement`")]
     Implement,
-    #[display(fmt = "`interface`")]
-    Interface,
+    #[display(fmt = "`trait`")]
+    Trait,
     #[display(fmt = "`return`")]
     Return,
     #[display(fmt = "`defer`")]
@@ -342,18 +305,6 @@ pub type Token = WithSpan<RawToken>;
 
 /// List of reserved Ry names: keywords, boolean literals & etc..
 pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
-    "i8" => RawToken::PrimaryType(PrimaryType::I8),
-    "i16" => RawToken::PrimaryType(PrimaryType::I16),
-    "i32" => RawToken::PrimaryType(PrimaryType::I32),
-    "i64" => RawToken::PrimaryType(PrimaryType::I64),
-    "isize" => RawToken::PrimaryType(PrimaryType::ISize),
-    "u8" => RawToken::PrimaryType(PrimaryType::U8),
-    "u16" => RawToken::PrimaryType(PrimaryType::U16),
-    "u32" => RawToken::PrimaryType(PrimaryType::U32),
-    "u64" => RawToken::PrimaryType(PrimaryType::U64),
-    "usize" => RawToken::PrimaryType(PrimaryType::USize),
-    "f32" => RawToken::PrimaryType(PrimaryType::F32),
-    "f64" => RawToken::PrimaryType(PrimaryType::F64),
     "true" => RawToken::Bool(true),
     "false" => RawToken::Bool(false),
     "import" => RawToken::Import,
@@ -361,7 +312,7 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "fun" => RawToken::Fun,
     "struct" => RawToken::Struct,
     "implement" => RawToken::Implement,
-    "interface" => RawToken::Interface,
+    "trait" => RawToken::Trait,
     "return" => RawToken::Return,
     "defer" => RawToken::Defer,
     "impl" => RawToken::Impl,
