@@ -368,6 +368,14 @@ impl GraphvizTranslatorState {
 
                 root
             }
+            RawExpression::Char(c) => {
+                let root = self.add_node("Char");
+                let node = self.add_node(&c.to_string());
+
+                self.add_node_connections(&[root, node]);
+
+                root
+            }
             RawExpression::String(str) => {
                 let root = self.add_node("String");
                 let node = self.add_node(&str.to_string());

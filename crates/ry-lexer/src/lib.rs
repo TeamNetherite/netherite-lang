@@ -232,49 +232,65 @@ impl<'c> Lexer<'c> {
     fn scan_char(&mut self) -> IterElem {
         self.start_location = self.location;
 
-        self.advance(); // '\''
+        self.advance(); // `'`
 
-        let c = self.current;
-
-        if c == '\'' {
-            return Some(
-                (
-                    RawToken::Invalid(LexerError::EmptyCharLiteral),
-                    self.span_from_start(),
-                )
-                    .into(),
-            );
-        }
+        let mut size = 0;
 
         let mut result = '\0';
 
-        if c == '\\' {
-            self.start_location = self.location;
+        while self.current != '\'' {
+            if self.current == '\\' {
+                self.start_location = self.location;
 
-            let e = self.scan_escape();
+                let e = self.scan_escape();
 
-            if let Err(e) = e {
-                return Some((RawToken::Invalid(e.0), e.1).into());
-            } else if let Ok(c) = e {
-                result = c;
+                if let Err(e) = e {
+                    return Some((RawToken::Invalid(e.0), e.1).into());
+                } else if let Ok(c) = e {
+                    result = c;
+                }
+            } else {
+                result = self.current;
             }
-        } else {
-            result = c;
+
+            if self.current == '\n' || self.eof() {
+                return Some(
+                    (
+                        RawToken::Invalid(LexerError::UnterminatedCharLiteral),
+                        self.span_from_start(),
+                    )
+                        .into(),
+                );
+            }
+
+            size += 1;
+
+            self.advance(); // c
         }
 
-        self.advance(); // c
+        self.advance(); // `'`
 
-        if self.current != '\'' {
-            return Some(
-                (
-                    RawToken::Invalid(LexerError::UnterminatedCharLiteral),
-                    self.span_from_start(),
-                )
-                    .into(),
-            );
+        match size {
+            2..=i32::MAX => {
+                return Some(
+                    (
+                        RawToken::Invalid(LexerError::MoreThanOneCharInCharLiteral),
+                        self.span_from_start(),
+                    )
+                        .into(),
+                );
+            }
+            0 => {
+                return Some(
+                    (
+                        RawToken::Invalid(LexerError::EmptyCharLiteral),
+                        self.span_from_start(),
+                    )
+                        .into(),
+                );
+            }
+            _ => {}
         }
-
-        self.advance(); // '\''
 
         Some((RawToken::Char(result), self.span_from_start()).into())
     }

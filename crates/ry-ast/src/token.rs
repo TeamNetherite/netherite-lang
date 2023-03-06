@@ -46,6 +46,8 @@ pub enum LexerError {
     EmptyCharLiteral,
     #[display(fmt = "unterminated character literal")]
     UnterminatedCharLiteral,
+    #[display(fmt = "character literal can only one character long")]
+    MoreThanOneCharInCharLiteral,
     #[display(fmt = "invalid radix point")]
     InvalidRadixPoint,
     #[display(fmt = "has no digits")]
@@ -317,7 +319,7 @@ impl RawToken {
 
     pub fn ident(&self) -> Option<String> {
         if let RawToken::Identifier(i) = self {
-            Some(i.into())
+            Some(i.to_owned())
         } else {
             None
         }
@@ -325,47 +327,7 @@ impl RawToken {
 
     pub fn string(&self) -> Option<String> {
         if let RawToken::String(s) = &self {
-            Some(s.into())
-        } else {
-            None
-        }
-    }
-
-    pub fn bool(&self) -> Option<bool> {
-        if let RawToken::Bool(b) = self {
-            Some(*b)
-        } else {
-            None
-        }
-    }
-
-    pub fn int(&self) -> Option<u64> {
-        if let RawToken::Int(i) = self {
-            Some(*i)
-        } else {
-            None
-        }
-    }
-
-    pub fn char(&self) -> Option<char> {
-        if let RawToken::Char(c) = self {
-            Some(*c)
-        } else {
-            None
-        }
-    }
-
-    pub fn float(&self) -> Option<f64> {
-        if let RawToken::Float(f) = self {
-            Some(*f)
-        } else {
-            None
-        }
-    }
-
-    pub fn imag(&self) -> Option<f64> {
-        if let RawToken::Imag(i) = self {
-            Some(*i)
+            Some(s.to_owned())
         } else {
             None
         }

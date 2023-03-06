@@ -102,8 +102,13 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
-            .parse_function_argument());
+        let arguments = parse_list!(
+            self,
+            "interface method arguments",
+            &RawToken::CloseParent,
+            false,
+            || self.parse_function_argument()
+        );
 
         let mut return_type = None;
 

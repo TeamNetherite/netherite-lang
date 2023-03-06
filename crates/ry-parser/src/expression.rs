@@ -164,8 +164,10 @@ impl<'c> Parser<'c> {
                 let start = self.current.span.range.start;
                 self.advance()?; // '['
 
-                let list = parse_list_of_smth!(self, &RawToken::CloseBracket, false, || self
-                    .parse_expression(Precedence::Lowest.to_i8().unwrap()));
+                let list =
+                    parse_list!(self, "list literal", &RawToken::CloseBracket, false, || {
+                        self.parse_expression(Precedence::Lowest.to_i8().unwrap())
+                    });
 
                 let end = self.previous.as_ref().unwrap().span.range.end;
 
@@ -312,8 +314,13 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
-            .parse_expression(Precedence::Lowest.to_i8().unwrap()));
+        let arguments = parse_list!(
+            self,
+            "call arguments list",
+            &RawToken::CloseParent,
+            false,
+            || self.parse_expression(Precedence::Lowest.to_i8().unwrap())
+        );
 
         let end = self.previous.as_ref().unwrap().span.range.end;
 
@@ -331,7 +338,7 @@ impl<'c> Parser<'c> {
 
         let generics = self.parse_type_generic_part()?;
 
-        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
+        let arguments = parse_list!(self, "generics for call", &RawToken::CloseParent, false, || self
             .parse_expression(Precedence::Lowest.to_i8().unwrap()));
 
         let end = self.previous.as_ref().unwrap().span.range.end;

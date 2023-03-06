@@ -29,12 +29,18 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '{'
 
-        let variants = parse_list_of_smth!(
+        let variants = parse_list!(
             self,
+            "enum variant",
             &RawToken::CloseBrace,
             true, // top level
             || {
-                check_token0!(self, "identifier", RawToken::Identifier(_), "enum variant")?;
+                check_token0!(
+                    self,
+                    "identifier",
+                    RawToken::Identifier(_),
+                    "enum declaration"
+                )?;
 
                 let variant = (
                     self.current.value.ident().unwrap(),

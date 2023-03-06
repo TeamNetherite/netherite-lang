@@ -43,11 +43,11 @@ macro_rules! check_token0 {
     };
 }
 
-macro_rules! parse_list_of_smth {
-    ($p: ident, $closing_token: expr, $top_level: expr, $fn: expr) => {
-        parse_list_of_smth!($p, $closing_token, $top_level, $fn, )
+macro_rules! parse_list {
+    ($p: ident, $name: literal, $closing_token: expr, $top_level: expr, $fn: expr) => {
+        parse_list!($p, $name, $closing_token, $top_level, $fn, )
     };
-    ($p: ident, $closing_token: expr, $top_level: expr, $fn: expr, $($fn_arg:expr)*) => {
+    ($p: ident, $name: literal, $closing_token: expr, $top_level: expr, $fn: expr, $($fn_arg:expr)*) => {
         {
             let mut result = vec![];
 
@@ -58,7 +58,7 @@ macro_rules! parse_list_of_smth {
                     if $p.current.value.is($closing_token) {
                         break
                     } else {
-                        check_token0!($p, format!("`,` or {:?}", $closing_token), RawToken::Comma, "enum variant")?;
+                        check_token0!($p, format!("`,` or {}", $closing_token), RawToken::Comma, $name)?;
 
                         $p.advance()?; // ','
 
@@ -80,4 +80,4 @@ macro_rules! parse_list_of_smth {
     };
 }
 
-pub(crate) use {check_token, check_token0, parse_list_of_smth};
+pub(crate) use {check_token, check_token0, parse_list};

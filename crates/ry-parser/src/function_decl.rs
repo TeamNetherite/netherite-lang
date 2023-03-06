@@ -32,7 +32,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let arguments = parse_list_of_smth!(self, &RawToken::CloseParent, false, || self
+        let arguments = parse_list!(self, "function arguments", &RawToken::CloseParent, false, || self
             .parse_function_argument());
 
         let mut return_type = None;

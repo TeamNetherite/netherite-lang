@@ -100,8 +100,9 @@ impl<'c> Parser<'c> {
         if self.current.value.is(&RawToken::LessThan) {
             self.advance()?; // '<'
 
-            Ok(Some(parse_list_of_smth!(
+            Ok(Some(parse_list!(
                 self,
+                "generics",
                 &RawToken::GreaterThan,
                 false,
                 || self.parse_type()
