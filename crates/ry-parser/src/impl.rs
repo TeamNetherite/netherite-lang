@@ -1,5 +1,6 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
+use ry_ast::location::WithSpan;
 use ry_ast::token::RawToken;
 use ry_ast::*;
 
@@ -14,7 +15,7 @@ impl<'c> Parser<'c> {
             "type implementation"
         )?;
 
-        let name = (
+        let name: WithSpan<String> = (
             self.current.value.ident().unwrap(),
             self.current.span.clone(),
         )
@@ -37,11 +38,12 @@ impl<'c> Parser<'c> {
         check_token!(self, RawToken::CloseBrace, "type implementation")?;
 
         self.advance0()?; // '}'
+        todo!()
 
-        Ok(TopLevelStatement::Impl(Impl {
-            for_what: (name, generic_annotations),
-            impl_what: vec![],
-            methods: vec![],
-        }))
+        // Ok(TopLevelStatement::Impl(Impl {
+        //     for_what: (name, generic_annotations),
+        //     impl_what: vec![],
+        //     methods: vec![],
+        // }))
     }
 }

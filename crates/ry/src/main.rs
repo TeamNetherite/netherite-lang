@@ -8,9 +8,7 @@ use std::{fs, process::exit};
 
 fn cli() -> Command {
     Command::new("ry")
-        .about(
-            "Ry programming language compiler toolchain.\nCopyright 2021 - 2023 Quantumatic Team.",
-        )
+        .about("Ry programming language compiler toolchain.\nCopyright 2023 - Salimgereyev Adi.")
         .subcommand_required(true)
         .arg_required_else_help(true)
         .subcommand(

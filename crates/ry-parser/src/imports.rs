@@ -4,12 +4,9 @@ use ry_ast::token::RawToken;
 use ry_ast::*;
 
 impl<'c> Parser<'c> {
+    /// TODO: fix the problem with comments and imports messed up
     pub(crate) fn parse_imports(&mut self) -> ParserResult<Vec<Import>> {
         let mut imports = vec![];
-
-        if self.current.value.is(&RawToken::Import) {
-            self.docstring_buffer.clear();
-        }
 
         while self.current.value.is(&RawToken::Import) {
             imports.push(self.parse_import()?);

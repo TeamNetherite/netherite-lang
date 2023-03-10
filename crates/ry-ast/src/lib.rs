@@ -11,12 +11,19 @@ use token::Token;
 /// Represents Ry source file.
 #[derive(Debug, PartialEq)]
 pub struct ProgramUnit {
+    /// Global source file docstring
     pub docstring: String,
+
     pub imports: Vec<Import>,
-    pub top_level_statements: Vec<(TopLevelStatement, String)>,
+    pub top_level_statements: Vec<(String, TopLevelStatement)>,
 }
 
-/// Represents import declaration.
+/// Import
+///
+/// ```ry
+/// import "test.ry";
+///        --------- `filename`
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct Import {
     pub filename: WithSpan<String>,
@@ -32,6 +39,15 @@ pub enum TopLevelStatement {
 }
 
 /// Function declaration top level statement
+///
+/// ```ry
+/// 1 | fun print_sum<T Number>(a T, b T) T
+///   | ----------------------------------- `def`
+/// 2 | {
+///   |   ...
+///   |   --- `stmts`
+/// 7 | }
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct FunctionDecl {
     pub def: FunctionDef,
@@ -41,7 +57,15 @@ pub struct FunctionDecl {
 pub type GenericAnnotation = (WithSpan<String>, Option<Type>);
 pub type GenericAnnotations = Vec<GenericAnnotation>;
 
-/// Function definition statement
+/// Function definition
+///
+/// ```ry
+/// pub fun test<T Number, M, A>(a T, b T) T
+/// ---     ---- --------------- --------  - `return_type`
+/// |          | |                      |
+/// `public`   | `generic_annotations`  |
+///        `name`                      `params`
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct FunctionDef {
     pub public: Option<Span>,
@@ -51,29 +75,79 @@ pub struct FunctionDef {
     pub return_type: Option<Type>,
 }
 
+/// Struct declaration top level statement
+///
+/// ```ry
+/// 1 | pub struct Test<B, C> {
+///   | ---        ---- ----
+///   | |          |       |
+///   | `public`   |    `generic_annotations`
+///   |            `name`
+/// 2 |   /// documentation for the 1st member
+///   |   ------------------------------------ `members.0.0`
+/// 3 |   a B;
+///   |   ---- `members.0.1`
+/// 4 |
+/// 5 |   ...
+/// 6 | }
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct StructDecl {
     pub public: Option<Span>,
     pub generic_annotations: GenericAnnotations,
     pub name: WithSpan<String>,
-    pub members: Vec<StructMemberDef>,
+    pub members: Vec<(String, StructMemberDef)>,
 }
 
+/// Trait implementation top level statement
+///
+/// ```ry
+/// 1 | impl<A, B> Into<Tuple<A, B>> for Tuple<B, A> {
+///   |     ------ -----------------     ----------- `for`
+///   |     |                      |
+///   |     |                  `what`
+///   |     `global_generic_annotations`
+/// 2 |   ...
+///   |   --- `methods`
+/// 3 | }
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct Impl {
-    pub for_what: (WithSpan<String>, GenericAnnotations),
-    pub impl_what: Vec<(WithSpan<String>, WithSpan<String>)>,
+    pub global_generic_annotations: GenericAnnotations,
+    pub r#for: Type,
+    pub what: Option<Type>,
     pub methods: Vec<FunctionDecl>,
 }
 
+/// Trait declaration top level statement
+///
+/// ```ry
+/// 1 | pub trait Into<T> {
+///   | ---       ---- - `generic_annotations`
+///   | |            |
+///   | `pub`    `name`
+/// 2 |   ...
+///   |   --- `methods`
+/// 3 | }
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct TraitDecl {
     pub public: Option<Span>,
-    pub generic_annotations: GenericAnnotations,
     pub name: WithSpan<String>,
+    pub generic_annotations: GenericAnnotations,
     pub methods: Vec<(String, TraitMethod)>,
 }
 
+/// Trait method
+///
+/// ```ry
+/// pub fun into<T>(self Self) T { ... }
+/// ---     ---- -  ---------  -   --- `body`
+/// |          | |          |  |
+/// |          | |   `params` `return_type`
+/// `public`   | `generic_annotations`
+///        `name`
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct TraitMethod {
     pub name: WithSpan<String>,
@@ -83,6 +157,20 @@ pub struct TraitMethod {
     pub body: Option<StatementsBlock>,
 }
 
+/// Enum declaration top level statement
+///
+/// ```ry
+/// 1 | pub enum Test {
+///   | ---      ---- `name`
+///   | |
+///   | `public`
+///   |
+/// 2 |   Test1,
+///   |   -----   \
+/// 3 |   Test2,  | `variants`
+///   |   -----   /
+/// 4 | }
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct EnumDecl {
     pub public: Option<Span>,
@@ -90,17 +178,32 @@ pub struct EnumDecl {
     pub variants: Vec<WithSpan<String>>,
 }
 
+/// ```ry
+/// pub a [i32];
+/// --- - ----- `type`
+/// |   |
+/// |   `name`
+/// `public`
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct StructMemberDef {
     pub public: Option<Span>,
     pub name: WithSpan<String>,
-    pub ty: Type,
+    pub r#type: Type,
 }
 
+/// ```ry
+/// pub fun test(a i32 = 0) {}
+///              -^---^^^- function param
+///              | |     |
+///              | |     `default_value`
+///              | `type`
+///              `name`
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct FunctionParam {
     pub name: WithSpan<String>,
-    pub ty: Type,
+    pub r#type: Type,
     pub default_value: Option<Expression>,
 }
 

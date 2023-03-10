@@ -55,7 +55,7 @@ impl<'c> Parser<'c> {
         let mut unnecessary_qualifier_error_span = None;
 
         while !self.current.value.is(&RawToken::CloseBrace) {
-            self.consume_statement_docstring()?;
+            self.consume_local_docstring()?;
 
             if self.current.value.is(&RawToken::Pub) {
                 unnecessary_qualifier_error_span = Some(self.current.span.clone());
@@ -64,7 +64,7 @@ impl<'c> Parser<'c> {
 
             let trait_def = self.parse_trait_method()?;
             let name_span = trait_def.name.span.clone();
-            definitions.push((self.take_docstring(), trait_def));
+            definitions.push((self.consume_local_docstring()?, trait_def));
 
             if let Some(s) = unnecessary_qualifier_error_span {
                 return Err(ParserError::UnnecessaryVisibilityQualifier(

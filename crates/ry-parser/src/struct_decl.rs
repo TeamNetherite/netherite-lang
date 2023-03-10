@@ -29,7 +29,7 @@ impl<'c> Parser<'c> {
 
         check_token!(self, RawToken::OpenBrace, "struct declaration")?;
 
-        self.advance()?; // '{'
+        self.advance0()?; // '{'
 
         let members = self.parse_struct_members()?;
 
@@ -68,20 +68,24 @@ impl<'c> Parser<'c> {
 
         self.advance()?;
 
-        let ty = self.parse_type()?;
+        let r#type = self.parse_type()?;
 
         check_token!(self, RawToken::Semicolon, "struct member definition")?;
 
-        self.advance()?; // ';'
+        self.advance0()?; // ';'
 
-        Ok(StructMemberDef { public, name, ty })
+        Ok(StructMemberDef {
+            public,
+            name,
+            r#type,
+        })
     }
 
-    fn parse_struct_members(&mut self) -> ParserResult<Vec<StructMemberDef>> {
+    fn parse_struct_members(&mut self) -> ParserResult<Vec<(String, StructMemberDef)>> {
         let mut members = vec![];
 
         while !self.current.value.is(&RawToken::CloseBrace) {
-            members.push(self.parse_struct_member()?);
+            members.push((self.consume_local_docstring()?, self.parse_struct_member()?));
         }
 
         Ok(members)

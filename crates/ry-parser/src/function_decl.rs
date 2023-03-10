@@ -70,7 +70,7 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // name
 
-        let ty = self.parse_type()?;
+        let r#type = self.parse_type()?;
 
         let mut default_value = None;
 
@@ -83,7 +83,7 @@ impl<'c> Parser<'c> {
 
         Ok(FunctionParam {
             name,
-            ty,
+            r#type,
             default_value,
         })
     }

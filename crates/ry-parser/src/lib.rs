@@ -26,7 +26,6 @@ pub struct Parser<'c> {
     lexer: Lexer<'c>,
     previous: Option<Token>,
     current: Token,
-    docstring_buffer: String,
 }
 
 pub(crate) type ParserResult<T> = Result<T, ParserError>;
@@ -41,7 +40,6 @@ impl<'c> Parser<'c> {
             lexer,
             previous: None,
             current,
-            docstring_buffer: "".to_owned(),
         }
     }
 
@@ -73,61 +71,63 @@ impl<'c> Parser<'c> {
         Ok(())
     }
 
-    pub(crate) fn consume_fst_docstring(&mut self) -> ParserResult<String> {
-        let mut module_docstring = "".to_owned();
+    pub(crate) fn consume_fst_docstring(&mut self) -> ParserResult<(String, String)> {
+        let (mut module_docstring, mut local_docstring) = ("".to_owned(), "".to_owned());
         loop {
             if let RawToken::Comment(s) = &self.current.value {
                 if let Some(stripped) = s.strip_prefix('!') {
                     module_docstring.push_str(stripped.trim());
                     module_docstring.push('\n');
                 } else if let Some(stripped) = s.strip_prefix('/') {
-                    self.docstring_buffer.push_str(stripped.trim());
-                    self.docstring_buffer.push('\n');
+                    local_docstring.push_str(stripped.trim());
+                    local_docstring.push('\n');
                 }
             } else {
                 module_docstring.pop();
-                self.docstring_buffer.pop();
-                return Ok(module_docstring);
+                local_docstring.pop();
+                return Ok((module_docstring, local_docstring));
             }
 
             self.advance0()?;
         }
     }
 
-    pub(crate) fn consume_statement_docstring(&mut self) -> ParserResult<()> {
+    pub(crate) fn consume_local_docstring(&mut self) -> ParserResult<String> {
+        let mut result = "".to_owned();
+
         loop {
             if let RawToken::Comment(s) = &self.current.value {
                 if let Some(stripped) = s.strip_prefix('/') {
-                    self.docstring_buffer.push_str(stripped.trim());
-                    self.docstring_buffer.push('\n');
+                    result.push_str(stripped.trim());
+                    result.push('\n');
                 }
             } else {
-                self.docstring_buffer.pop();
-                return Ok(());
+                result.pop();
+                return Ok(result);
             }
 
             self.advance0()?;
         }
-    }
-
-    pub(crate) fn take_docstring(&mut self) -> String {
-        take(&mut self.docstring_buffer)
     }
 
     pub fn parse(&mut self) -> ParserResult<ProgramUnit> {
         let module_docstring = self.consume_fst_docstring()?;
         Ok(ProgramUnit {
-            docstring: module_docstring,
+            docstring: module_docstring.0,
             imports: self.parse_imports()?,
-            top_level_statements: self.parse_top_level_statements()?,
+            top_level_statements: self.parse_top_level_statements(module_docstring.1)?,
         })
     }
 
-    fn parse_top_level_statements(&mut self) -> ParserResult<Vec<(TopLevelStatement, String)>> {
+    fn parse_top_level_statements(
+        &mut self,
+        mut local_docstring: String,
+    ) -> ParserResult<Vec<(String, TopLevelStatement)>> {
         let mut top_level_statements = vec![];
 
         loop {
             top_level_statements.push((
+                local_docstring,
                 match self.current.value {
                     RawToken::Fun => self.parse_function_declaration(None)?,
                     RawToken::Struct => self.parse_struct_declaration(None)?,
@@ -184,10 +184,9 @@ impl<'c> Parser<'c> {
                         return err;
                     }
                 },
-                self.take_docstring(),
             ));
 
-            self.consume_statement_docstring()?;
+            local_docstring = self.consume_local_docstring()?;
         }
 
         Ok(top_level_statements)

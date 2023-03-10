@@ -24,7 +24,7 @@ impl GraphvizTranslatorState {
             self.create_import_node(&import);
         }
         for stmt in &ast.top_level_statements {
-            self.create_top_level_stmt_node(&stmt.0);
+            self.create_top_level_stmt_node(&stmt.1);
         }
         println!("}}");
     }
@@ -95,6 +95,7 @@ impl GraphvizTranslatorState {
                     let members_node = self.add_node("Members");
 
                     for member in &sd.members {
+                        let member = &member.1;
                         let member_node = self.add_node("Member");
 
                         self.add_node_connections(&[members_node, member_node]);
@@ -110,7 +111,7 @@ impl GraphvizTranslatorState {
                         self.add_node_connections(&[member_node, name_node_root, name_node]);
 
                         let type_node_root = self.add_node("Type");
-                        let type_node = self.create_type_node(member.ty.value.deref());
+                        let type_node = self.create_type_node(member.r#type.value.deref());
 
                         self.add_node_connections(&[member_node, type_node_root, type_node]);
                     }
@@ -320,7 +321,7 @@ impl GraphvizTranslatorState {
             }
 
             let type_node_root = self.add_node("Type");
-            let type_node = self.create_type_node(param.ty.value.deref());
+            let type_node = self.create_type_node(param.r#type.value.deref());
 
             self.add_node_connections(&[param_node, type_node_root, type_node]);
         }
@@ -587,7 +588,6 @@ impl GraphvizTranslatorState {
         }
     }
 
-    // Returns root node
     fn create_type_node(&mut self, r#type: &RawType) -> u32 {
         match r#type {
             RawType::Array(a) => {
