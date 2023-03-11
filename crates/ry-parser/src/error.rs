@@ -21,8 +21,8 @@ pub enum ParserError {
     /// Appears when you try to define trait method as public.
     /// 1-st [`Span`] is location of `pub` keyword.
     /// 2-nd [`Span`] is location of method name.
-    /// 3-rd [`Span`] is location of trait name in which method is defined.
-    UnnecessaryVisibilityQualifier(Span, Span, Span),
+    /// [`bool`] is weather it is method declaration or definition.
+    UnnecessaryVisibilityQualifier(Span, Span, bool),
 
     /// Appears when `import` keyword is found after top level statement(-s)
     /// [`Span`] here is location of `import` statement.
@@ -32,13 +32,13 @@ pub enum ParserError {
 impl<'source> Reporter<'source> for ParserError {
     fn build_diagnostic(&self, file_id: usize) -> Diagnostic<usize> {
         match self {
-            Self::ErrorToken(ref t) => Diagnostic::error()
+            Self::ErrorToken(t) => Diagnostic::error()
                 .with_message("scanning error occured")
                 .with_code("E000")
                 .with_labels(vec![
                     Label::primary(file_id, t.span.range.clone()).with_message(t.value.to_string())
                 ]),
-            Self::UnexpectedToken(ref got, ref expected, ref node_name) => {
+            Self::UnexpectedToken(got, expected, node_name) => {
                 let mut label_message = format!("expected {expected}");
 
                 if let Some(node_name_s) = node_name {
@@ -52,25 +52,24 @@ impl<'source> Reporter<'source> for ParserError {
                         Label::primary(file_id, got.span.range.clone()).with_message(label_message)
                     ])
             }
-            Self::UnnecessaryVisibilityQualifier(ref pub_span, ref method_name_span ,ref trait_name_span) => {
+            Self::UnnecessaryVisibilityQualifier(pub_span, method_name_span, declaration) => {
+                let declaration = if *declaration { "declaration" } else { "definition" };
                 Diagnostic::error()
                     .with_message(
-                        "unnecessary visibility qualifier in trait method definition".to_owned(),
+                        format!("unnecessary visibility qualifier in method {}", declaration)
                     )
                     .with_labels(vec![
                         Label::primary(file_id, pub_span.range.clone())
                             .with_message("consider removing `pub`"),
                         Label::secondary(file_id, method_name_span.range.clone())
-                            .with_message("in this method definition"),
-                        Label::secondary(file_id, trait_name_span.range.clone())
-                            .with_message("method is defined in this trait"),
+                            .with_message(format!("in this method {}", declaration)),
                     ])
                     .with_code("E002")
                     .with_notes(vec![
-                        "note: methods in trait are by default public. this is why their declarations\ndo not require using `pub` keyword in the beginning".to_owned()
+                        "note: by default, methods within a trait possess public visibility,\nthereby obviating the need for utilizing the `pub` keyword\nat the outset of their declarations.".to_owned()
                     ])
             }
-            Self::UnexpectedTokenExpectedX(ref got, ref expected, ref node_name) => {
+            Self::UnexpectedTokenExpectedX(got, expected, node_name) => {
                 let mut label_message = format!("expected {expected}");
 
                 if let Some(node_name_s) = node_name {

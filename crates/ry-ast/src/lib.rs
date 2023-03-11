@@ -103,9 +103,9 @@ pub struct StructDecl {
 ///
 /// ```ry
 /// 1 | impl<A, B> Into<Tuple<A, B>> for Tuple<B, A> {
-///   |     ------ -----------------     ----------- `for`
+///   |     ------ -----------------     ----------- `type`
 ///   |     |                      |
-///   |     |                  `what`
+///   |     |                 `trait`
 ///   |     `global_generic_annotations`
 /// 2 |   ...
 ///   |   --- `methods`
@@ -114,9 +114,9 @@ pub struct StructDecl {
 #[derive(Debug, PartialEq)]
 pub struct Impl {
     pub global_generic_annotations: GenericAnnotations,
-    pub r#for: Type,
-    pub what: Option<Type>,
-    pub methods: Vec<FunctionDecl>,
+    pub r#type: Type,
+    pub r#trait: Option<Type>,
+    pub methods: Vec<(String, TraitMethod)>,
 }
 
 /// Trait declaration top level statement

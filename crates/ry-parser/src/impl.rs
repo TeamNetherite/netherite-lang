@@ -1,6 +1,5 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::location::WithSpan;
 use ry_ast::token::RawToken;
 use ry_ast::*;
 
@@ -8,42 +7,33 @@ impl<'c> Parser<'c> {
     pub(crate) fn parse_impl(&mut self) -> ParserResult<TopLevelStatement> {
         self.advance()?; // 'impl'
 
-        check_token0!(
-            self,
-            "identifier for implemented type name",
-            RawToken::Identifier(_),
-            "type implementation"
-        )?;
-
-        let name: WithSpan<String> = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
-
-        self.advance()?; // 'name'
-
         let generic_annotations = self.parse_generic_annotations()?;
 
-        if self.current.value.is(&RawToken::Colon) {
-            self.advance()?;
+        let mut r#type = self.parse_type()?;
+        let mut r#trait = None;
+
+        if self.current.value.is(&RawToken::For) {
+            self.advance()?; // `for`
+
+            r#trait = Some(r#type);
+            r#type = self.parse_type()?;
         }
 
         check_token!(self, RawToken::OpenBrace, "type implementation")?;
 
         self.advance()?; // '{'
 
-        // let methods = self.parse_interface_method_definitions(name_span.clone())?;
+        let methods = self.parse_trait_methods()?;
 
         check_token!(self, RawToken::CloseBrace, "type implementation")?;
 
         self.advance0()?; // '}'
-        todo!()
 
-        // Ok(TopLevelStatement::Impl(Impl {
-        //     for_what: (name, generic_annotations),
-        //     impl_what: vec![],
-        //     methods: vec![],
-        // }))
+        Ok(TopLevelStatement::Impl(Impl {
+            global_generic_annotations: generic_annotations,
+            r#type,
+            r#trait,
+            methods,
+        }))
     }
 }

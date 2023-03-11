@@ -32,8 +32,13 @@ impl<'c> Parser<'c> {
 
         self.advance()?; // '('
 
-        let arguments = parse_list!(self, "function arguments", &RawToken::CloseParent, false, || self
-            .parse_function_argument());
+        let arguments = parse_list!(
+            self,
+            "function arguments",
+            &RawToken::CloseParent,
+            false,
+            || self.parse_function_argument()
+        );
 
         let mut return_type = None;
 
@@ -74,7 +79,6 @@ impl<'c> Parser<'c> {
 
         let mut default_value = None;
 
-        // argument's default value
         if self.current.value.is(&RawToken::Assign) {
             self.advance()?;
 

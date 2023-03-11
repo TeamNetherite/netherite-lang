@@ -137,6 +137,8 @@ pub enum RawToken {
     Var,
     #[display(fmt = "`as`")]
     As,
+    #[display(fmt = "`for`")]
+    For,
 
     #[display(fmt = "`?`")]
     QuestionMark,
@@ -322,4 +324,5 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "while" => RawToken::While,
     "var" => RawToken::Var,
     "as" => RawToken::As,
+    "for" => RawToken::For,
 };

@@ -32,7 +32,7 @@ impl<'c> Parser<'c> {
 
         self.advance0()?; // '{'
 
-        let methods = self.parse_trait_methods(name.span.clone())?;
+        let methods = self.parse_trait_methods()?;
 
         check_token!(self, RawToken::CloseBrace, "trait declaration")?;
 
@@ -46,10 +46,7 @@ impl<'c> Parser<'c> {
         }))
     }
 
-    fn parse_trait_methods(
-        &mut self,
-        trait_name_span: Span,
-    ) -> ParserResult<Vec<(String, TraitMethod)>> {
+    pub(crate) fn parse_trait_methods(&mut self) -> ParserResult<Vec<(String, TraitMethod)>> {
         let mut definitions = vec![];
 
         let mut unnecessary_qualifier_error_span = None;
@@ -63,6 +60,7 @@ impl<'c> Parser<'c> {
             }
 
             let trait_def = self.parse_trait_method()?;
+            let declaration = trait_def.body.is_some();
             let name_span = trait_def.name.span.clone();
             definitions.push((self.consume_local_docstring()?, trait_def));
 
@@ -70,7 +68,7 @@ impl<'c> Parser<'c> {
                 return Err(ParserError::UnnecessaryVisibilityQualifier(
                     s,
                     name_span,
-                    trait_name_span,
+                    declaration,
                 ));
             }
         }
