@@ -8,16 +8,16 @@ use ry_ast::{
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_name(&mut self) -> ParserResult<WithSpan<String>> {
-        let start = self.current.span.range.start;
+        let start = self.current.span.start;
 
         let mut name = self.current.value.ident().unwrap();
         name.push_str("::");
 
-        let mut end = self.current.span.range.end;
+        let mut end = self.current.span.end;
 
         self.advance()?; // id
 
-        while self.current.value.is(&RawToken::DoubleColon) {
+        while self.current.value.is(RawToken::DoubleColon) {
             self.advance()?; // '::'
 
             check_token0!(self, "identifier", RawToken::Identifier(_), "name")?;
@@ -25,7 +25,7 @@ impl<'c> Parser<'c> {
             name.push_str(&self.current.value.ident().unwrap());
             name.push_str("::");
 
-            end = self.current.span.range.end;
+            end = self.current.span.end;
 
             self.advance()?; // id
         }
@@ -33,11 +33,19 @@ impl<'c> Parser<'c> {
         name.pop();
         name.pop();
 
-        Ok((name, (start..end).into()).into())
+        Ok(name.with_span(start..end))
+    }
+
+    pub fn get_name(&mut self) -> WithSpan<String> {
+        self.current
+            .value
+            .ident()
+            .unwrap()
+            .with_span(self.current.span)
     }
 
     pub(crate) fn parse_type(&mut self) -> ParserResult<Type> {
-        let start = self.current.span.range.start;
+        let start = self.current.span.start;
 
         let mut lhs = match &self.current.value {
             RawToken::Identifier(_) => self.parse_primary_type(),
@@ -50,11 +58,8 @@ impl<'c> Parser<'c> {
             )),
         }?;
 
-        while self.current.value.is(&RawToken::QuestionMark) {
-            lhs = WithSpan::new(
-                Box::new(RawType::Option(lhs)),
-                Span::new(start, self.current.span.range.end),
-            );
+        while self.current.value.is(RawToken::QuestionMark) {
+            lhs = Box::new(RawType::Option(lhs)).with_span(start..self.current.span.end);
             self.advance()?;
         }
 
@@ -62,13 +67,14 @@ impl<'c> Parser<'c> {
     }
 
     fn parse_primary_type(&mut self) -> ParserResult<Type> {
-        let start = self.current.span.range.end;
+        let start = self.current.span.end;
         let name = self.parse_name()?;
-        let mut end = self.current.span.range.end;
         let generic_part = self.parse_type_generic_part()?;
 
+        let mut end = self.current.span.end;
+
         if generic_part.is_some() {
-            end = self.previous.as_ref().unwrap().span.range.end;
+            end = self.previous.as_ref().unwrap().span.end;
         }
 
         Ok(WithSpan::new(
@@ -85,13 +91,13 @@ impl<'c> Parser<'c> {
     }
 
     pub(crate) fn parse_type_generic_part(&mut self) -> ParserResult<Option<Vec<Type>>> {
-        if self.current.value.is(&RawToken::LessThan) {
+        if self.current.value.is(RawToken::LessThan) {
             self.advance()?; // '<'
 
             Ok(Some(parse_list!(
                 self,
                 "generics",
-                &RawToken::GreaterThan,
+                RawToken::GreaterThan,
                 false,
                 || self.parse_type()
             )))
@@ -101,7 +107,7 @@ impl<'c> Parser<'c> {
     }
 
     fn parse_array_type(&mut self) -> ParserResult<Type> {
-        let start = self.current.span.range.start;
+        let start = self.current.span.start;
 
         self.advance()?; // '['
 
@@ -109,7 +115,7 @@ impl<'c> Parser<'c> {
 
         check_token!(self, RawToken::CloseBracket, "array type")?;
 
-        let end = self.current.span.range.end;
+        let end = self.current.span.end;
 
         self.advance()?; // ']'
 
@@ -120,13 +126,13 @@ impl<'c> Parser<'c> {
     }
 
     fn parse_pointer_type(&mut self) -> ParserResult<Type> {
-        let start = self.current.span.range.start;
+        let start = self.current.span.start;
 
         self.advance()?; // '*'
 
         let inner_type = self.parse_type()?;
 
-        let end = self.current.span.range.end;
+        let end = self.current.span.end;
 
         Ok(WithSpan::new(
             Box::new(RawType::Pointer(inner_type)),
@@ -137,13 +143,13 @@ impl<'c> Parser<'c> {
     pub(crate) fn parse_generic_annotations(&mut self) -> ParserResult<GenericAnnotations> {
         let mut generics = vec![];
 
-        if !self.current.value.is(&RawToken::LessThan) {
+        if !self.current.value.is(RawToken::LessThan) {
             return Ok(generics);
         }
 
         self.advance()?; // '<'
 
-        if self.current.value.is(&RawToken::GreaterThan) {
+        if self.current.value.is(RawToken::GreaterThan) {
             self.advance()?; // '>'
             return Ok(generics);
         }
@@ -160,15 +166,15 @@ impl<'c> Parser<'c> {
 
             let mut constraint = None;
 
-            if !self.current.value.is(&RawToken::Comma)
-                && !self.current.value.is(&RawToken::GreaterThan)
+            if !self.current.value.is(RawToken::Comma)
+                && !self.current.value.is(RawToken::GreaterThan)
             {
                 constraint = Some(self.parse_type()?);
             }
 
             generics.push((generic, constraint));
 
-            if !self.current.value.is(&RawToken::Comma) {
+            if !self.current.value.is(RawToken::Comma) {
                 check_token!(self, RawToken::GreaterThan, "generic annotations")?;
 
                 self.advance()?; // >
@@ -181,13 +187,13 @@ impl<'c> Parser<'c> {
     }
 
     pub fn parse_generic(&mut self) -> ParserResult<WithSpan<String>> {
-        let start = self.current.span.range.start;
+        let start = self.current.span.start;
 
         let name = self.current.value.ident().unwrap();
-        let end = self.current.span.range.end;
+        let end = self.current.span.end;
 
         self.advance()?; // id
 
-        Ok(WithSpan::new(name, Span::new(start, end)))
+        Ok(name.with_span(start..end))
     }
 }

@@ -7,12 +7,12 @@ use crate::{IterElem, Lexer};
 
 #[inline]
 pub(crate) fn decimal(c: char) -> bool {
-    ('0'..='9').contains(&c)
+    c.is_ascii_digit()
 }
 
 #[inline]
 pub(crate) fn hexadecimal(c: char) -> bool {
-    ('0'..='9').contains(&c) || ('a'..='f').contains(&c.to_ascii_lowercase())
+    c.is_ascii_digit() || ('a'..='f').contains(&c.to_ascii_lowercase())
 }
 
 #[inline]

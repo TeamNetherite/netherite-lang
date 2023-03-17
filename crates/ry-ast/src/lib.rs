@@ -1,3 +1,5 @@
+#![feature(auto_traits)]
+
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
 pub mod precedence;
@@ -113,6 +115,7 @@ pub struct StructDecl {
 /// ```
 #[derive(Debug, PartialEq)]
 pub struct Impl {
+    pub public: Option<Span>,
     pub global_generic_annotations: GenericAnnotations,
     pub r#type: Type,
     pub r#trait: Option<Type>,
@@ -150,6 +153,7 @@ pub struct TraitDecl {
 /// ```
 #[derive(Debug, PartialEq)]
 pub struct TraitMethod {
+    pub public: Option<Span>,
     pub name: WithSpan<String>,
     pub generic_annotations: GenericAnnotations,
     pub params: Vec<FunctionParam>,
@@ -166,16 +170,18 @@ pub struct TraitMethod {
 ///   | `public`
 ///   |
 /// 2 |   Test1,
-///   |   -----   \
-/// 3 |   Test2,  | `variants`
-///   |   -----   /
-/// 4 | }
+///   |   ----- `variants.0.1`
+/// 3 |   /// Some funny documentation
+///   |   ---------------------------- `variants.1.0`
+/// 4 |   Test2,
+///   |   ----- `variants.1.1`
+/// 5 | }
 /// ```
 #[derive(Debug, PartialEq)]
 pub struct EnumDecl {
     pub public: Option<Span>,
     pub name: WithSpan<String>,
-    pub variants: Vec<WithSpan<String>>,
+    pub variants: Vec<(String, WithSpan<String>)>,
 }
 
 /// ```ry
@@ -275,5 +281,17 @@ impl RawExpression {
             self,
             RawExpression::If(_, _, _) | RawExpression::While(_, _)
         )
+    }
+}
+
+pub trait WithSpannable {
+    fn with_span(self, span: impl Into<Span>) -> WithSpan<Self>
+    where
+        Self: Sized;
+}
+
+impl<T: Sized> WithSpannable for T {
+    fn with_span(self, span: impl Into<Span>) -> WithSpan<Self> {
+        WithSpan::new(self, span.into())
     }
 }

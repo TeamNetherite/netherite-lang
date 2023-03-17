@@ -18,12 +18,6 @@ pub enum ParserError {
     /// is `Some(String)`.
     UnexpectedTokenExpectedX(Token, RawToken, Option<String>),
 
-    /// Appears when you try to define trait method as public.
-    /// 1-st [`Span`] is location of `pub` keyword.
-    /// 2-nd [`Span`] is location of method name.
-    /// [`bool`] is weather it is method declaration or definition.
-    UnnecessaryVisibilityQualifier(Span, Span, bool),
-
     /// Appears when `import` keyword is found after top level statement(-s)
     /// [`Span`] here is location of `import` statement.
     ImportAfterTopLevelStatement(Span),
@@ -36,7 +30,7 @@ impl<'source> Reporter<'source> for ParserError {
                 .with_message("scanning error occured")
                 .with_code("E000")
                 .with_labels(vec![
-                    Label::primary(file_id, t.span.range.clone()).with_message(t.value.to_string())
+                    Label::primary(file_id, t.span).with_message(t.value.to_string())
                 ]),
             Self::UnexpectedToken(got, expected, node_name) => {
                 let mut label_message = format!("expected {expected}");
@@ -49,24 +43,7 @@ impl<'source> Reporter<'source> for ParserError {
                     .with_message(format!("unexpected {}", got.value))
                     .with_code("E001")
                     .with_labels(vec![
-                        Label::primary(file_id, got.span.range.clone()).with_message(label_message)
-                    ])
-            }
-            Self::UnnecessaryVisibilityQualifier(pub_span, method_name_span, declaration) => {
-                let declaration = if *declaration { "declaration" } else { "definition" };
-                Diagnostic::error()
-                    .with_message(
-                        format!("unnecessary visibility qualifier in method {}", declaration)
-                    )
-                    .with_labels(vec![
-                        Label::primary(file_id, pub_span.range.clone())
-                            .with_message("consider removing `pub`"),
-                        Label::secondary(file_id, method_name_span.range.clone())
-                            .with_message(format!("in this method {}", declaration)),
-                    ])
-                    .with_code("E002")
-                    .with_notes(vec![
-                        "note: by default, methods within a trait possess public visibility,\nthereby obviating the need for utilizing the `pub` keyword\nat the outset of their declarations.".to_owned()
+                        Label::primary(file_id, got.span).with_message(label_message)
                     ])
             }
             Self::UnexpectedTokenExpectedX(got, expected, node_name) => {
@@ -80,7 +57,7 @@ impl<'source> Reporter<'source> for ParserError {
                     .with_message(format!("expected {}, found {}", expected, got.value))
                     .with_code("E001")
                     .with_labels(vec![
-                        Label::primary(file_id, got.span.range.clone()).with_message(label_message)
+                        Label::primary(file_id, got.span).with_message(label_message)
                     ])
             }
             Self::ImportAfterTopLevelStatement(name) => {
@@ -88,7 +65,7 @@ impl<'source> Reporter<'source> for ParserError {
                     .with_message("import statement is found after top level statement(-s)".to_owned())
                     .with_code("E003")
                     .with_labels(vec![
-                        Label::primary(file_id, name.range.clone()).with_message("this import statement must not be here")
+                        Label::primary(file_id, *name).with_message("this import statement must not be here")
                     ])
                     .with_notes(vec!["note: imports are placed at the beginning of source file, so consider placing it there".to_owned()])
             }

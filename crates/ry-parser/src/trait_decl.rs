@@ -1,6 +1,5 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::location::WithSpan;
 use ry_ast::*;
 use ry_ast::{location::Span, token::RawToken};
 
@@ -18,11 +17,7 @@ impl<'c> Parser<'c> {
             "trait declaration"
         )?;
 
-        let name: WithSpan<String> = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let name = self.get_name();
 
         self.advance()?; // 'name'
 
@@ -49,34 +44,24 @@ impl<'c> Parser<'c> {
     pub(crate) fn parse_trait_methods(&mut self) -> ParserResult<Vec<(String, TraitMethod)>> {
         let mut definitions = vec![];
 
-        let mut unnecessary_qualifier_error_span = None;
-
-        while !self.current.value.is(&RawToken::CloseBrace) {
+        while !self.current.value.is(RawToken::CloseBrace) {
             self.consume_local_docstring()?;
 
-            if self.current.value.is(&RawToken::Pub) {
-                unnecessary_qualifier_error_span = Some(self.current.span.clone());
-                self.advance()?;
-            }
-
             let trait_def = self.parse_trait_method()?;
-            let declaration = trait_def.body.is_some();
-            let name_span = trait_def.name.span.clone();
             definitions.push((self.consume_local_docstring()?, trait_def));
-
-            if let Some(s) = unnecessary_qualifier_error_span {
-                return Err(ParserError::UnnecessaryVisibilityQualifier(
-                    s,
-                    name_span,
-                    declaration,
-                ));
-            }
         }
 
         Ok(definitions)
     }
 
     fn parse_trait_method(&mut self) -> ParserResult<TraitMethod> {
+        let mut public = None;
+
+        if self.current.value.is(RawToken::Pub) {
+            public = Some(self.current.span);
+            self.advance()?; // pub
+        }
+
         check_token!(self, RawToken::Fun, "trait method")?;
 
         self.advance()?; // 'fun'
@@ -88,11 +73,7 @@ impl<'c> Parser<'c> {
             "trait method"
         )?;
 
-        let name = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let name = self.get_name();
 
         self.advance()?; // name
 
@@ -105,15 +86,15 @@ impl<'c> Parser<'c> {
         let arguments = parse_list!(
             self,
             "trait method arguments",
-            &RawToken::CloseParent,
+            RawToken::CloseParent,
             false,
             || self.parse_function_argument()
         );
 
         let mut return_type = None;
 
-        if !self.current.value.is(&RawToken::Semicolon)
-            && !self.current.value.is(&RawToken::OpenBrace)
+        if !self.current.value.is(RawToken::Semicolon)
+            && !self.current.value.is(RawToken::OpenBrace)
         {
             return_type = Some(self.parse_type()?);
         }
@@ -135,6 +116,7 @@ impl<'c> Parser<'c> {
         }
 
         Ok(TraitMethod {
+            public,
             name,
             generic_annotations,
             params: arguments,

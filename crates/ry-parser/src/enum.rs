@@ -17,40 +17,29 @@ impl<'c> Parser<'c> {
             "enum declaration"
         )?;
 
-        let name = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let name = self.get_name();
 
         self.advance()?; // 'name'
 
         check_token!(self, RawToken::OpenBrace, "enum declaration")?;
 
-        self.advance()?; // '{'
+        self.advance0()?; // '{'
 
         let variants = parse_list!(
             self,
             "enum variant",
-            &RawToken::CloseBrace,
+            RawToken::CloseBrace,
             true, // top level
             || {
-                check_token0!(
-                    self,
-                    "identifier",
-                    RawToken::Identifier(_),
-                    "enum declaration"
-                )?;
+                let doc = self.consume_local_docstring()?;
 
-                let variant = (
-                    self.current.value.ident().unwrap(),
-                    self.current.span.clone(),
-                )
-                    .into();
+                check_token0!(self, "identifier", RawToken::Identifier(_), "enum variant")?;
+
+                let variant = self.get_name();
 
                 self.advance()?; // id
 
-                Ok(variant)
+                Ok((doc, variant))
             }
         );
 

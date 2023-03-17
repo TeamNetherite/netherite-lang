@@ -45,9 +45,7 @@ impl<'c> Parser<'c> {
 
     fn check_scanning_error(&mut self) -> ParserResult<()> {
         if let RawToken::Invalid(e) = self.current.value {
-            Err(ParserError::ErrorToken(
-                (e, self.current.span.clone()).into(),
-            ))
+            Err(ParserError::ErrorToken(e.with_span(self.current.span)))
         } else {
             Ok(())
         }
@@ -141,16 +139,16 @@ impl<'c> Parser<'c> {
 
                         match self.current.value {
                             RawToken::Fun => {
-                                self.parse_function_declaration(Some(self.current.span.clone()))?
+                                self.parse_function_declaration(Some(self.current.span))?
                             }
                             RawToken::Struct => {
-                                self.parse_struct_declaration(Some(self.current.span.clone()))?
+                                self.parse_struct_declaration(Some(self.current.span))?
                             }
                             RawToken::Trait => {
-                                self.parse_trait_declaration(Some(self.current.span.clone()))?
+                                self.parse_trait_declaration(Some(self.current.span))?
                             }
                             RawToken::Enum => {
-                                self.parse_enum_declaration(Some(self.current.span.clone()))?
+                                self.parse_enum_declaration(Some(self.current.span))?
                             }
                             _ => {
                                 return Err(ParserError::UnexpectedToken(
@@ -162,11 +160,11 @@ impl<'c> Parser<'c> {
                         }
                     }
                     RawToken::Import => {
-                        let start = self.current.span.range.start;
+                        let start = self.current.span.start;
 
                         self.parse_import()?;
 
-                        let end = self.current.span.range.end;
+                        let end = self.current.span.end;
                         self.advance()?; // ';'
 
                         return Err(ParserError::ImportAfterTopLevelStatement(

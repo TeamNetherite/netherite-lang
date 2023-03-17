@@ -18,11 +18,7 @@ impl<'c> Parser<'c> {
             "function declaration"
         )?;
 
-        let name = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let name = self.get_name();
 
         self.advance()?; // name
 
@@ -35,14 +31,14 @@ impl<'c> Parser<'c> {
         let arguments = parse_list!(
             self,
             "function arguments",
-            &RawToken::CloseParent,
+            RawToken::CloseParent,
             false,
             || self.parse_function_argument()
         );
 
         let mut return_type = None;
 
-        if !self.current.value.is(&RawToken::OpenBrace) {
+        if !self.current.value.is(RawToken::OpenBrace) {
             return_type = Some(self.parse_type()?);
         }
 
@@ -67,11 +63,7 @@ impl<'c> Parser<'c> {
             RawToken::Identifier(_)
         )?;
 
-        let name = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let name = self.get_name();
 
         self.advance()?; // name
 
@@ -79,7 +71,7 @@ impl<'c> Parser<'c> {
 
         let mut default_value = None;
 
-        if self.current.value.is(&RawToken::Assign) {
+        if self.current.value.is(RawToken::Assign) {
             self.advance()?;
 
             default_value = Some(self.parse_expression(Precedence::Lowest.to_i8().unwrap())?);

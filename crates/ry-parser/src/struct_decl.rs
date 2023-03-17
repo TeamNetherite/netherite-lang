@@ -17,11 +17,7 @@ impl<'c> Parser<'c> {
             "struct declaration"
         )?;
 
-        let name = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let name = self.get_name();
 
         self.advance()?; // 'name'
 
@@ -48,8 +44,8 @@ impl<'c> Parser<'c> {
     fn parse_struct_member(&mut self) -> ParserResult<StructMemberDef> {
         let mut public = None;
 
-        if self.current.value.is(&RawToken::Pub) {
-            public = Some(self.current.span.clone());
+        if self.current.value.is(RawToken::Pub) {
+            public = Some(self.current.span);
             self.advance()?;
         }
 
@@ -60,11 +56,7 @@ impl<'c> Parser<'c> {
             "struct definition"
         )?;
 
-        let name = (
-            self.current.value.ident().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let name = self.get_name();
 
         self.advance()?;
 
@@ -84,7 +76,7 @@ impl<'c> Parser<'c> {
     fn parse_struct_members(&mut self) -> ParserResult<Vec<(String, StructMemberDef)>> {
         let mut members = vec![];
 
-        while !self.current.value.is(&RawToken::CloseBrace) {
+        while !self.current.value.is(RawToken::CloseBrace) {
             members.push((self.consume_local_docstring()?, self.parse_struct_member()?));
         }
 

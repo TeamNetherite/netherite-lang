@@ -1,7 +1,7 @@
 //! `token.rs` - defines the token which represents grammatical unit of Ry
 //! source text.
 
-use std::mem::discriminant;
+use std::mem::{discriminant, replace};
 
 use derive_more::Display;
 use phf::phf_map;
@@ -91,7 +91,6 @@ pub enum RawToken {
     #[display(fmt = "boolean literal")]
     Bool(bool),
 
-    #[default]
     #[display(fmt = "`+`")]
     Plus,
     #[display(fmt = "`-`")]
@@ -234,12 +233,43 @@ pub enum RawToken {
     #[display(fmt = "comment")]
     Comment(String),
 
+    #[default]
     #[display(fmt = "end of file")]
     EndOfFile,
 
     #[display(fmt = "invalid token")]
     Invalid(LexerError),
 }
+
+impl AsRef<RawToken> for RawToken {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
+pub type Token = WithSpan<RawToken>;
+
+/// List of reserved Ry names: keywords, boolean literals & etc..
+pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
+    "true" => RawToken::Bool(true),
+    "false" => RawToken::Bool(false),
+    "import" => RawToken::Import,
+    "pub" => RawToken::Pub,
+    "fun" => RawToken::Fun,
+    "struct" => RawToken::Struct,
+    "implement" => RawToken::Implement,
+    "trait" => RawToken::Trait,
+    "return" => RawToken::Return,
+    "defer" => RawToken::Defer,
+    "impl" => RawToken::Impl,
+    "enum" => RawToken::Enum,
+    "if" => RawToken::If,
+    "else" => RawToken::Else,
+    "while" => RawToken::While,
+    "var" => RawToken::Var,
+    "as" => RawToken::As,
+    "for" => RawToken::For,
+};
 
 impl RawToken {
     pub fn to_precedence(&self) -> i8 {
@@ -282,47 +312,23 @@ impl RawToken {
         .unwrap()
     }
 
-    pub fn ident(&self) -> Option<String> {
+    pub fn ident(&mut self) -> Option<String> {
         if let RawToken::Identifier(i) = self {
-            Some(i.to_owned())
+            Some(replace(i, "".to_owned()))
         } else {
             None
         }
     }
 
-    pub fn string(&self) -> Option<String> {
-        if let RawToken::String(s) = &self {
-            Some(s.to_owned())
+    pub fn string(&mut self) -> Option<String> {
+        if let RawToken::String(s) = self {
+            Some(replace(s, "".to_owned()))
         } else {
             None
         }
     }
 
-    pub fn is(&self, raw: &Self) -> bool {
-        discriminant(self) == discriminant(raw)
+    pub fn is<'a, T: AsRef<Self>>(&self, raw: T) -> bool {
+        discriminant(self) == discriminant(raw.as_ref())
     }
 }
-
-pub type Token = WithSpan<RawToken>;
-
-/// List of reserved Ry names: keywords, boolean literals & etc..
-pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
-    "true" => RawToken::Bool(true),
-    "false" => RawToken::Bool(false),
-    "import" => RawToken::Import,
-    "pub" => RawToken::Pub,
-    "fun" => RawToken::Fun,
-    "struct" => RawToken::Struct,
-    "implement" => RawToken::Implement,
-    "trait" => RawToken::Trait,
-    "return" => RawToken::Return,
-    "defer" => RawToken::Defer,
-    "impl" => RawToken::Impl,
-    "enum" => RawToken::Enum,
-    "if" => RawToken::If,
-    "else" => RawToken::Else,
-    "while" => RawToken::While,
-    "var" => RawToken::Var,
-    "as" => RawToken::As,
-    "for" => RawToken::For,
-};

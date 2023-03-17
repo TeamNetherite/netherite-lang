@@ -8,7 +8,7 @@ impl<'c> Parser<'c> {
     pub(crate) fn parse_imports(&mut self) -> ParserResult<Vec<Import>> {
         let mut imports = vec![];
 
-        while self.current.value.is(&RawToken::Import) {
+        while self.current.value.is(RawToken::Import) {
             imports.push(self.parse_import()?);
             self.advance()?; // ';'
         }
@@ -21,13 +21,14 @@ impl<'c> Parser<'c> {
 
         check_token0!(self, "string for filepath", RawToken::String(_), "import")?;
 
-        let filename = (
-            self.current.value.string().unwrap(),
-            self.current.span.clone(),
-        )
-            .into();
+        let filename = self
+            .current
+            .value
+            .string()
+            .unwrap()
+            .with_span(self.current.span);
 
-        self.advance()?; // "name"
+        self.advance()?; // "filename"
 
         check_token!(self, RawToken::Semicolon, "import")?;
 
@@ -53,7 +54,7 @@ mod tests {
             vec![Import {
                 filename: WithSpan {
                     value: "test".to_owned(),
-                    span: Span { range: 7..13 }
+                    span: Span { start: 7, end: 13 }
                 }
             }],
             imports.ok().unwrap()
@@ -71,19 +72,19 @@ mod tests {
                 Import {
                     filename: WithSpan {
                         value: "test".to_owned(),
-                        span: Span { range: 7..13 }
+                        span: Span { start: 7, end: 13 }
                     }
                 },
                 Import {
                     filename: WithSpan {
                         value: "test2".to_owned(),
-                        span: Span { range: 22..29 }
+                        span: Span { start: 22, end: 29 }
                     }
                 },
                 Import {
                     filename: WithSpan {
                         value: "test3".to_owned(),
-                        span: Span { range: 38..45 }
+                        span: Span { start: 38, end: 45 }
                     }
                 }
             ],

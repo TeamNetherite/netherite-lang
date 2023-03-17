@@ -5,30 +5,28 @@
 use std::ops::Range;
 
 /// Represents code block location in source text.
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Default, Copy)]
 pub struct Span {
-    pub range: Range<usize>,
+    pub start: usize,
+    pub end: usize,
 }
 
 impl Span {
-    pub fn from(range: Range<usize>) -> Self {
-        Self { range }
-    }
-
     pub fn new(start: usize, end: usize) -> Self {
-        Self { range: start..end }
+        Self { start, end }
     }
 
     pub fn from_location(location: usize, character_len: usize) -> Self {
         Self {
-            range: location..location + character_len,
+            start: location,
+            end: location + character_len,
         }
     }
 }
 
 impl From<Range<usize>> for Span {
     fn from(val: Range<usize>) -> Self {
-        Span::from(val)
+        Self::new(val.start, val.end)
     }
 }
 
@@ -48,5 +46,11 @@ impl<T> WithSpan<T> {
 impl<T> From<(T, Span)> for WithSpan<T> {
     fn from(val: (T, Span)) -> Self {
         WithSpan::new(val.0, val.1)
+    }
+}
+
+impl From<Span> for Range<usize> {
+    fn from(value: Span) -> Self {
+        value.start..value.end
     }
 }

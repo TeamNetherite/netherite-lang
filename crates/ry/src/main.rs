@@ -51,13 +51,13 @@ fn main() {
                     loop {
                         let token = lexer.next().unwrap();
 
-                        if token.value.is(&RawToken::EndOfFile) {
+                        if token.value.is(RawToken::EndOfFile) {
                             break;
                         }
 
                         println!(
                             "{token_index}: [{}]@{}..{}",
-                            token.value, token.span.range.start, token.span.range.end,
+                            token.value, token.span.start, token.span.end,
                         );
 
                         token_index += 1;

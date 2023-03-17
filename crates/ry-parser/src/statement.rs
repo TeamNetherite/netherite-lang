@@ -18,7 +18,7 @@ impl<'c> Parser<'c> {
 
         let mut stmts = vec![];
 
-        while !self.current.value.is(&RawToken::CloseBrace) {
+        while !self.current.value.is(RawToken::CloseBrace) {
             let (stmt, last) = self.parse_statement()?;
 
             stmts.push(stmt);
@@ -63,17 +63,13 @@ impl<'c> Parser<'c> {
 
                 check_token0!(self, "identifier", RawToken::Identifier(_), "var statement")?;
 
-                let name = (
-                    self.current.value.ident().unwrap(),
-                    self.current.span.clone(),
-                )
-                    .into();
+                let name = self.get_name();
 
                 self.advance()?; // id
 
                 let mut r#type = None;
 
-                if !self.current.value.is(&RawToken::Assign) {
+                if !self.current.value.is(RawToken::Assign) {
                     r#type = Some(self.parse_type()?);
                 }
 
@@ -91,7 +87,7 @@ impl<'c> Parser<'c> {
                 must_have_semicolon_at_the_end =
                     expression.value.deref().must_have_semicolon_at_the_end();
 
-                if !self.current.value.is(&RawToken::Semicolon) && must_have_semicolon_at_the_end {
+                if !self.current.value.is(RawToken::Semicolon) && must_have_semicolon_at_the_end {
                     last_statement_in_block = true;
                 }
 
