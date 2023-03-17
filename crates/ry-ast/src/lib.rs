@@ -1,5 +1,3 @@
-#![feature(auto_traits)]
-
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
 pub mod precedence;
