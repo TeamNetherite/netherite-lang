@@ -31,7 +31,7 @@ impl GraphvizTranslatorState {
 
     fn add_import_node(&mut self, import: &Import) -> u32 {
         let import_node = self.add_node("Import");
-        let filename_node = self.add_node(&import.filename.value);
+        let filename_node = self.add_node(&import.path.value);
         self.add_node_connections(&[import_node, filename_node]);
         import_node
     }
@@ -238,6 +238,7 @@ impl GraphvizTranslatorState {
 
                 root
             }
+            _ => unreachable!(),
         }
     }
 

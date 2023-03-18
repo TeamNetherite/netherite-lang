@@ -15,10 +15,10 @@ impl<'c> Parser<'c> {
 
         let mut end = self.current.span.end;
 
-        self.advance()?; // id
+        self.advance(false)?; // id
 
         while self.current.value.is(RawToken::DoubleColon) {
-            self.advance()?; // '::'
+            self.advance(false)?; // '::'
 
             check_token0!(self, "identifier", RawToken::Identifier(_), "name")?;
 
@@ -27,7 +27,7 @@ impl<'c> Parser<'c> {
 
             end = self.current.span.end;
 
-            self.advance()?; // id
+            self.advance(false)?; // id
         }
 
         name.pop();
@@ -60,7 +60,7 @@ impl<'c> Parser<'c> {
 
         while self.current.value.is(RawToken::QuestionMark) {
             lhs = Box::new(RawType::Option(lhs)).with_span(start..self.current.span.end);
-            self.advance()?;
+            self.advance(false)?;
         }
 
         Ok(lhs)
@@ -92,7 +92,7 @@ impl<'c> Parser<'c> {
 
     pub(crate) fn parse_type_generic_part(&mut self) -> ParserResult<Option<Vec<Type>>> {
         if self.current.value.is(RawToken::LessThan) {
-            self.advance()?; // '<'
+            self.advance(false)?; // '<'
 
             Ok(Some(parse_list!(
                 self,
@@ -109,7 +109,7 @@ impl<'c> Parser<'c> {
     fn parse_array_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.start;
 
-        self.advance()?; // '['
+        self.advance(false)?; // '['
 
         let inner_type = self.parse_type()?;
 
@@ -117,7 +117,7 @@ impl<'c> Parser<'c> {
 
         let end = self.current.span.end;
 
-        self.advance()?; // ']'
+        self.advance(false)?; // ']'
 
         Ok(WithSpan::new(
             Box::new(RawType::Array(inner_type)),
@@ -128,7 +128,7 @@ impl<'c> Parser<'c> {
     fn parse_pointer_type(&mut self) -> ParserResult<Type> {
         let start = self.current.span.start;
 
-        self.advance()?; // '*'
+        self.advance(false)?; // '*'
 
         let inner_type = self.parse_type()?;
 
@@ -147,10 +147,10 @@ impl<'c> Parser<'c> {
             return Ok(generics);
         }
 
-        self.advance()?; // '<'
+        self.advance(false)?; // '<'
 
         if self.current.value.is(RawToken::GreaterThan) {
-            self.advance()?; // '>'
+            self.advance(false)?; // '>'
             return Ok(generics);
         }
 
@@ -177,12 +177,12 @@ impl<'c> Parser<'c> {
             if !self.current.value.is(RawToken::Comma) {
                 check_token!(self, RawToken::GreaterThan, "generic annotations")?;
 
-                self.advance()?; // >
+                self.advance(false)?; // >
 
                 return Ok(generics);
             }
 
-            self.advance()?;
+            self.advance(false)?;
         }
     }
 
@@ -192,7 +192,7 @@ impl<'c> Parser<'c> {
         let name = self.current.value.ident().unwrap();
         let end = self.current.span.end;
 
-        self.advance()?; // id
+        self.advance(false)?; // id
 
         Ok(name.with_span(start..end))
     }

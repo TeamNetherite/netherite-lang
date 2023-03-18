@@ -4,6 +4,7 @@ use ry_ast::token::RawToken;
 use ry_lexer::Lexer;
 use ry_parser::Parser;
 use ry_report::{Reporter, ReporterState};
+use ry_static_analyzer::StaticAnalyzer;
 use std::{fs, process::exit};
 
 fn cli() -> Command {
@@ -26,6 +27,12 @@ fn cli() -> Command {
         .subcommand(
             Command::new("graphviz")
                 .about("Parse source code and print AST in graphviz format")
+                .arg(arg!(<PATH> "source file path"))
+                .arg_required_else_help(true),
+        )
+        .subcommand(
+            Command::new("analyze")
+                .about("Parse source code and analyze AST using static analysis tools")
                 .arg(arg!(<PATH> "source file path"))
                 .arg_required_else_help(true),
         )
@@ -82,6 +89,40 @@ fn main() {
                     match ast {
                         Ok(program_unit) => {
                             println!("{:?}", program_unit);
+                        }
+                        Err(e) => {
+                            e.emit_diagnostic(&reporter, &files, file_id);
+
+                            reporter
+                                .emit_global_error("cannot output AST due to the previous errors");
+
+                            exit(1);
+                        }
+                    }
+                }
+                Err(_) => {
+                    reporter.emit_global_error("cannot read given file");
+                    exit(1);
+                }
+            }
+        }
+        Some(("analyze", sub_matches)) => {
+            let filepath = sub_matches.get_one::<String>("PATH").unwrap();
+
+            match fs::read_to_string(filepath) {
+                Ok(contents) => {
+                    let file_id = files.add(filepath, &contents);
+                    let mut parser = Parser::new(&contents);
+
+                    let ast = parser.parse();
+
+                    match ast {
+                        Ok(program_unit) => {
+                            let mut analyzer = StaticAnalyzer::new(file_id, program_unit, &files);
+                            analyzer.analyze();
+                            for e in &analyzer.output {
+                                e.1.emit_diagnostic(&reporter, &files, e.0);
+                            }
                         }
                         Err(e) => {
                             e.emit_diagnostic(&reporter, &files, file_id);

@@ -5,7 +5,7 @@ use ry_ast::token::*;
 use ry_ast::*;
 use ry_lexer::Lexer;
 
-use crate::error::ParserError;
+use error::ParserError;
 
 pub mod error;
 
@@ -51,20 +51,16 @@ impl<'c> Parser<'c> {
         }
     }
 
-    fn advance0(&mut self) -> ParserResult<()> {
+    fn advance(&mut self, consume_comment: bool) -> ParserResult<()> {
         self.check_scanning_error()?;
 
         self.previous = Some(take(&mut self.current));
-        self.current = self.lexer.next().unwrap();
 
-        Ok(())
-    }
-
-    fn advance(&mut self) -> ParserResult<()> {
-        self.check_scanning_error()?;
-
-        self.previous = Some(take(&mut self.current));
-        self.current = self.lexer.next_no_comments().unwrap();
+        self.current = if consume_comment {
+            self.lexer.next().unwrap()
+        } else {
+            self.lexer.next_no_comments().unwrap()
+        };
 
         Ok(())
     }
@@ -86,7 +82,7 @@ impl<'c> Parser<'c> {
                 return Ok((module_docstring, local_docstring));
             }
 
-            self.advance0()?;
+            self.advance(true)?;
         }
     }
 
@@ -104,7 +100,7 @@ impl<'c> Parser<'c> {
                 return Ok(result);
             }
 
-            self.advance0()?;
+            self.advance(true)?;
         }
     }
 
@@ -133,23 +129,16 @@ impl<'c> Parser<'c> {
                     RawToken::Enum => self.parse_enum_declaration(None)?,
                     RawToken::Impl => self.parse_impl()?,
                     RawToken::Pub => {
-                        self.advance()?;
+                        let pub_span = self.current.span;
+                        self.advance(false)?;
 
                         self.check_scanning_error()?;
 
                         match self.current.value {
-                            RawToken::Fun => {
-                                self.parse_function_declaration(Some(self.current.span))?
-                            }
-                            RawToken::Struct => {
-                                self.parse_struct_declaration(Some(self.current.span))?
-                            }
-                            RawToken::Trait => {
-                                self.parse_trait_declaration(Some(self.current.span))?
-                            }
-                            RawToken::Enum => {
-                                self.parse_enum_declaration(Some(self.current.span))?
-                            }
+                            RawToken::Fun => self.parse_function_declaration(Some(pub_span))?,
+                            RawToken::Struct => self.parse_struct_declaration(Some(pub_span))?,
+                            RawToken::Trait => self.parse_trait_declaration(Some(pub_span))?,
+                            RawToken::Enum => self.parse_enum_declaration(Some(pub_span))?,
                             _ => {
                                 return Err(ParserError::UnexpectedToken(
                                     self.current.clone(),
@@ -160,16 +149,11 @@ impl<'c> Parser<'c> {
                         }
                     }
                     RawToken::Import => {
-                        let start = self.current.span.start;
+                        let import = self.parse_import()?;
 
-                        self.parse_import()?;
+                        self.advance(false)?; // ';'
 
-                        let end = self.current.span.end;
-                        self.advance()?; // ';'
-
-                        return Err(ParserError::ImportAfterTopLevelStatement(
-                            (start..end).into(),
-                        ));
+                        TopLevelStatement::Import(import)
                     }
                     RawToken::EndOfFile => break,
                     _ => {
@@ -178,7 +162,7 @@ impl<'c> Parser<'c> {
                             "top level declaration".to_owned(),
                             None,
                         ));
-                        self.advance()?;
+                        self.advance(false)?;
                         return err;
                     }
                 },

@@ -21,12 +21,12 @@ pub struct ProgramUnit {
 /// Import
 ///
 /// ```ry
-/// import "test.ry";
-///        --------- `filename`
+/// import std::io;
+///        ------- `path`
 /// ```
 #[derive(Debug, PartialEq)]
 pub struct Import {
-    pub filename: WithSpan<String>,
+    pub path: WithSpan<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -36,6 +36,9 @@ pub enum TopLevelStatement {
     TraitDecl(TraitDecl),
     Impl(Impl),
     EnumDecl(EnumDecl),
+
+    // just for better errors
+    Import(Import),
 }
 
 /// Function declaration top level statement

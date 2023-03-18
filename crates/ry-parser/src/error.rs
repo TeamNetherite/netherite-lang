@@ -3,24 +3,24 @@ use codespan_reporting::diagnostic::{Diagnostic, Label};
 use ry_ast::location::*;
 use ry_ast::token::{LexerError, RawToken, Token};
 use ry_report::Reporter;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ParserError {
     /// Error appeared in lexing stage.
+    #[error("scanning error appeared in the process")]
     ErrorToken(WithSpan<LexerError>),
 
     /// Unexpected token [`Token`] in AST Node called
     /// [`Option<String>`], expected [`String`].
+    #[error("unexpected token `{0:?}` in `{2:?}`, expected `{1}`")]
     UnexpectedToken(Token, String, Option<String>),
 
     /// Unexpected token [`Token`], expected [`RawToken`]
     /// in AST Node called [`String`]  if [`Option<String>`]
     /// is `Some(String)`.
+    #[error("unexpected token `{0:?}`, expected `{1:?}` in `{2:?}`")]
     UnexpectedTokenExpectedX(Token, RawToken, Option<String>),
-
-    /// Appears when `import` keyword is found after top level statement(-s)
-    /// [`Span`] here is location of `import` statement.
-    ImportAfterTopLevelStatement(Span),
 }
 
 impl<'source> Reporter<'source> for ParserError {
@@ -59,15 +59,6 @@ impl<'source> Reporter<'source> for ParserError {
                     .with_labels(vec![
                         Label::primary(file_id, got.span).with_message(label_message)
                     ])
-            }
-            Self::ImportAfterTopLevelStatement(name) => {
-                Diagnostic::error()
-                    .with_message("import statement is found after top level statement(-s)".to_owned())
-                    .with_code("E003")
-                    .with_labels(vec![
-                        Label::primary(file_id, *name).with_message("this import statement must not be here")
-                    ])
-                    .with_notes(vec!["note: imports are placed at the beginning of source file, so consider placing it there".to_owned()])
             }
         }
     }

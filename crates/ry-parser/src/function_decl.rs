@@ -9,7 +9,7 @@ impl<'c> Parser<'c> {
         &mut self,
         public: Option<Span>,
     ) -> ParserResult<TopLevelStatement> {
-        self.advance()?; // 'fun'
+        self.advance(false)?; // 'fun'
 
         check_token0!(
             self,
@@ -20,13 +20,13 @@ impl<'c> Parser<'c> {
 
         let name = self.get_name();
 
-        self.advance()?; // name
+        self.advance(false)?; // name
 
         let generic_annotations = self.parse_generic_annotations()?;
 
         check_token!(self, RawToken::OpenParent, "function declaration")?;
 
-        self.advance()?; // '('
+        self.advance(false)?; // '('
 
         let arguments = parse_list!(
             self,
@@ -65,14 +65,14 @@ impl<'c> Parser<'c> {
 
         let name = self.get_name();
 
-        self.advance()?; // name
+        self.advance(false)?; // name
 
         let r#type = self.parse_type()?;
 
         let mut default_value = None;
 
         if self.current.value.is(RawToken::Assign) {
-            self.advance()?;
+            self.advance(false)?;
 
             default_value = Some(self.parse_expression(Precedence::Lowest.to_i8().unwrap())?);
         }

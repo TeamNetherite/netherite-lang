@@ -8,7 +8,7 @@ impl<'c> Parser<'c> {
         &mut self,
         public: Option<Span>,
     ) -> ParserResult<TopLevelStatement> {
-        self.advance()?; // 'struct'
+        self.advance(false)?; // 'struct'
 
         check_token0!(
             self,
@@ -19,19 +19,19 @@ impl<'c> Parser<'c> {
 
         let name = self.get_name();
 
-        self.advance()?; // 'name'
+        self.advance(false)?; // 'name'
 
         let generic_annotations = self.parse_generic_annotations()?;
 
         check_token!(self, RawToken::OpenBrace, "struct declaration")?;
 
-        self.advance0()?; // '{'
+        self.advance(true)?; // '{'
 
         let members = self.parse_struct_members()?;
 
         check_token!(self, RawToken::CloseBrace, "struct declaration")?;
 
-        self.advance0()?; // '}'
+        self.advance(true)?; // '}'
 
         Ok(TopLevelStatement::StructDecl(StructDecl {
             generic_annotations,
@@ -46,7 +46,7 @@ impl<'c> Parser<'c> {
 
         if self.current.value.is(RawToken::Pub) {
             public = Some(self.current.span);
-            self.advance()?;
+            self.advance(false)?;
         }
 
         check_token0!(
@@ -58,13 +58,13 @@ impl<'c> Parser<'c> {
 
         let name = self.get_name();
 
-        self.advance()?;
+        self.advance(false)?;
 
         let r#type = self.parse_type()?;
 
         check_token!(self, RawToken::Semicolon, "struct member definition")?;
 
-        self.advance0()?; // ';'
+        self.advance(true)?; // ';'
 
         Ok(StructMemberDef {
             public,

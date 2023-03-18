@@ -4,8 +4,11 @@
 //! AST node.
 use std::ops::Range;
 
+use derive_more::Display;
+
 /// Represents code block location in source text.
-#[derive(Clone, Debug, PartialEq, Default, Copy)]
+#[derive(Clone, Debug, PartialEq, Default, Copy, Display, Eq)]
+#[display(fmt = "{}..{}", start, end)]
 pub struct Span {
     pub start: usize,
     pub end: usize,

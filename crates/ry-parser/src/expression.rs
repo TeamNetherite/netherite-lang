@@ -15,7 +15,7 @@ impl<'c> Parser<'c> {
 
                     let op = self.current.clone();
                     let precedence = self.current.value.to_precedence();
-                    self.advance()?; // op
+                    self.advance(false)?; // op
 
                     let right = self.parse_expression(precedence)?;
 
@@ -26,12 +26,12 @@ impl<'c> Parser<'c> {
                 RawToken::OpenParent => {
                     let start = left.span.start;
 
-                    self.advance()?; // '('
+                    self.advance(false)?; // '('
 
                     let arguments = parse_list!(
                         self,
                         "call arguments list",
-                        &RawToken::CloseParent,
+                        RawToken::CloseParent,
                         false,
                         || self.parse_expression(Precedence::Lowest.to_i8().unwrap())
                     );
@@ -41,7 +41,7 @@ impl<'c> Parser<'c> {
                     Box::new(RawExpression::Call(vec![], left, arguments)).with_span(start..end)
                 }
                 RawToken::Dot => {
-                    self.advance()?; // `.`
+                    self.advance(false)?; // `.`
 
                     if self.current.value.is(RawToken::LessThan) {
                         let start = left.span.start;
@@ -50,12 +50,12 @@ impl<'c> Parser<'c> {
 
                         check_token!(self, RawToken::OpenParent, "call")?;
 
-                        self.advance()?; // '('
+                        self.advance(false)?; // '('
 
                         let arguments = parse_list!(
                             self,
                             "generics for call",
-                            &RawToken::CloseParent,
+                            RawToken::CloseParent,
                             false,
                             || self.parse_expression(Precedence::Lowest.to_i8().unwrap())
                         );
@@ -81,7 +81,7 @@ impl<'c> Parser<'c> {
                         let name = self.get_name();
                         let end = self.current.span.end;
 
-                        self.advance()?; // id
+                        self.advance(false)?; // id
 
                         Box::new(RawExpression::Property(left, name)).with_span(start..end)
                     }
@@ -89,7 +89,7 @@ impl<'c> Parser<'c> {
                 RawToken::OpenBracket => {
                     let start = left.span.start;
 
-                    self.advance()?; // '['
+                    self.advance(false)?; // '['
 
                     let inner_expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
 
@@ -97,7 +97,7 @@ impl<'c> Parser<'c> {
 
                     let end = self.current.span.end;
 
-                    self.advance()?; // ']'
+                    self.advance(false)?; // ']'
 
                     Box::new(RawExpression::Index(left, inner_expr)).with_span(start..end)
                 }
@@ -105,12 +105,12 @@ impl<'c> Parser<'c> {
                     let right = self.current.clone();
                     let span = left.span.start..self.current.span.end;
 
-                    self.advance()?; // right
+                    self.advance(false)?; // right
 
                     Box::new(RawExpression::PrefixOrPostfix(right, left)).with_span(span)
                 }
                 RawToken::As => {
-                    self.advance()?; // as
+                    self.advance(false)?; // as
 
                     let r#type = self.parse_type()?;
 
@@ -133,7 +133,7 @@ impl<'c> Parser<'c> {
                 let value = *i;
                 let span = self.current.span;
 
-                self.advance()?; // int
+                self.advance(false)?; // int
 
                 Ok(Box::new(RawExpression::Int(value)).with_span(span))
             }
@@ -141,7 +141,7 @@ impl<'c> Parser<'c> {
                 let value = *f;
                 let span = self.current.span;
 
-                self.advance()?; // float
+                self.advance(false)?; // float
 
                 Ok(Box::new(RawExpression::Float(value)).with_span(span))
             }
@@ -149,7 +149,7 @@ impl<'c> Parser<'c> {
                 let value = *i;
                 let span = self.current.span;
 
-                self.advance()?; // imag
+                self.advance(false)?; // imag
 
                 Ok(Box::new(RawExpression::Imag(value)).with_span(span))
             }
@@ -157,7 +157,7 @@ impl<'c> Parser<'c> {
                 let value = s.to_owned();
                 let span = self.current.span;
 
-                self.advance()?; // string
+                self.advance(false)?; // string
 
                 Ok(Box::new(RawExpression::String(value)).with_span(span))
             }
@@ -165,7 +165,7 @@ impl<'c> Parser<'c> {
                 let value = *c;
                 let span = self.current.span;
 
-                self.advance()?; // char
+                self.advance(false)?; // char
 
                 Ok(Box::new(RawExpression::Char(value)).with_span(span))
             }
@@ -173,7 +173,7 @@ impl<'c> Parser<'c> {
                 let value = *b;
                 let span = self.current.span;
 
-                self.advance()?; // bool
+                self.advance(false)?; // bool
 
                 Ok(Box::new(RawExpression::Bool(value)).with_span(span))
             }
@@ -185,7 +185,7 @@ impl<'c> Parser<'c> {
             | RawToken::Plus => {
                 let left = self.current.clone();
                 let start = left.span.start;
-                self.advance()?; // left
+                self.advance(false)?; // left
 
                 let expr = self.parse_expression(Precedence::PrefixOrPostfix.to_i8().unwrap())?;
                 let end = expr.span.end;
@@ -193,24 +193,23 @@ impl<'c> Parser<'c> {
                 Ok(Box::new(RawExpression::PrefixOrPostfix(left, expr)).with_span(start..end))
             }
             RawToken::OpenParent => {
-                self.advance()?; // '('
+                self.advance(false)?; // '('
 
                 let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
 
                 check_token!(self, RawToken::CloseParent, "parenthesized expression")?;
 
-                self.advance()?; // ')'
+                self.advance(false)?; // ')'
 
                 Ok(expr)
             }
             RawToken::OpenBracket => {
                 let start = self.current.span.start;
-                self.advance()?; // '['
+                self.advance(false)?; // '['
 
-                let list =
-                    parse_list!(self, "list literal", &RawToken::CloseBracket, false, || {
-                        self.parse_expression(Precedence::Lowest.to_i8().unwrap())
-                    });
+                let list = parse_list!(self, "list literal", RawToken::CloseBracket, false, || {
+                    self.parse_expression(Precedence::Lowest.to_i8().unwrap())
+                });
 
                 let end = self.previous.as_ref().unwrap().span.end;
 
@@ -223,7 +222,7 @@ impl<'c> Parser<'c> {
             }
             RawToken::If => {
                 let start = self.current.span.start;
-                self.advance()?;
+                self.advance(false)?;
 
                 let if_condition = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
                 let if_statements_block = self.parse_statements_block(false)?;
@@ -232,14 +231,14 @@ impl<'c> Parser<'c> {
                 let mut else_if_chains = vec![];
 
                 while self.current.value.is(RawToken::Else) {
-                    self.advance()?; // else
+                    self.advance(false)?; // else
 
                     if !self.current.value.is(RawToken::If) {
                         else_statements_block = Some(self.parse_statements_block(false)?);
                         break;
                     }
 
-                    self.advance()?; // if
+                    self.advance(false)?; // if
 
                     let else_if_condition =
                         self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
@@ -261,7 +260,7 @@ impl<'c> Parser<'c> {
             RawToken::While => {
                 let start = self.current.span.start;
 
-                self.advance()?; // 'while'
+                self.advance(false)?; // 'while'
 
                 let condition = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
                 let block = self.parse_statements_block(false)?;

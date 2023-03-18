@@ -8,7 +8,7 @@ impl<'c> Parser<'c> {
         &mut self,
         public: Option<Span>,
     ) -> ParserResult<TopLevelStatement> {
-        self.advance()?; // 'trait'
+        self.advance(false)?; // 'trait'
 
         check_token0!(
             self,
@@ -19,19 +19,19 @@ impl<'c> Parser<'c> {
 
         let name = self.get_name();
 
-        self.advance()?; // 'name'
+        self.advance(false)?; // 'name'
 
         let generic_annotations = self.parse_generic_annotations()?;
 
         check_token!(self, RawToken::OpenBrace, "trait declaration")?;
 
-        self.advance0()?; // '{'
+        self.advance(true)?; // '{'
 
         let methods = self.parse_trait_methods()?;
 
         check_token!(self, RawToken::CloseBrace, "trait declaration")?;
 
-        self.advance0()?; // '}'
+        self.advance(true)?; // '}'
 
         Ok(TopLevelStatement::TraitDecl(TraitDecl {
             public,
@@ -59,12 +59,12 @@ impl<'c> Parser<'c> {
 
         if self.current.value.is(RawToken::Pub) {
             public = Some(self.current.span);
-            self.advance()?; // pub
+            self.advance(false)?; // pub
         }
 
         check_token!(self, RawToken::Fun, "trait method")?;
 
-        self.advance()?; // 'fun'
+        self.advance(false)?; // 'fun'
 
         check_token0!(
             self,
@@ -75,13 +75,13 @@ impl<'c> Parser<'c> {
 
         let name = self.get_name();
 
-        self.advance()?; // name
+        self.advance(false)?; // name
 
         let generic_annotations = self.parse_generic_annotations()?;
 
         check_token!(self, RawToken::OpenParent, "trait method")?;
 
-        self.advance()?; // '('
+        self.advance(false)?; // '('
 
         let arguments = parse_list!(
             self,
@@ -102,7 +102,7 @@ impl<'c> Parser<'c> {
         let mut body = None;
 
         match self.current.value {
-            RawToken::Semicolon => self.advance0()?,
+            RawToken::Semicolon => self.advance(true)?,
             RawToken::OpenBrace => {
                 body = Some(self.parse_statements_block(true)?);
             }

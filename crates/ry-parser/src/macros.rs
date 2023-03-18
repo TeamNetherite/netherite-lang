@@ -60,11 +60,7 @@ macro_rules! parse_list {
                     } else {
                         check_token0!($p, format!("`,` or {}", $closing_token), RawToken::Comma, $name)?;
 
-                        if $top_level {
-                            $p.advance0()?; // `,`
-                        } else {
-                            $p.advance()?; // ','
-                        }
+                        $p.advance($top_level)?; // ','
 
                         if $p.current.value.is($closing_token) {
                             break
@@ -73,11 +69,7 @@ macro_rules! parse_list {
                 }
             }
 
-            if $top_level {
-                $p.advance0()?; // $closing_token
-            } else {
-                $p.advance()?; // $closing_token
-            }
+            $p.advance($top_level)?; // $closing_token
 
             result
         }

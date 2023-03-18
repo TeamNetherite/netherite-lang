@@ -9,10 +9,10 @@ impl<'c> Parser<'c> {
 
         if self.current.value.is(RawToken::Pub) {
             public = Some(self.current.span);
-            self.advance()?; // `pub`
+            self.advance(false)?; // `pub`
         }
 
-        self.advance()?; // `impl`
+        self.advance(false)?; // `impl`
 
         let generic_annotations = self.parse_generic_annotations()?;
 
@@ -20,7 +20,7 @@ impl<'c> Parser<'c> {
         let mut r#trait = None;
 
         if self.current.value.is(RawToken::For) {
-            self.advance()?; // `for`
+            self.advance(false)?; // `for`
 
             r#trait = Some(r#type);
             r#type = self.parse_type()?;
@@ -28,13 +28,13 @@ impl<'c> Parser<'c> {
 
         check_token!(self, RawToken::OpenBrace, "type implementation")?;
 
-        self.advance()?; // '{'
+        self.advance(false)?; // '{'
 
         let methods = self.parse_trait_methods()?;
 
         check_token!(self, RawToken::CloseBrace, "type implementation")?;
 
-        self.advance0()?; // '}'
+        self.advance(true)?; // '}'
 
         Ok(TopLevelStatement::Impl(Impl {
             public,

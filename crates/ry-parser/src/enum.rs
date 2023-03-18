@@ -8,7 +8,7 @@ impl<'c> Parser<'c> {
         &mut self,
         public: Option<Span>,
     ) -> ParserResult<TopLevelStatement> {
-        self.advance()?; // 'enum'
+        self.advance(false)?; // 'enum'
 
         check_token0!(
             self,
@@ -19,11 +19,11 @@ impl<'c> Parser<'c> {
 
         let name = self.get_name();
 
-        self.advance()?; // 'name'
+        self.advance(false)?; // 'name'
 
         check_token!(self, RawToken::OpenBrace, "enum declaration")?;
 
-        self.advance0()?; // '{'
+        self.advance(true)?; // '{'
 
         let variants = parse_list!(
             self,
@@ -37,7 +37,7 @@ impl<'c> Parser<'c> {
 
                 let variant = self.get_name();
 
-                self.advance()?; // id
+                self.advance(false)?; // id
 
                 Ok((doc, variant))
             }

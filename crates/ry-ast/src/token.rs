@@ -3,64 +3,67 @@
 
 use std::mem::{discriminant, replace};
 
-use derive_more::Display;
 use phf::phf_map;
 
+use derive_more::Display;
+
 use num_traits::ToPrimitive;
+
+use thiserror::Error;
 
 use crate::location::WithSpan;
 use crate::precedence::Precedence;
 
 /// Represents error that lexer can fail with.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Error, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum LexerError {
-    #[display(fmt = "unexpected character `{_0}`")]
+    #[error("unexpected character `{_0}`")]
     UnexpectedChar(char),
-    #[display(fmt = "unterminated wrapped identifier literal")]
+    #[error("unterminated wrapped identifier literal")]
     UnterminatedWrappedIdentifierLiteral,
-    #[display(fmt = "empty wrapped identifier literal")]
+    #[error("empty wrapped identifier literal")]
     EmptyWrappedIdentifierLiteral,
-    #[display(fmt = "unterminated string literal")]
+    #[error("unterminated string literal")]
     UnterminatedStringLiteral,
-    #[display(fmt = "unknown escape sequence")]
+    #[error("unknown escape sequence")]
     UnknownEscapeSequence,
-    #[display(fmt = "empty escape sequence")]
+    #[error("empty escape sequence")]
     EmptyEscapeSequence,
-    #[display(fmt = "expected closing bracket (`}}`) in unicode escape sequence")]
+    #[error("expected closing bracket (`}}`) in unicode escape sequence")]
     ExpectedCloseBracketInUnicodeEscapeSequence,
-    #[display(fmt = "expected opening bracket (`{{`) in unicode escape sequence")]
+    #[error("expected opening bracket (`{{`) in unicode escape sequence")]
     ExpectedOpenBracketInUnicodeEscapeSequence,
-    #[display(fmt = "expected hexadecimal digit in unicode escape sequence")]
+    #[error("expected hexadecimal digit in unicode escape sequence")]
     ExpectedDigitInUnicodeEscapeSequence,
-    #[display(fmt = "such unicode character does not exists")]
+    #[error("such unicode character does not exists")]
     InvalidUnicodeEscapeSequence,
-    #[display(fmt = "expected closing bracket (`}}`) in byte escape sequence")]
+    #[error("expected closing bracket (`}}`) in byte escape sequence")]
     ExpectedCloseBracketInByteEscapeSequence,
-    #[display(fmt = "expected opening bracket (`{{`) in byte escape sequence")]
+    #[error("expected opening bracket (`{{`) in byte escape sequence")]
     ExpectedOpenBracketInByteEscapeSequence,
-    #[display(fmt = "expected hexadecimal digit in byte escape sequence")]
+    #[error("expected hexadecimal digit in byte escape sequence")]
     ExpectedDigitInByteEscapeSequence,
-    #[display(fmt = "such byte does not exists")]
+    #[error("such byte does not exists")]
     InvalidByteEscapeSequence,
-    #[display(fmt = "empty character literal")]
+    #[error("empty character literal")]
     EmptyCharLiteral,
-    #[display(fmt = "unterminated character literal")]
+    #[error("unterminated character literal")]
     UnterminatedCharLiteral,
-    #[display(fmt = "character literal can only one character long")]
+    #[error("character literal can only one character long")]
     MoreThanOneCharInCharLiteral,
-    #[display(fmt = "invalid radix point")]
+    #[error("invalid radix point")]
     InvalidRadixPoint,
-    #[display(fmt = "has no digits")]
+    #[error("has no digits")]
     HasNoDigits,
-    #[display(fmt = "exponent requires decimal mantissa")]
+    #[error("exponent requires decimal mantissa")]
     ExponentRequiresDecimalMantissa,
-    #[display(fmt = "exponent has no digits")]
+    #[error("exponent has no digits")]
     ExponentHasNoDigits,
-    #[display(fmt = "digit doesn't correspond to the base")]
+    #[error("digit doesn't correspond to the base")]
     InvalidDigit,
-    #[display(fmt = "number parsing error (overflow is possible)")]
+    #[error("number parsing error (overflow is possible)")]
     NumberParserError,
-    #[display(fmt = "underscore must seperate successive digits")]
+    #[error("underscore must seperate successive digits")]
     UnderscoreMustSeperateSuccessiveDigits,
 }
 

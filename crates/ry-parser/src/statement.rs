@@ -14,7 +14,7 @@ impl<'c> Parser<'c> {
     ) -> ParserResult<StatementsBlock> {
         check_token!(self, RawToken::OpenBrace, "statements block")?;
 
-        self.advance()?; // '{'
+        self.advance(false)?; // '{'
 
         let mut stmts = vec![];
 
@@ -31,9 +31,9 @@ impl<'c> Parser<'c> {
         check_token!(self, RawToken::CloseBrace, "statements block")?;
 
         if top_level {
-            self.advance0()?;
+            self.advance(true)?;
         } else {
-            self.advance()?;
+            self.advance(false)?;
         }
 
         Ok(stmts)
@@ -45,27 +45,27 @@ impl<'c> Parser<'c> {
 
         let statement = match self.current.value {
             RawToken::Return => {
-                self.advance()?; // return
+                self.advance(false)?; // return
 
                 let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
 
                 Ok(Statement::Return(expr))
             }
             RawToken::Defer => {
-                self.advance()?; // defer
+                self.advance(false)?; // defer
 
                 let expr = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
 
                 Ok(Statement::Defer(expr))
             }
             RawToken::Var => {
-                self.advance()?; // var
+                self.advance(false)?; // var
 
                 check_token0!(self, "identifier", RawToken::Identifier(_), "var statement")?;
 
                 let name = self.get_name();
 
-                self.advance()?; // id
+                self.advance(false)?; // id
 
                 let mut r#type = None;
 
@@ -75,7 +75,7 @@ impl<'c> Parser<'c> {
 
                 check_token!(self, RawToken::Assign, "var statement")?;
 
-                self.advance()?; // '='
+                self.advance(false)?; // '='
 
                 let value = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
 
@@ -101,7 +101,7 @@ impl<'c> Parser<'c> {
 
         if !last_statement_in_block && must_have_semicolon_at_the_end {
             check_token!(self, RawToken::Semicolon, "end of the statement")?;
-            self.advance()?; // ';'
+            self.advance(false)?; // ';'
         }
 
         Ok((statement, last_statement_in_block))
