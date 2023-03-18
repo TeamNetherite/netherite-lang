@@ -1,0 +1,9 @@
+public trait Drop {
+    public func drop(move this);
+}
+
+impl<T> Drop for T {
+    @std_blanket_drop
+    @override
+    public func drop(move this) {}
+}

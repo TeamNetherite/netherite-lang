@@ -1,3 +1,7 @@
 [submodule "crates/lapis"]
 	path = crates/lapis
 	url = https://github.com/topaz-lang/lapis
+[submodule "spec"]
+	path = spec
+	url = https://github.com/topaz-lang/spec
+	branch = main
