@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "crates/lapis",
+    "crates/topaz",
+    "crates/topaz-ast",
+    "crates/topaz-ast-to-graphviz",
+    "crates/topaz-doky",
+    "crates/topaz-gcc-codegen",
+    "crates/topaz-lexer",
+    "crates/topaz-llvm",
+    "crates/topaz-parser",
+    "crates/topaz-report",
+    "crates/topaz-type-checker"
+]

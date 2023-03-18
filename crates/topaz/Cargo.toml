@@ -1,0 +1,14 @@
+[package]
+name = "ry"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ry-parser = {path = "../topaz-parser" }
+ry-lexer = {path = "../topaz-lexer" }
+ry-report = {path = "../topaz-report" }
+ry-ast = {path = "../topaz-ast" }
+ry-ast-to-graphviz = {path = "../topaz-ast-to-graphviz" }
+ry-static-analyzer = {path = "../topaz-type-checker" }
+codespan-reporting = "0.11.1"
+clap = "4.1.4"

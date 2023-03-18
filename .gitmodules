@@ -1,0 +1,3 @@
+[submodule "lapis"]
+    path = crates/lapis
+    url = https://github.com/topaz-lang/lapis

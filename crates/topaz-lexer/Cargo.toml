@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ry-ast = {path = "../ry-ast"}
+ry-ast = {path = "../topaz-ast" }
