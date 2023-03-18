@@ -1,13 +1,3 @@
-enum Gamemode {
-    Human,
-    Alien,
-    @let is_admin = true
-    God
-}
-
-impl Gamemode {
-    @bind_name
-    let name: String;
-
-    let is_admin: bool;
+func hello() {
+    println("Hello world!");
 }
