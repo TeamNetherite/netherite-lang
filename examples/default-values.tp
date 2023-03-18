@@ -1,0 +1,3 @@
+pub fun print(string s = "default value") {
+    println(s);
+}
