@@ -4,8 +4,8 @@ use error::StaticAnalysisError;
 mod error;
 mod warning;
 
-use ry_ast::ProgramUnit;
-use ry_report::Reporter;
+use topaz_ast::ProgramUnit;
+use topaz_report::Reporter;
 use warning::StaticAnalysisWarning;
 
 pub enum StaticAnalysisOutputUnit {
@@ -51,7 +51,7 @@ impl<'a> StaticAnalyzer<'a> {
     pub fn analyze(&mut self) {
         for tlstmt in self.initial_ast.top_level_statements.iter() {
             match &tlstmt.1 {
-                ry_ast::TopLevelStatement::Import(filename) => {
+                topaz_ast::TopLevelStatement::Import(filename) => {
                     self.output.push((
                         self.current_file_id,
                         StaticAnalysisOutputUnit::Warning(
@@ -61,12 +61,12 @@ impl<'a> StaticAnalyzer<'a> {
                         ),
                     ));
                 }
-                ry_ast::TopLevelStatement::TraitDecl(t) => {
+                topaz_ast::TopLevelStatement::TraitDecl(t) => {
                     if let Some(p) = t.public {
                         self.output.push((
                             self.current_file_id,
                             StaticAnalysisOutputUnit::Warning(
-                                StaticAnalysisWarning::UnnecessaryVisibilityQualifier(p),
+                                StaticAnalysisWarning::UnnecessatopazVisibilityQualifier(p),
                             ),
                         ));
                     }

@@ -1,7 +1,7 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::*;
-use ry_ast::{location::*, token::*};
+use topaz_ast::*;
+use topaz_ast::{location::*, token::*};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_struct_declaration(
@@ -44,7 +44,7 @@ impl<'c> Parser<'c> {
     fn parse_struct_member(&mut self) -> ParserResult<StructMemberDef> {
         let mut public = None;
 
-        if self.current.value.is(RawToken::Pub) {
+        if self.current.value.is(RawToken::Public) {
             public = Some(self.current.span);
             self.advance(false)?;
         }

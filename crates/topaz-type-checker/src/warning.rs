@@ -1,12 +1,12 @@
 use codespan_reporting::diagnostic::{Diagnostic, Label};
-use ry_ast::location::Span;
-use ry_report::Reporter;
+use topaz_ast::location::Span;
+use topaz_report::Reporter;
 use thiserror::Error;
 
 #[derive(Error, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum StaticAnalysisWarning {
-    #[error("unnecessary visibility qualifier in {0}")]
-    UnnecessaryVisibilityQualifier(Span),
+    #[error("unnecessatopaz visibility qualifier in {0}")]
+    UnnecessatopazVisibilityQualifier(Span),
     #[error("import after first top level statement in {0}")]
     ImportAfterFirstTopLevelStatement(Span),
 }
@@ -22,13 +22,13 @@ impl<'source> Reporter<'source> for StaticAnalysisWarning {
                 .with_notes(vec![
                     "`#[warn(imports_after_fst_tlstmt)]` on by default".to_owned()
                 ]),
-            Self::UnnecessaryVisibilityQualifier(span) => Diagnostic::warning()
+            Self::UnnecessatopazVisibilityQualifier(span) => Diagnostic::warning()
                 .with_code("W002")
-                .with_message("unnecessary visibility qualifier found")
+                .with_message("unnecessatopaz visibility qualifier found")
                 .with_labels(vec![Label::primary(file_id, *span)
                     .with_message("consider removing `pub`, because it's implied")])
                 .with_notes(vec![
-                    "`#[warn(unnecessary_visibility_qualifier)]` on by default`".to_owned(),
+                    "`#[warn(unnecessatopaz_visibility_qualifier)]` on by default`".to_owned(),
                 ]),
             // _ => todo!(),
         }

@@ -1,9 +1,9 @@
 //! `lib.rs` - implements parser for Ry source files.
 use std::mem::take;
 
-use ry_ast::token::*;
-use ry_ast::*;
-use ry_lexer::Lexer;
+use topaz_ast::token::*;
+use topaz_ast::*;
+use topaz_lexer::Lexer;
 
 use error::ParserError;
 
@@ -65,7 +65,7 @@ impl<'c> Parser<'c> {
         Ok(())
     }
 
-    pub(crate) fn consume_fst_docstring(&mut self) -> ParserResult<(String, String)> {
+    pub(crate) fn consume_first_docstring(&mut self) -> ParserResult<(String, String)> {
         let (mut module_docstring, mut local_docstring) = ("".to_owned(), "".to_owned());
         loop {
             if let RawToken::Comment(s) = &self.current.value {
@@ -105,7 +105,7 @@ impl<'c> Parser<'c> {
     }
 
     pub fn parse(&mut self) -> ParserResult<ProgramUnit> {
-        let module_docstring = self.consume_fst_docstring()?;
+        let module_docstring = self.consume_first_docstring()?;
         Ok(ProgramUnit {
             docstring: module_docstring.0,
             imports: self.parse_imports()?,
@@ -123,19 +123,19 @@ impl<'c> Parser<'c> {
             top_level_statements.push((
                 local_docstring,
                 match self.current.value {
-                    RawToken::Fun => self.parse_function_declaration(None)?,
+                    RawToken::Func => self.parse_function_declaration(None)?,
                     RawToken::Struct => self.parse_struct_declaration(None)?,
                     RawToken::Trait => self.parse_trait_declaration(None)?,
                     RawToken::Enum => self.parse_enum_declaration(None)?,
                     RawToken::Impl => self.parse_impl()?,
-                    RawToken::Pub => {
+                    RawToken::Public => {
                         let pub_span = self.current.span;
                         self.advance(false)?;
 
                         self.check_scanning_error()?;
 
                         match self.current.value {
-                            RawToken::Fun => self.parse_function_declaration(Some(pub_span))?,
+                            RawToken::Func => self.parse_function_declaration(Some(pub_span))?,
                             RawToken::Struct => self.parse_struct_declaration(Some(pub_span))?,
                             RawToken::Trait => self.parse_trait_declaration(Some(pub_span))?,
                             RawToken::Enum => self.parse_enum_declaration(Some(pub_span))?,
@@ -147,7 +147,7 @@ impl<'c> Parser<'c> {
                                 ));
                             }
                         }
-                    }
+                    },
                     RawToken::Import => {
                         let import = self.parse_import()?;
 

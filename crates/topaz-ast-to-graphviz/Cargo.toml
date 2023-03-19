@@ -1,9 +1,9 @@
 [package]
-name = "ry-ast-to-graphviz"
+name = "topaz-ast-to-graphviz"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ry-ast = {path = "../topaz-ast" }
-ry-report = {path = "../topaz-report" }
-ry-parser = {path = "../topaz-parser" }
+topaz-ast = {path = "../topaz-ast" }
+topaz-report = {path = "../topaz-report" }
+topaz-parser = {path = "../topaz-parser" }

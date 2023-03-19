@@ -1,7 +1,7 @@
 [package]
-name = "ry-report"
+name = "topaz-report"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-codespan-reporting = "0.11.1"
+codespan-reporting.path = "../cool-reporting/topaz-cool-reporting"

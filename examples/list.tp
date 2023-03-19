@@ -1,7 +1,5 @@
-pub fun test() i32 {
-    2
-}
+public func test() -> i32 = 2;
 
-pub fun test2() {
+public func test2() {
     [1, test(), 3 + 2]
 }

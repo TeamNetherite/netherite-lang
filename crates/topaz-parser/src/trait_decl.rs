@@ -1,7 +1,7 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::*;
-use ry_ast::{location::Span, token::RawToken};
+use topaz_ast::*;
+use topaz_ast::{location::Span, token::RawToken};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_trait_declaration(
@@ -57,12 +57,12 @@ impl<'c> Parser<'c> {
     fn parse_trait_method(&mut self) -> ParserResult<TraitMethod> {
         let mut public = None;
 
-        if self.current.value.is(RawToken::Pub) {
+        if self.current.value.is(RawToken::Public) {
             public = Some(self.current.span);
             self.advance(false)?; // pub
         }
 
-        check_token!(self, RawToken::Fun, "trait method")?;
+        check_token!(self, RawToken::Func, "trait method")?;
 
         self.advance(false)?; // 'fun'
 

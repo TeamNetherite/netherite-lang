@@ -1,13 +1,13 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::token::RawToken;
-use ry_ast::*;
+use topaz_ast::token::RawToken;
+use topaz_ast::*;
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_impl(&mut self) -> ParserResult<TopLevelStatement> {
         let mut public = None;
 
-        if self.current.value.is(RawToken::Pub) {
+        if self.current.value.is(RawToken::Public) {
             public = Some(self.current.span);
             self.advance(false)?; // `pub`
         }

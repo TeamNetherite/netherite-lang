@@ -1,8 +1,8 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
 use num_traits::ToPrimitive;
-use ry_ast::*;
-use ry_ast::{precedence::Precedence, token::RawToken};
+use topaz_ast::*;
+use topaz_ast::{precedence::Precedence, token::RawToken};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_expression(&mut self, precedence: i8) -> ParserResult<Expression> {

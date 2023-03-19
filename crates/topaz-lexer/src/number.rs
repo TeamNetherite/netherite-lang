@@ -1,4 +1,4 @@
-use ry_ast::{
+use topaz_ast::{
     location::Span,
     token::{LexerError, NumberKind, RawToken, Token},
 };
@@ -197,7 +197,7 @@ impl Lexer<'_> {
 
         if digit_separator & 2 != 0 && s >= 0 {
             return Some(Token::new(
-                RawToken::Invalid(LexerError::UnderscoreMustSeperateSuccessiveDigits),
+                RawToken::Invalid(LexerError::UnderscoreMustSeparateSuccessiveDigits),
                 Span::from_location(s as usize + self.start_location, 1),
             ));
         }

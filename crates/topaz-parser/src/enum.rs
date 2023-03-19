@@ -1,7 +1,7 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::*;
-use ry_ast::{location::Span, token::RawToken};
+use topaz_ast::*;
+use topaz_ast::{location::Span, token::RawToken};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_enum_declaration(

@@ -1,5 +1,5 @@
-use ry_ast::{location::WithSpan, *};
 use std::ops::Deref;
+use topaz_ast::{location::WithSpan, *};
 
 pub struct GraphvizTranslatorState {
     current_node_index: u32,
@@ -66,7 +66,7 @@ impl GraphvizTranslatorState {
 
                 if let Some(t) = &f.def.return_type {
                     let return_type_node_root = self.add_node("ReturnType");
-                    let return_type_node = self.add_type_node(t.value.deref());
+                    let return_type_node = self.add_type_node(t.1.value.deref());
                     self.add_node_connections(&[root, return_type_node_root, return_type_node]);
                 }
 
@@ -292,13 +292,20 @@ impl GraphvizTranslatorState {
 
                 node
             }
-            Statement::Var(name, r#type, value) => {
-                let node = self.add_node("VarStatement");
+            Statement::Let(mutable, name, r#type, value) => {
+                let node = self.add_node("LetStatement");
+
+                let mutable_node_root = self.add_node("Mutable");
+                let mutable_node = self.add_node(&mutable.is_some().to_string());
+
+                self.add_node_connections(&[node, mutable_node_root, mutable_node]);
+
 
                 let name_node_root = self.add_node("Name");
                 let name_node = self.add_node(&name.value);
 
                 self.add_node_connections(&[node, name_node_root, name_node]);
+
 
                 if let Some(t) = r#type {
                     let type_node_root = self.add_node("Type");
@@ -434,7 +441,7 @@ impl GraphvizTranslatorState {
                 root
             }
             RawExpression::Binary(lhs, op, rhs) => {
-                let root = self.add_node("BinaryExpr");
+                let root = self.add_node("BinatopazExpr");
                 let op_node_root = self.add_node("Op");
                 let op_node = self.add_node(&op.value.to_string());
 

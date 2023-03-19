@@ -2,7 +2,7 @@ use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
 use num_traits::ToPrimitive;
 
-use ry_ast::{location::Span, precedence::Precedence, token::RawToken, *};
+use topaz_ast::{location::Span, precedence::Precedence, token::RawToken, *};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_function_declaration(
@@ -39,7 +39,9 @@ impl<'c> Parser<'c> {
         let mut return_type = None;
 
         if !self.current.value.is(RawToken::OpenBrace) {
-            return_type = Some(self.parse_type()?);
+            self.advance(false)?;
+            self.advance(false)?; // '->'
+            return_type = Some((self.current.value.clone(), self.parse_type()?));
         }
 
         let stmts = self.parse_statements_block(true)?;
@@ -66,6 +68,15 @@ impl<'c> Parser<'c> {
         let name = self.get_name();
 
         self.advance(false)?; // name
+        if self.current.value != RawToken::Colon {
+            return Err(ParserError::UnexpectedTokenExpectedX(
+                self.current.clone(),
+                self.current.value.clone(),
+                Some(":".to_string()),
+            ));
+        }
+        let colon = self.current.value.clone();
+        self.advance(false)?; // :
 
         let r#type = self.parse_type()?;
 
@@ -79,6 +90,7 @@ impl<'c> Parser<'c> {
 
         Ok(FunctionParam {
             name,
+            colon,
             r#type,
             default_value,
         })

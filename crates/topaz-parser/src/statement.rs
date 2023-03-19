@@ -4,14 +4,11 @@ use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
 use num_traits::ToPrimitive;
 
-use ry_ast::*;
-use ry_ast::{precedence::Precedence, token::RawToken};
+use topaz_ast::*;
+use topaz_ast::{precedence::Precedence, token::RawToken};
 
 impl<'c> Parser<'c> {
-    pub(crate) fn parse_statements_block(
-        &mut self,
-        top_level: bool,
-    ) -> ParserResult<StatementsBlock> {
+    pub(crate) fn parse_statements_block(&mut self, top_level: bool) -> ParserResult<Block> {
         check_token!(self, RawToken::OpenBrace, "statements block")?;
 
         self.advance(false)?; // '{'
@@ -58,10 +55,18 @@ impl<'c> Parser<'c> {
 
                 Ok(Statement::Defer(expr))
             }
-            RawToken::Var => {
-                self.advance(false)?; // var
+            RawToken::Let => {
+                self.advance(false)?; // let
 
-                check_token0!(self, "identifier", RawToken::Identifier(_), "var statement")?;
+                let mutable = if self.current.value == RawToken::Mut {
+                    let cur = self.current.clone();
+                    self.advance(false)?;
+                    Some(cur)
+                } else {
+                    None
+                };
+
+                check_token0!(self, "identifier", RawToken::Identifier(_), "let statement")?;
 
                 let name = self.get_name();
 
@@ -79,7 +84,7 @@ impl<'c> Parser<'c> {
 
                 let value = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;
 
-                Ok(Statement::Var(name, r#type, value))
+                Ok(Statement::Let(mutable, name, r#type, value))
             }
             _ => {
                 let expression = self.parse_expression(Precedence::Lowest.to_i8().unwrap())?;

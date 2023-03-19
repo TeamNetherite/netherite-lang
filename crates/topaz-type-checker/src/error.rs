@@ -1,5 +1,5 @@
 use codespan_reporting::diagnostic::Diagnostic;
-use ry_report::Reporter;
+use topaz_report::Reporter;
 use thiserror::Error;
 
 #[derive(Error, Copy, Clone, Debug, PartialEq, Eq)]

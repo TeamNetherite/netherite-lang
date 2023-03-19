@@ -1,14 +1,14 @@
 use clap::{arg, Command};
 use codespan_reporting::files::SimpleFiles;
-use ry_ast::token::RawToken;
-use ry_lexer::Lexer;
-use ry_parser::Parser;
-use ry_report::{Reporter, ReporterState};
-use ry_static_analyzer::StaticAnalyzer;
+use topaz_ast::token::RawToken;
+use topaz_lexer::Lexer;
+use topaz_parser::Parser;
+use topaz_report::{Reporter, ReporterState};
+use topaz_type_checker::StaticAnalyzer;
 use std::{fs, process::exit};
 
 fn cli() -> Command {
-    Command::new("ry")
+    Command::new("topaz")
         .about("The Topaz compiler toolchain.\nCopyright 2023 - the Topaz team.")
         .subcommand_required(true)
         .arg_required_else_help(true)
@@ -151,7 +151,7 @@ fn main() {
 
                     match ast {
                         Ok(program_unit) => {
-                            let mut translator = ry_ast_to_graphviz::GraphvizTranslatorState::new();
+                            let mut translator = topaz_ast_to_graphviz::GraphvizTranslatorState::new();
                             translator.ast_to_graphviz(&program_unit);
                         }
                         Err(e) => {

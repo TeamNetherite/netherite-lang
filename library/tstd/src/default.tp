@@ -1,9 +1,9 @@
 public trait Default {
-    static func default() -> this;
+    func default() -> this;
 }
 
 impl<T> Default for maybe T {
-    static func default() -> maybe T {
+    func default() -> maybe T {
         nope
     }
 }

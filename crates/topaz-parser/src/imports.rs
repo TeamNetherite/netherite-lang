@@ -1,7 +1,7 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use ry_ast::token::RawToken;
-use ry_ast::*;
+use topaz_ast::token::RawToken;
+use topaz_ast::*;
 
 impl<'c> Parser<'c> {
     /// TODO: fix the problem with comments and imports messed up

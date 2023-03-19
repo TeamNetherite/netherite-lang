@@ -10,5 +10,8 @@ members = [
     "crates/topaz-llvm",
     "crates/topaz-parser",
     "crates/topaz-report",
-    "crates/topaz-type-checker"
+    "crates/topaz-type-checker",
+    "crates/cool-reporting/codespan",
+    "crates/cool-reporting/topaz-cool-reporting",
+    "crates/cool-reporting/codespan-lsp"
 ]

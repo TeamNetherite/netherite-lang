@@ -1,5 +1,5 @@
 [package]
-name = "ry-llvm-codegen"
+name = "topaz-llvm-codegen"
 version = "0.1.0"
 edition = "2021"
 

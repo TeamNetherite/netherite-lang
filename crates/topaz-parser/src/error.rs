@@ -1,9 +1,9 @@
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 
-use ry_ast::location::*;
-use ry_ast::token::{LexerError, RawToken, Token};
-use ry_report::Reporter;
 use thiserror::Error;
+use topaz_ast::location::*;
+use topaz_ast::token::{LexerError, RawToken, Token};
+use topaz_report::Reporter;
 
 #[derive(Debug, Error)]
 pub enum ParserError {

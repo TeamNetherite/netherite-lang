@@ -7,15 +7,15 @@
 //!
 //! Inherited multiline comments are not supported:
 //! This is not valid:
-//! ```ry
+//! ```tp
 //!  /* /* test */ */
 //! ```
 //!
 //! Lexer is fairly standart. It implements `Iterator<Item = Token>` on each step,
 //! and stops at eof (always returns [`RawToken::EndOfFile`] when it's already eof).
 //! ```
-//! use ry_lexer::Lexer;
-//! use ry_ast::token::RawToken;
+//! use topaz_lexer::Lexer;
+//! use topaz_ast::token::RawToken;
 //!
 //! let mut lexer = Lexer::new("");
 //!
@@ -26,8 +26,8 @@
 //! If error appeared in the process, [`RawToken::Invalid`] will be returned:
 //!
 //! ```
-//! use ry_lexer::Lexer;
-//! use ry_ast::token::{RawToken, LexerError};
+//! use topaz_lexer::Lexer;
+//! use topaz_ast::token::{RawToken, LexerError};
 //!
 //! let mut lexer = Lexer::new("#");
 //!
@@ -36,8 +36,8 @@
 //!
 //! Lexer doesn't emit diagnostics in the process.
 
-use ry_ast::location::*;
-use ry_ast::token::*;
+use topaz_ast::location::*;
+use topaz_ast::token::*;
 
 use std::char::from_u32;
 use std::str::Chars;
@@ -46,12 +46,12 @@ mod number;
 mod tests;
 
 pub struct Lexer<'c> {
-    current: char,
-    next: char,
-    contents: &'c str,
-    chars: Chars<'c>,
-    location: usize,
-    start_location: usize,
+    pub current: char,
+    pub next: char,
+    pub contents: &'c str,
+    pub chars: Chars<'c>,
+    pub location: usize,
+    pub start_location: usize,
 }
 
 type IterElem = Option<Token>;
@@ -271,7 +271,7 @@ impl<'c> Lexer<'c> {
         self.advance(); // `'`
 
         match size {
-            2..=i32::MAX => {
+            2..=std::i32::MAX => {
                 return Some(
                     (
                         RawToken::Invalid(LexerError::MoreThanOneCharInCharLiteral),
@@ -429,6 +429,20 @@ impl<'c> Lexer<'c> {
         }
     }
 
+    fn scan_maybe(&mut self) -> Option<Token> {
+        if (self.current, self.next) == ('m', 'a') {
+            let start = self.location;
+                            // m
+            self.advance(); // a
+            self.advance(); // y
+            self.advance(); // b
+            self.advance(); // e
+            return Some(WithSpan::new(RawToken::Maybe, Span::new(start, self.location)))
+        };
+
+        None
+    }
+
     pub fn next_no_comments(&mut self) -> IterElem {
         loop {
             let t = self.next();
@@ -461,6 +475,8 @@ impl<'c> Iterator for Lexer<'c> {
             ('"', _) => self.scan_string(),
             ('\'', _) => self.scan_char(),
             ('`', _) => self.scan_wrapped_id(),
+
+            ('m', 'a') => self.scan_maybe(),
 
             ('+', '+') => self.advance_twice_with(RawToken::PlusPlus),
             ('+', '=') => self.advance_twice_with(RawToken::PlusEq),

@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use location::{Span, WithSpan};
 use token::Token;
+use crate::token::RawToken;
 
 /// Represents Ry source file.
 #[derive(Debug, PartialEq)]
@@ -63,7 +64,7 @@ pub type GenericAnnotations = Vec<GenericAnnotation>;
 /// Function definition
 ///
 /// ```ry
-/// pub fun test<T Number, M, A>(a T, b T) T
+/// public func test<T: Number, M, A>(a: T, b: T) -> T
 /// ---     ---- --------------- --------  - `return_type`
 /// |          | |                      |
 /// `public`   | `generic_annotations`  |
@@ -75,7 +76,7 @@ pub struct FunctionDef {
     pub generic_annotations: GenericAnnotations,
     pub name: WithSpan<String>,
     pub params: Vec<FunctionParam>,
-    pub return_type: Option<Type>,
+    pub return_type: Option<(RawToken, Type)>,
 }
 
 /// Struct declaration top level statement
@@ -159,7 +160,7 @@ pub struct TraitMethod {
     pub generic_annotations: GenericAnnotations,
     pub params: Vec<FunctionParam>,
     pub return_type: Option<Type>,
-    pub body: Option<StatementsBlock>,
+    pub body: Option<Block>,
 }
 
 /// Enum declaration top level statement
@@ -199,8 +200,8 @@ pub struct StructMemberDef {
     pub r#type: Type,
 }
 
-/// ```ry
-/// pub fun test(a i32 = 0) {}
+/// ```tp
+/// pub func test(a:  i32 = 0) {}
 ///              -^---^^^- function param
 ///              | |     |
 ///              | |     `default_value`
@@ -210,6 +211,7 @@ pub struct StructMemberDef {
 #[derive(Debug, PartialEq)]
 pub struct FunctionParam {
     pub name: WithSpan<String>,
+    pub colon: RawToken,
     pub r#type: Type,
     pub default_value: Option<Expression>,
 }
@@ -225,7 +227,7 @@ pub enum RawType {
     Option(Type),
 }
 
-pub type StatementsBlock = Vec<Statement>;
+pub type Block = Vec<Statement>;
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
@@ -233,7 +235,7 @@ pub enum Statement {
     ExpressionWithoutSemicolon(Expression),
     Return(Expression),
     Defer(Expression),
-    Var(WithSpan<String>, Option<Type>, Expression),
+    Let(Option<Token>, WithSpan<String>, Option<Type>, Expression),
 }
 
 impl Statement {
@@ -273,7 +275,7 @@ pub enum RawExpression {
         Vec<(Expression, Vec<Statement>)>,
         Option<Vec<Statement>>,
     ),
-    While(Expression, StatementsBlock),
+    While(Expression, Block),
 }
 
 impl RawExpression {

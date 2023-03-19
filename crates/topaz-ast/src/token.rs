@@ -63,11 +63,11 @@ pub enum LexerError {
     InvalidDigit,
     #[error("number parsing error (overflow is possible)")]
     NumberParserError,
-    #[error("underscore must seperate successive digits")]
-    UnderscoreMustSeperateSuccessiveDigits,
+    #[error("underscore must separate successive digits")]
+    UnderscoreMustSeparateSuccessiveDigits,
 }
 
-/// Wether the number is integer, float or imaginary literal.
+/// Either the number is integer, float or imaginary literal.
 #[derive(PartialEq, Debug)]
 pub enum NumberKind {
     Invalid,
@@ -109,10 +109,10 @@ pub enum RawToken {
 
     #[display(fmt = "`import`")]
     Import,
-    #[display(fmt = "`pub`")]
-    Pub,
-    #[display(fmt = "`fun`")]
-    Fun,
+    #[display(fmt = "`public`")]
+    Public,
+    #[display(fmt = "`func`")]
+    Func,
     #[display(fmt = "`struct`")]
     Struct,
     #[display(fmt = "`implement`")]
@@ -135,13 +135,21 @@ pub enum RawToken {
     Else,
     #[display(fmt = "`while`")]
     While,
-    #[display(fmt = "`var`")]
-    Var,
+    #[display(fmt = "`let`")]
+    Let,
+    #[display(fmt = "`mut`")]
+    Mut,
     #[display(fmt = "`as`")]
     As,
     #[display(fmt = "`for`")]
     For,
 
+    #[display(fmt = "`maybe`")]
+    Maybe,
+    #[display(fmt = "`some`")]
+    Some,
+    #[display(fmt = "`nope`")]
+    Nope,
     #[display(fmt = "`?`")]
     QuestionMark,
 
@@ -215,6 +223,8 @@ pub enum RawToken {
     Semicolon,
     #[display(fmt = "`:`")]
     Colon,
+    #[display(fmt = "`->`")]
+    Arrow,
     #[display(fmt = "`::`")]
     DoubleColon,
 
@@ -252,13 +262,13 @@ impl AsRef<RawToken> for RawToken {
 
 pub type Token = WithSpan<RawToken>;
 
-/// List of reserved Ry names: keywords, boolean literals & etc..
+/// List of reserved Topaz names: keywords, boolean literals & etc..
 pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "true" => RawToken::Bool(true),
     "false" => RawToken::Bool(false),
     "import" => RawToken::Import,
-    "pub" => RawToken::Pub,
-    "fun" => RawToken::Fun,
+    "public" => RawToken::Public,
+    "func" => RawToken::Func,
     "struct" => RawToken::Struct,
     "implement" => RawToken::Implement,
     "trait" => RawToken::Trait,
@@ -269,7 +279,8 @@ pub static RESERVED: phf::Map<&'static str, RawToken> = phf_map! {
     "if" => RawToken::If,
     "else" => RawToken::Else,
     "while" => RawToken::While,
-    "var" => RawToken::Var,
+    "let" => RawToken::Let,
+    "mut" => RawToken::Mut,
     "as" => RawToken::As,
     "for" => RawToken::For,
 };
@@ -291,9 +302,7 @@ impl RawToken {
             | Self::SlashEq
             | Self::OrEq
             | Self::XorEq => Precedence::Assign,
-            Self::LessThan | Self::LessThanOrEq | Self::GreaterThan | Self::GreaterThanOrEq => {
-                Precedence::LessOrGreater
-            }
+            Self::LessThan | Self::LessThanOrEq | Self::GreaterThan | Self::GreaterThanOrEq => Precedence::LessOrGreater,
             Self::Dollar => Precedence::Dollar,
             Self::LeftShift | Self::RightShift => Precedence::LeftRightShift,
             Self::Plus | Self::Minus => Precedence::Sum,

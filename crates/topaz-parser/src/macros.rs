@@ -1,5 +1,5 @@
 macro_rules! check_token {
-    ($p: ident, $expected: expr, $expected_for: literal) => {
+    ($p:ident, $expected:expr, $expected_for:literal) => {
         if let RawToken::Invalid(e) = $p.current.value {
             Err(ParserError::ErrorToken((e, $p.current.span.clone()).into()))
         } else if !&$p.current.value.is($expected) {
@@ -15,7 +15,7 @@ macro_rules! check_token {
 }
 
 macro_rules! check_token0 {
-    ($p: ident, $t_dump: expr, $expected: pat, $expected_for: expr) => {
+    ($p:ident, $t_dump:expr, $expected:pat, $expected_for:expr) => {
         if let RawToken::Invalid(e) = $p.current.value {
             Err(ParserError::ErrorToken((e, $p.current.span.clone()).into()))
         } else if let $expected = $p.current.value {
@@ -28,7 +28,7 @@ macro_rules! check_token0 {
             ))
         }
     };
-    ($p: ident, $expected_for: expr, $expected: pat) => {
+    ($p:ident, $expected_for:expr, $expected:pat) => {
         if let RawToken::Invalid(e) = $p.current.value {
             Err(ParserError::ErrorToken((e, $p.current.span.clone()).into()))
         } else if let $expected = $p.current.value {
@@ -44,10 +44,10 @@ macro_rules! check_token0 {
 }
 
 macro_rules! parse_list {
-    ($p: ident, $name: literal, $closing_token: expr, $top_level: expr, $fn: expr) => {
+    ($p:ident, $name:literal, $closing_token:expr, $top_level:expr, $fn:expr) => {
         parse_list!($p, $name, $closing_token, $top_level, $fn, )
     };
-    ($p: ident, $name: literal, $closing_token: expr, $top_level: expr, $fn: expr, $($fn_arg:expr)*) => {
+    ($p:ident, $name:literal, $closing_token:expr, $top_level:expr, $fn:expr, $($fn_arg:expr)*) => {
         {
             let mut result = vec![];
 
