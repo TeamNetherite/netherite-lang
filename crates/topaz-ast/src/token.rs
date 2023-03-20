@@ -2,12 +2,14 @@
 //! source text.
 
 use std::mem::{discriminant, replace};
+use std::ops::DerefMut;
 
 use phf::phf_map;
 
 use derive_more::Display;
 
 use num_traits::ToPrimitive;
+use string_interner::{DefaultSymbol, StringInterner};
 
 use thiserror::Error;
 
@@ -80,7 +82,7 @@ pub enum NumberKind {
 #[derive(Clone, Debug, PartialEq, Display, Default)]
 pub enum RawToken {
     #[display(fmt = "identifier")]
-    Identifier(String),
+    Identifier(DefaultSymbol),
     #[display(fmt = "string literal")]
     String(String),
     #[display(fmt = "integer literal")]
@@ -147,7 +149,7 @@ pub enum RawToken {
     #[display(fmt = "`maybe`")]
     Maybe,
     #[display(fmt = "`some`")]
-    Some,
+    MaybeSome,
     #[display(fmt = "`nope`")]
     Nope,
     #[display(fmt = "`?`")]
@@ -302,7 +304,9 @@ impl RawToken {
             | Self::SlashEq
             | Self::OrEq
             | Self::XorEq => Precedence::Assign,
-            Self::LessThan | Self::LessThanOrEq | Self::GreaterThan | Self::GreaterThanOrEq => Precedence::LessOrGreater,
+            Self::LessThan | Self::LessThanOrEq | Self::GreaterThan | Self::GreaterThanOrEq => {
+                Precedence::LessOrGreater
+            }
             Self::Dollar => Precedence::Dollar,
             Self::LeftShift | Self::RightShift => Precedence::LeftRightShift,
             Self::Plus | Self::Minus => Precedence::Sum,
@@ -322,14 +326,6 @@ impl RawToken {
         }
         .to_i8()
         .unwrap()
-    }
-
-    pub fn ident(&mut self) -> Option<String> {
-        if let RawToken::Identifier(i) = self {
-            Some(replace(i, "".to_owned()))
-        } else {
-            None
-        }
     }
 
     pub fn string(&mut self) -> Option<String> {

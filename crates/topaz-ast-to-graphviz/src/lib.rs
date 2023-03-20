@@ -300,12 +300,10 @@ impl GraphvizTranslatorState {
 
                 self.add_node_connections(&[node, mutable_node_root, mutable_node]);
 
-
                 let name_node_root = self.add_node("Name");
                 let name_node = self.add_node(&name.value);
 
                 self.add_node_connections(&[node, name_node_root, name_node]);
-
 
                 if let Some(t) = r#type {
                     let type_node_root = self.add_node("Type");
@@ -552,7 +550,7 @@ impl GraphvizTranslatorState {
                 self.add_node_connections(&[if_node, if_statements_block]);
 
                 if !elseifs.is_empty() {
-                    let elseifs_root = self.add_node("IfElseChain");
+                    let ifelse_root = self.add_node("IfElseChain");
 
                     for elseif in elseifs {
                         let elseif_node = self.add_node("ElseIf");
@@ -562,7 +560,7 @@ impl GraphvizTranslatorState {
                         let elseif_statements_block = self.add_statements_block_node(&elseif.1);
 
                         self.add_node_connections(&[
-                            elseifs_root,
+                            ifelse_root,
                             elseif_node,
                             elseif_condition_node_root,
                             elseif_condition_node,
@@ -570,7 +568,7 @@ impl GraphvizTranslatorState {
                         self.add_node_connections(&[elseif_node, elseif_statements_block]);
                     }
 
-                    self.add_node_connections(&[root, elseifs_root]);
+                    self.add_node_connections(&[root, ifelse_root]);
                 }
 
                 if r#else.is_some() {

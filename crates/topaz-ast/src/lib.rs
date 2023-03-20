@@ -4,12 +4,13 @@ pub mod precedence;
 pub mod token;
 
 use std::collections::HashMap;
+use string_interner::StringInterner;
 
+use crate::token::RawToken;
 use location::{Span, WithSpan};
 use token::Token;
-use crate::token::RawToken;
 
-/// Represents Ry source file.
+/// Represents a Topaz source file.
 #[derive(Debug, PartialEq)]
 pub struct ProgramUnit {
     /// Global source file docstring

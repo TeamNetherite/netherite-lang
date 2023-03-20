@@ -1,4 +1,4 @@
-func helllo() {
+fun helllo() {
     let mut world = "\t";
     println(world);
 }

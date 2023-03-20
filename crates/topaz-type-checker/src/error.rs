@@ -1,6 +1,6 @@
 use codespan_reporting::diagnostic::Diagnostic;
-use topaz_report::Reporter;
 use thiserror::Error;
+use topaz_report::Reporter;
 
 #[derive(Error, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum StaticAnalysisError {}

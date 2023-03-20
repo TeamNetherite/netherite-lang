@@ -1,7 +1,7 @@
 use codespan_reporting::diagnostic::{Diagnostic, Label};
+use thiserror::Error;
 use topaz_ast::location::Span;
 use topaz_report::Reporter;
-use thiserror::Error;
 
 #[derive(Error, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum StaticAnalysisWarning {

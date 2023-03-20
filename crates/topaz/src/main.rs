@@ -1,11 +1,11 @@
 use clap::{arg, Command};
 use codespan_reporting::files::SimpleFiles;
+use std::{fs, process::exit};
 use topaz_ast::token::RawToken;
 use topaz_lexer::Lexer;
 use topaz_parser::Parser;
 use topaz_report::{Reporter, ReporterState};
 use topaz_type_checker::StaticAnalyzer;
-use std::{fs, process::exit};
 
 fn cli() -> Command {
     Command::new("topaz")
@@ -151,7 +151,8 @@ fn main() {
 
                     match ast {
                         Ok(program_unit) => {
-                            let mut translator = topaz_ast_to_graphviz::GraphvizTranslatorState::new();
+                            let mut translator =
+                                topaz_ast_to_graphviz::GraphvizTranslatorState::new();
                             translator.ast_to_graphviz(&program_unit);
                         }
                         Err(e) => {

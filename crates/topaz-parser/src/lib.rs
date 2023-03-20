@@ -147,7 +147,7 @@ impl<'c> Parser<'c> {
                                 ));
                             }
                         }
-                    },
+                    }
                     RawToken::Import => {
                         let import = self.parse_import()?;
 

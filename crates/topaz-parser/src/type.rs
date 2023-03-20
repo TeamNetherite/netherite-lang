@@ -22,7 +22,7 @@ impl<'c> Parser<'c> {
 
             check_token0!(self, "identifier", RawToken::Identifier(_), "name")?;
 
-            name.push_str(&self.current.value.ident().unwrap());
+            name.push_str(self.current.value.ident().unwrap().as_ref());
             name.push_str("::");
 
             end = self.current.span.end;
