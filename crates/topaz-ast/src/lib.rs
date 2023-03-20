@@ -1,7 +1,10 @@
+#![feature(decl_macro)]
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
 pub mod precedence;
 pub mod token;
+pub mod visit;
+pub mod visit_mut;
 
 use std::collections::HashMap;
 use string_interner::StringInterner;
@@ -22,7 +25,7 @@ pub struct ProgramUnit {
 
 /// Import
 ///
-/// ```ry
+/// ```tp
 /// import std::io;
 ///        ------- `path`
 /// ```
@@ -45,8 +48,8 @@ pub enum TopLevelStatement {
 
 /// Function declaration top level statement
 ///
-/// ```ry
-/// 1 | fun print_sum<T Number>(a T, b T) T
+/// ```tp
+/// 1 | func print_sum<T: Number>(a: T, b: T): T
 ///   | ----------------------------------- `def`
 /// 2 | {
 ///   |   ...
@@ -64,7 +67,7 @@ pub type GenericAnnotations = Vec<GenericAnnotation>;
 
 /// Function definition
 ///
-/// ```ry
+/// ```tp
 /// public func test<T: Number, M, A>(a: T, b: T) -> T
 /// ---     ---- --------------- --------  - `return_type`
 /// |          | |                      |

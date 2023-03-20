@@ -3,6 +3,7 @@ use error::StaticAnalysisError;
 
 mod error;
 mod warning;
+pub mod borrow;
 
 use topaz_ast::ProgramUnit;
 use topaz_report::Reporter;
