@@ -1,6 +1,6 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
-use topaz_ast::token::RawToken;
+use topaz_ast::tokens::RawToken;
 use topaz_ast::*;
 
 impl<'c> Parser<'c> {

@@ -1,7 +1,7 @@
 //! `lib.rs` - implements parser for Ry source files.
 use std::mem::take;
 
-use topaz_ast::token::*;
+use topaz_ast::tokens::*;
 use topaz_ast::*;
 use topaz_lexer::Lexer;
 

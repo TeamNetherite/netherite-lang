@@ -1,6 +1,6 @@
 use topaz_ast::{
     location::Span,
-    token::{LexerError, NumberKind, RawToken, Token},
+    tokens::{LexerError, NumberKind, RawToken, Token},
 };
 
 use crate::{IterElem, Lexer};

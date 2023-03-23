@@ -15,8 +15,8 @@
 //! and stops at eof (always returns [`EndOfFile`] when it's already eof).
 //! ```
 //! use topaz_lexer::Lexer;
-//! use topaz_ast::token::RawToken;
-//! use topaz_ast::token::RawToken::EndOfFile;
+//! use topaz_ast::tokens::RawToken;
+//! use topaz_ast::tokens::RawToken::EndOfFile;
 //! use string_interner::StringInterner;
 //!
 //! let mut string_interner = StringInterner::default();
@@ -34,7 +34,7 @@
 //!
 //! ```
 //! use topaz_lexer::Lexer;
-//! use topaz_ast::token::{LexerError, RawToken::Invalid};
+//! use topaz_ast::tokens::{LexerError, RawToken::Invalid};
 //! use string_interner::StringInterner;
 //!
 //! let mut string_interner = StringInterner::default();
@@ -43,7 +43,7 @@
 //! assert_eq!(lexer.next().unwrap().value, Invalid(LexerError::UnexpectedChar('#')));
 //! ```
 
-use topaz_ast::{location::*, token::RawToken::*, token::*};
+use topaz_ast::{location::*, tokens::RawToken::*, tokens::*};
 use std::{char::from_u32, str::Chars, string::String};
 
 use string_interner::StringInterner;

@@ -1,7 +1,7 @@
 use clap::{arg, Command};
 use codespan_reporting::files::SimpleFiles;
 use std::{fs, process::exit};
-use topaz_ast::token::RawToken;
+use topaz_ast::tokens::RawToken;
 use topaz_lexer::Lexer;
 use topaz_parser::Parser;
 use topaz_report::{Reporter, ReporterState};

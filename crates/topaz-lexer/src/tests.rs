@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod lexer_tests {
     use crate::Lexer;
-    use topaz_ast::token::{LexerError, RawToken::*};
+    use topaz_ast::tokens::{LexerError, RawToken::*};
     use string_interner::StringInterner;
 
     macro_rules! lexer_test {

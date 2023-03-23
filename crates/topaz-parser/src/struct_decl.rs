@@ -1,7 +1,7 @@
 use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
 use topaz_ast::*;
-use topaz_ast::{location::*, token::*};
+use topaz_ast::{location::*, tokens::*};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_struct_declaration(

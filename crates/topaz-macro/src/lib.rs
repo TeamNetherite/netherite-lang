@@ -1,26 +1,30 @@
-mod visitor;
-
 extern crate proc_macro;
 use proc_macro::TokenStream;
 
-use syn::{parse_macro_input, DeriveInput, Block, bracketed};
+use syn::{parse_macro_input, DeriveInput, Block, bracketed, braced};
 use quote::quote;
-use syn::parse::{Parse, ParseStream};
+use syn::parse::{Parse, Parser, ParseStream};
+use syn::punctuated::Punctuated;
 
 
-#[proc_macro]
-pub fn _make_visitor(input: TokenStream) -> TokenStream {
-    visitor::visitor_impl(input.into()).unwrap_or_else(|e| e.to_compile_error()).into()
-}
+pub(crate) struct Braced<T>(T);
 
-pub(crate) struct Bracketed<T>(T);
-
-impl<T: Parse> Parse for Bracketed<T> {
+impl<T: Parse> Parse for Braced<T> {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let content;
 
-        bracketed!(content in input);
+        braced!(content in input);
 
-        Ok(Bracketed(T::parse(&content)?))
+        Ok(Braced(T::parse(&content)?))
+    }
+}
+
+impl<T: Parse, P: Parse> Braced<Punctuated<T, P>> {
+    pub(crate) fn parse_punct(input: ParseStream) -> syn::Result<Self> {
+        let content;
+
+        braced!(content in input);
+
+        Ok(Braced(Punctuated::parse_terminated(&content)?))
     }
 }

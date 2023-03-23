@@ -2,7 +2,7 @@ use codespan_reporting::diagnostic::{Diagnostic, Label};
 
 use thiserror::Error;
 use topaz_ast::location::*;
-use topaz_ast::token::{LexerError, RawToken, Token};
+use topaz_ast::tokens::{LexerError, RawToken, Token};
 use topaz_report::Reporter;
 
 #[derive(Debug, Error)]
@@ -11,15 +11,15 @@ pub enum ParserError {
     #[error("scanning error appeared in the process")]
     ErrorToken(WithSpan<LexerError>),
 
-    /// Unexpected token [`Token`] in AST Node called
+    /// Unexpected tokens [`Token`] in AST Node called
     /// [`Option<String>`], expected [`String`].
-    #[error("unexpected token `{0:?}` in `{2:?}`, expected `{1}`")]
+    #[error("unexpected tokens `{0:?}` in `{2:?}`, expected `{1}`")]
     UnexpectedToken(Token, String, Option<String>),
 
-    /// Unexpected token [`Token`], expected [`RawToken`]
+    /// Unexpected tokens [`Token`], expected [`RawToken`]
     /// in AST Node called [`String`]  if [`Option<String>`]
     /// is `Some(String)`.
-    #[error("unexpected token `{0:?}`, expected `{1:?}` in `{2:?}`")]
+    #[error("unexpected tokens `{0:?}`, expected `{1:?}` in `{2:?}`")]
     UnexpectedTokenExpectedX(Token, RawToken, Option<String>),
 }
 

@@ -2,7 +2,7 @@ use crate::{error::ParserError, macros::*, Parser, ParserResult};
 
 use num_traits::ToPrimitive;
 
-use topaz_ast::{location::Span, precedence::Precedence, token::RawToken, *};
+use topaz_ast::{location::Span, precedence::Precedence, tokens::RawToken, *};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_function_declaration(

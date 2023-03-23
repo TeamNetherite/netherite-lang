@@ -1,17 +1,34 @@
 #![feature(decl_macro)]
+#![feature(default_free_fn)]
+#![feature(is_some_and)]
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
 pub mod precedence;
-pub mod token;
-pub mod visit;
-pub mod visit_mut;
+pub mod tokens;
 
 use std::collections::HashMap;
 use string_interner::StringInterner;
 
-use crate::token::RawToken;
+use crate::tokens::RawToken;
 use location::{Span, WithSpan};
-use token::Token;
+use tokens::Token;
+use crate::util::unit_impl;
+
+pub mod item;
+pub mod token;
+pub mod file;
+pub mod ident;
+pub mod parser;
+pub mod path;
+pub mod pattern;
+pub mod types;
+pub mod punctuated;
+pub mod util;
+
+pub(crate) trait _Tokens {}
+pub trait Tokens: _Tokens {}
+
+impl<T: _Tokens> Tokens for T {}
 
 /// Represents a Topaz source file.
 #[derive(Debug, PartialEq)]

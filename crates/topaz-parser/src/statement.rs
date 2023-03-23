@@ -5,7 +5,7 @@ use crate::{error::ParserError, macros::*, Parser, ParserResult};
 use num_traits::ToPrimitive;
 
 use topaz_ast::*;
-use topaz_ast::{precedence::Precedence, token::RawToken};
+use topaz_ast::{precedence::Precedence, tokens::RawToken};
 
 impl<'c> Parser<'c> {
     pub(crate) fn parse_statements_block(&mut self, top_level: bool) -> ParserResult<Block> {

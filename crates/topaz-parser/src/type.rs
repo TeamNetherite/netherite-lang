@@ -3,7 +3,7 @@ use crate::{error::ParserError, macros::*, Parser, ParserResult};
 use topaz_ast::*;
 use topaz_ast::{
     location::{Span, WithSpan},
-    token::*,
+    tokens::*,
 };
 
 impl<'c> Parser<'c> {

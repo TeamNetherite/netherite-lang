@@ -1,4 +1,4 @@
-//! `token.rs` - defines the token which represents grammatical unit of Ry
+//! `tokens.rs` - defines the tokens which represents grammatical unit of Ry
 //! source text.
 
 use std::mem::{discriminant, replace};
@@ -78,7 +78,7 @@ pub enum NumberKind {
     Imag,
 }
 
-/// Represents token without a specific location in source text.
+/// Represents tokens without a specific location in source text.
 #[derive(Clone, Debug, PartialEq, Display, Default)]
 pub enum RawToken {
     #[display(fmt = "identifier")]
@@ -252,7 +252,7 @@ pub enum RawToken {
     #[display(fmt = "end of file")]
     EndOfFile,
 
-    #[display(fmt = "invalid token")]
+    #[display(fmt = "invalid tokens")]
     Invalid(LexerError),
 }
 
