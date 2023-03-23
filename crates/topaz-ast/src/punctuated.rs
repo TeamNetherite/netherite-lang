@@ -6,6 +6,20 @@ pub enum Pair<T: _Tokens, P: _Tokens> {
     End(T),
 }
 
+impl<T: _Tokens, P: _Tokens> Pair<T, P> {
+    pub fn into_value(self) -> T {
+        match self { Pair::Punct(t, _) | Pair::End(t) => t }
+    }
+
+    pub fn value(&self) -> &T {
+        match self { Pair::Punct(t, _) | Pair::End(t) => t }
+    }
+
+    pub fn value_mut(&mut self) -> &mut T {
+        match self { Pair::Punct(t, _) | Pair::End(t) => t }
+    }
+}
+
 pub struct Punctuated<T: _Tokens, P: _Tokens> {
     segments: Vec<Pair<T, P>>,
 }
@@ -13,7 +27,7 @@ pub struct Punctuated<T: _Tokens, P: _Tokens> {
 impl<T: _Tokens, P: _Tokens> Punctuated<T, P> {
     pub const fn new() -> Self {
         Self {
-            segments: Vec::new()
+            segments: Vec::new(),
         }
     }
 
@@ -47,10 +61,10 @@ impl<T: _Tokens, P: _Tokens> Punctuated<T, P> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
-        (&self.segments[..]).map(|a: &Pair<T, P>| &a.0)
+        (self.segments.iter()).map(|a: &Pair<T, P>| a.value())
     }
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        (&mut self.segments[..]).map(|a: &mut Pair<T, P>| &mut a.0)
+        (self.segments.iter_mut()).map(|a: &mut Pair<T, P>| a.value_mut())
     }
 }
 
@@ -59,15 +73,15 @@ impl<T: _Tokens, P: _Tokens> IntoIterator for Punctuated<T, P> {
     type IntoIter = Map<<Vec<Pair<T, P>> as IntoIterator>::IntoIter, fn(Pair<T, P>) -> T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.segments.into_iter().map(|a| a.0)
+        self.segments.into_iter().map(|a| a.into_value())
     }
 }
 
-impl<T, P: _Tokens> FromIterator<T> for Punctuated<T, P> {
-    fn from_iter<I: IntoIterator<Item = I>>(iter: I) -> Self {
+impl<T: _Tokens, P: _Tokens + Default> FromIterator<T> for Punctuated<T, P> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut punct = Punctuated::new();
 
-        let mut vec: Vec<I> = iter.into_iter().collect();
+        let mut vec: Vec<T> = iter.into_iter().collect();
 
         if let Some(last) = vec.pop() {
             for i in vec {

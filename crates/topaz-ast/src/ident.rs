@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use std::sync::Arc;
 use string_interner::symbol::SymbolU32;
+use crate::_Tokens;
 use crate::parser::Parser;
 
 pub struct Ident(SymbolU32, Arc<Parser>);
@@ -15,3 +16,5 @@ impl Ident {
         Arc::clone(&self.1).interner.resolve(self.0).expect("symbol was dropped").to_owned()
     }
 }
+
+impl _Tokens for Ident {}

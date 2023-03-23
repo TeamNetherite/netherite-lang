@@ -1,6 +1,8 @@
 #![feature(decl_macro)]
 #![feature(default_free_fn)]
 #![feature(is_some_and)]
+#![warn(clippy::pedantic, clippy::nursery)]
+#![allow(unused_doc_comments)]
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
 pub mod precedence;
@@ -11,7 +13,7 @@ use string_interner::StringInterner;
 
 use crate::tokens::RawToken;
 use location::{Span, WithSpan};
-use tokens::Token;
+use tokens::Token as SpannedToken;
 use crate::util::unit_impl;
 
 pub mod item;
@@ -24,6 +26,8 @@ pub mod pattern;
 pub mod types;
 pub mod punctuated;
 pub mod util;
+
+pub use token::Token;
 
 pub(crate) trait _Tokens {}
 pub trait Tokens: _Tokens {}
@@ -256,7 +260,7 @@ pub enum Statement {
     ExpressionWithoutSemicolon(Expression),
     Return(Expression),
     Defer(Expression),
-    Let(Option<Token>, WithSpan<String>, Option<Type>, Expression),
+    Let(Option<SpannedToken>, WithSpan<String>, Option<Type>, Expression),
 }
 
 impl Statement {
@@ -280,9 +284,9 @@ pub enum RawExpression {
     Char(char),
     StaticName(String),
     List(Vec<Expression>),
-    Binary(Expression, Token, Expression),
+    Binary(Expression, SpannedToken, Expression),
     As(Expression, Type),
-    PrefixOrPostfix(Token, Expression),
+    PrefixOrPostfix(SpannedToken, Expression),
     Property(Expression, WithSpan<String>),
     Struct(
         WithSpan<String>,
