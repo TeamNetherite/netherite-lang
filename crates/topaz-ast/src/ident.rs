@@ -1,19 +1,25 @@
 use crate::private::_Tokens;
 use crate::token::PathPartKeyword;
-use std::borrow::Cow;
+use once_cell::sync::Lazy;
 use std::fmt::{Display, Formatter};
-use std::ops::Deref;
+use string_interner::symbol::SymbolU32;
+use string_interner::StringInterner;
 
-pub struct Ident(Cow<'static, str>);
-//pub struct Ident(SymbolU32, *const StringInterner);
+fn why() -> &'static mut StringInterner {
+    unsafe { Lazy::force_mut(&mut crate::INTERNER) }
+}
+
+//pub struct Ident(Cow<'static, str>);
+pub struct Ident(SymbolU32);
 
 impl Ident {
-    pub fn new(identifier: String) -> Self {
-        Ident(Cow::Owned(identifier))
+    #[must_use]
+    pub fn new(ident: &str) -> Self {
+        Self(why().get_or_intern(ident))
     }
-
+    #[must_use]
     pub fn new_static(ident: &'static str) -> Self {
-        Ident(Cow::Borrowed(ident))
+        Self(why().get_or_intern_static(ident))
     }
     /*
     pub fn new(parser: &mut Parser, value: impl AsRef<str>) -> Self {
@@ -29,31 +35,29 @@ impl Ident {
     }
      */
 
+    #[must_use]
     pub fn from_keyword<K: PathPartKeyword>() -> Self {
         Self::new_static(K::REPR)
     }
 
+    #[must_use]
     pub fn keyword<K: PathPartKeyword>(_: K) -> Self {
         Self::from_keyword::<K>()
     }
 
-    pub fn value<'a: 'static>(&'a self) -> &'static str {
-        self.0.deref()
-    }
-
-    pub fn into_value(self) -> String {
-        self.0.into_owned()
-    }
-
-    /*
+    #[must_use]
     pub fn maybe_value(&self) -> Option<&str> {
-        unsafe { self.1.as_ref().unwrap() }.resolve(self.0)
+        why().resolve(self.0)
     }
 
+    #[must_use]
+    /// # Panics
+    /// Panics if a symbol was dropped.
+    /// This should never happen.
     pub fn value(&self) -> &str {
-        self.maybe_value().expect("symbol was dropped")
+        self.maybe_value()
+            .unwrap_or_else(|| unreachable!("Symbol {:#?} was dropped", self.0))
     }
-     */
 }
 
 impl<K: PathPartKeyword> From<K> for Ident {
@@ -64,7 +68,7 @@ impl<K: PathPartKeyword> From<K> for Ident {
 
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
+        f.write_str(self.value())
     }
 }
 

@@ -3,15 +3,24 @@
 #![feature(is_some_and)]
 #![feature(auto_traits)]
 #![feature(negative_impls)]
-#![warn(clippy::pedantic, clippy::nursery, clippy::expect_used, clippy::unwrap_used)]
+#![warn(
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::expect_used,
+    clippy::unwrap_used
+)]
 #![allow(unused_doc_comments)]
+#![allow(clippy::module_name_repetitions)]
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
 pub mod precedence;
 pub mod tokens;
 
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use string_interner::StringInterner;
+
+static mut INTERNER: Lazy<StringInterner> = Lazy::new(StringInterner::new);
 
 use crate::tokens::RawToken;
 use crate::util::unit_impl;
@@ -22,6 +31,7 @@ pub mod expr;
 pub mod file;
 pub mod ident;
 pub mod item;
+pub mod literal;
 pub mod parser;
 pub mod path;
 pub mod pattern;
@@ -30,7 +40,7 @@ pub mod token;
 pub mod types;
 pub mod util;
 pub mod visibility;
-pub mod literal;
+pub mod visit;
 
 pub use token::Token;
 pub(crate) mod private {

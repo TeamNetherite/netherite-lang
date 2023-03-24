@@ -6,7 +6,7 @@ use crate::visibility::Visibility;
 /// ```tp
 /// public typealias Why = maybe ();
 /// ```
-pub struct ItemTypeAlias {
+pub struct TypeAlias {
     pub visibility: Visibility,
     pub typealias_token: TypeAlias,
     pub name: Ident,
