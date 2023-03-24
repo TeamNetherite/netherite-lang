@@ -1,4 +1,26 @@
-use crate::token::default_token_struct;
-/// The `&` (ampersand) token.
-/// Used when borrowing, or specifying a reference type.
-default_token_struct!(Ref);
+mod private {
+    pub trait PrefixToken {
+        const REPR: &'static str;
+    }
+}
+
+pub trait PrefixToken: private::PrefixToken {}
+impl<T: private::PrefixToken> PrefixToken for T {}
+
+use private::PrefixToken as _PrefixToken;
+
+macro_rules! prefix {
+    ($repr:literal $name:ident) => {
+        #[derive(Default, derive_more::Display)]
+        #[display(fmt = $repr)]
+        pub struct $name;
+
+        impl _PrefixToken for $name {
+            const REPR: &'static str = $repr;
+        }
+        impl crate::private::_Tokens for $name {}
+    }
+}
+
+prefix!("&" Ref);
+prefix!("b" B);

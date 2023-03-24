@@ -1,7 +1,9 @@
 #![feature(decl_macro)]
 #![feature(default_free_fn)]
 #![feature(is_some_and)]
-#![warn(clippy::pedantic, clippy::nursery)]
+#![feature(auto_traits)]
+#![feature(negative_impls)]
+#![warn(clippy::pedantic, clippy::nursery, clippy::expect_used, clippy::unwrap_used)]
 #![allow(unused_doc_comments)]
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
@@ -12,27 +14,36 @@ use std::collections::HashMap;
 use string_interner::StringInterner;
 
 use crate::tokens::RawToken;
+use crate::util::unit_impl;
 use location::{Span, WithSpan};
 use tokens::Token as SpannedToken;
-use crate::util::unit_impl;
 
-pub mod item;
-pub mod token;
+pub mod expr;
 pub mod file;
 pub mod ident;
+pub mod item;
 pub mod parser;
 pub mod path;
 pub mod pattern;
-pub mod types;
 pub mod punctuated;
+pub mod token;
+pub mod types;
 pub mod util;
+pub mod visibility;
+pub mod literal;
 
 pub use token::Token;
+pub(crate) mod private {
+    pub trait _Tokens {}
+}
 
-pub(crate) trait _Tokens {}
-pub trait Tokens: _Tokens {}
+pub trait Tokens: private::_Tokens {}
 
-impl<T: _Tokens> Tokens for T {}
+impl<T: private::_Tokens> Tokens for T {}
+
+impl<T: Tokens> private::_Tokens for Vec<T> {}
+
+unit_impl!(private::_Tokens [char, String, i32, u8]);
 
 /// Represents a Topaz source file.
 #[derive(Debug, PartialEq)]
@@ -260,7 +271,12 @@ pub enum Statement {
     ExpressionWithoutSemicolon(Expression),
     Return(Expression),
     Defer(Expression),
-    Let(Option<SpannedToken>, WithSpan<String>, Option<Type>, Expression),
+    Let(
+        Option<SpannedToken>,
+        WithSpan<String>,
+        Option<Type>,
+        Expression,
+    ),
 }
 
 impl Statement {

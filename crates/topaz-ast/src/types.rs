@@ -1,10 +1,29 @@
-use crate::location::WithSpan;
 use crate::path::Path;
+use crate::private::_Tokens;
 use crate::punctuated::Punctuated;
 use crate::token::delim::{AngleBracket, Parentheses, Surround};
 use crate::util::unit_impl;
-use crate::token::Token;
-use crate::_Tokens;
+use crate::Token;
+
+pub enum PrimitiveType {
+    // Numbers
+    Usize,
+    Isize,
+    Ubyte,
+    Byte,
+    Ushort,
+    Short,
+    Uint,
+    Int,
+    Ulong,
+    Long,
+    /// u128
+    Uexplod,
+    /// i128
+    Explod,
+
+    Char,
+}
 
 pub struct TypePath {
     pub path: Path,
