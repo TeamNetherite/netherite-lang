@@ -1,4 +1,3 @@
-use crate::private::_Tokens;
 use crate::token::PathPartKeyword;
 use once_cell::sync::Lazy;
 use std::fmt::{Display, Formatter};
@@ -11,7 +10,7 @@ fn interner() -> &'static mut StringInterner {
 }
 
 //pub struct Ident(Cow<'static, str>);
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Tokens)]
 pub struct Ident(SymbolU32);
 
 impl Ident {
@@ -60,5 +59,3 @@ impl Display for Ident {
         f.write_str(self.value())
     }
 }
-
-impl _Tokens for Ident {}
