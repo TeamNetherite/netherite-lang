@@ -34,19 +34,29 @@ pub enum NumberSuffix {
     #[display(fmt = "")]
     None,
 
+    /// usize
     Usize,
+    /// isize
     Isize,
 
+    /// u8
     Ubyte,
+    /// i8
     Byte,
 
+    /// u16
     Ushort,
+    /// i16
     Short,
 
+    /// u32
     Uint,
+    /// i32
     Int,
 
+    /// u64
     Ulong,
+    /// i64
     Long,
 
     /// u128
@@ -80,6 +90,24 @@ macro_rules! digits {
 }
 
 digits! {
+    HexDigit :::
+        0 Zero,
+        1 One,
+        2 Two,
+        3 Three,
+        4 Four,
+        5 Five,
+        6 Six,
+        7 Seven,
+        8 Eight,
+        9 Nine,
+        0xA Ten,
+        0xB Eleven,
+        0xC Twelve,
+        0xD Thirteen,
+        0xE Fourteen,
+        0xF Fifteen;
+
     DecimalDigit :::
         0 Zero,
         1 One,
@@ -91,6 +119,17 @@ digits! {
         7 Seven,
         8 Eight,
         9 Nine;
+
+    OctalDigit :::
+        0 Zero,
+        1 One,
+        2 Two,
+        3 Three,
+        4 Four,
+        5 Five,
+        6 Six,
+        7 Seven,
+        8 Eight;
 
     BinaryDigit :::
         0 Zero,

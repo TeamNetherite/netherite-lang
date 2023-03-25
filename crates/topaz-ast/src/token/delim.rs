@@ -12,10 +12,9 @@ impl<T: private::Sealed> Delim for T {}
 
 macro_rules! delimiter {
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident) => {
-        #[derive(Default)]
+        #[derive(Default, Tokens)]
         pub struct $name;
 
-        impl crate::private::_Tokens for $name {}
         impl private::Sealed for $name {
             const REPR: (char, char) = ($repr_a, $repr_b);
         }
@@ -24,10 +23,9 @@ macro_rules! delimiter {
     };
 
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident $inside:ty) => {
-        #[derive(Default)]
+        #[derive(Default, Tokens)]
         pub struct $name;
 
-        impl crate::private::_Tokens for $name {}
         impl private::Sealed for $name {
             const REPR: (char, char) = ($repr_a, $repr_b);
         }
@@ -68,6 +66,7 @@ impl<D: Delim> Delimiter<D> {
     }
 }
 
+#[derive(Tokens)]
 pub struct Surround<D: Delim, Content: Tokens>(D, Content, D);
 
 #[allow(clippy::missing_const_for_fn)]

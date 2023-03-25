@@ -1,6 +1,6 @@
-pub fun main() {
-    var a = "hello world";
-    var b i32 = 2;
+public func main() {
+    let a = "hello world";
+    let b: i32 = 2;
 
-    println("%s %d", a, b);
+    println("$a $b");
 }

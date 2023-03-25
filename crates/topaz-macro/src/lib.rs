@@ -1,28 +1,30 @@
 #![feature(decl_macro)]
 #![feature(string_leak)]
 
-mod token_macro;
 mod ident_manipulation;
+mod token_macro;
+mod tokens;
 
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use proc_macro_crate::{crate_name, FoundCrate};
-use syn::{parse_macro_input, DeriveInput, Block, bracketed, braced, Path};
 use quote::quote;
-use syn::parse::{Parse, Parser, ParseStream};
+use syn::parse::{Parse, ParseStream, Parser};
 use syn::punctuated::Punctuated;
+use syn::{braced, bracketed, parse_macro_input, Block, DeriveInput, Path};
 
 pub(crate) fn ast_crate() -> TokenStream2 {
     match crate_name("topaz-ast").ok() {
         Some(FoundCrate::Itself) => quote!(crate),
         Some(FoundCrate::Name(name)) => quote!(#name),
-        None => quote!(compile_error!("topaz-ast not found"))
+        None => quote!(compile_error!("topaz-ast not found")),
     }
 }
 
 #[allow(non_snake_case)]
 #[proc_macro]
+#[doc(hidden)]
 pub fn Token(input: TokenStream) -> TokenStream {
     token_macro::token_impl(input.into()).into_into()
 }
@@ -30,6 +32,17 @@ pub fn Token(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn lowercase_ident(input: TokenStream) -> TokenStream {
     ident_manipulation::lowercase_impl(input.into()).into_into()
+}
+
+#[proc_macro]
+pub fn charify(input: TokenStream) -> TokenStream {
+    ident_manipulation::charify(input.into()).into()
+}
+
+#[proc_macro_derive(Tokens)]
+#[doc(hidden)]
+pub fn derive_tokens(input: TokenStream) -> TokenStream {
+    tokens::derive_impl(input.into()).into_into()
 }
 
 pub(crate) trait IntoInto<T> {
@@ -43,11 +56,12 @@ impl IntoInto<TokenStream> for TokenStream2 {
 
 impl<TStream: IntoInto<TokenStream>> IntoInto<TokenStream> for Result<TStream, syn::Error> {
     fn into_into(self) -> TokenStream {
-        self.map(|a| a.into_into()).unwrap_or_else(|e| e.to_compile_error().into_into())
+        self.map(|a| a.into_into())
+            .unwrap_or_else(|e| e.to_compile_error().into_into())
     }
 }
 
-pub(crate) struct Braced<T>(T);
+pub(crate) struct Braced<T>(T); // {T}
 
 impl<T: Parse> Parse for Braced<T> {
     fn parse(input: ParseStream) -> syn::Result<Self> {

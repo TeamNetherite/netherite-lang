@@ -1,5 +1,4 @@
 use crate::path::Path;
-use crate::private::_Tokens;
 use crate::punctuated::Punctuated;
 use crate::token::delim::{AngleBracket, Parentheses, Surround};
 use crate::util::unit_impl;
@@ -61,21 +60,22 @@ pub enum Type {
 }
 
 impl Type {
+    #[must_use]
     pub fn type_arguments(&self) -> &TypeArguments {
         match self {
-            Type::Path(path) => &path.arguments,
-            Type::Reference(reference) => &reference.referenced.type_arguments(),
-            Type::Func(func) => &func.arguments,
-            Type::Maybe(maybe) => match maybe {
+            Self::Path(path) => &path.arguments,
+            Self::Reference(reference) => reference.referenced.type_arguments(),
+            Self::Func(func) => &func.arguments,
+            Self::Maybe(maybe) => match maybe {
                 TypeMaybe::Unknown(TypeMaybeUnknown { real_type, .. })
-                | TypeMaybe::Some(TypeMaybeSome { real_type, .. }) => &real_type.type_arguments(),
-                _ => &TypeArguments::None,
+                | TypeMaybe::Some(TypeMaybeSome { real_type, .. }) => real_type.type_arguments(),
+                TypeMaybe::Nope => &TypeArguments::None,
             },
         }
     }
 }
 
-unit_impl!(_Tokens [
+unit_impl!(crate::private::_Tokens [
     Type, TypePath, TypeReference, TypeFunc,
     TypeMaybe, TypeMaybeUnknown, TypeMaybeSome,
     TypeArguments, ParenthesizedTypeArguments, NormalTypeArguments

@@ -9,12 +9,16 @@
     clippy::expect_used,
     clippy::unwrap_used
 )]
+#![deny(deprecated)]
 #![allow(unused_doc_comments)]
 #![allow(clippy::module_name_repetitions)]
 //! `lib.rs` - defines AST nodes and additional stuff.
 pub mod location;
 pub mod precedence;
 pub mod tokens;
+
+#[macro_use]
+extern crate topaz_macro;
 
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
@@ -27,6 +31,7 @@ use crate::util::unit_impl;
 use location::{Span, WithSpan};
 use tokens::Token as SpannedToken;
 
+pub mod block;
 pub mod expr;
 pub mod file;
 pub mod ident;
@@ -36,6 +41,7 @@ pub mod parser;
 pub mod path;
 pub mod pattern;
 pub mod punctuated;
+pub mod statement;
 pub mod token;
 pub mod types;
 pub mod util;
@@ -43,6 +49,7 @@ pub mod visibility;
 pub mod visit;
 
 pub use token::Token;
+
 pub(crate) mod private {
     pub trait _Tokens {}
 }
@@ -53,7 +60,7 @@ impl<T: private::_Tokens> Tokens for T {}
 
 impl<T: Tokens> private::_Tokens for Vec<T> {}
 
-unit_impl!(private::_Tokens [char, String, i32, u8]);
+unit_impl!(crate::private::_Tokens [char, String, i32, u8]);
 
 /// Represents a Topaz source file.
 #[derive(Debug, PartialEq)]

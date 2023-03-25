@@ -28,4 +28,6 @@ punctuation! {
     ";" Semi;
     "->" Arrow;
     "::" DoubleColon;
+    "=" Equal;
+    "." Dot;
 }

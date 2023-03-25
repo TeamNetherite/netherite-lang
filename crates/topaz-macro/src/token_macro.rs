@@ -23,8 +23,10 @@ pub(crate) fn token_impl(input: TokenStream) -> syn::Result<TokenStream> {
         [,] => punctuation::Comma,
         [:] => punctuation::Colon,
         [;] => punctuation::Semi,
+        [.] => punctuation::Dot,
         [->] => punctuation::Arrow,
         [::] => punctuation::DoubleColon,
+        [=] => punctuation::Equal,
 
         // prefixes
         [&] => prefix::Ref,

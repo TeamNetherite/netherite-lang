@@ -1,14 +1,16 @@
 use crate::ident::Ident;
-use crate::token::TypeAlias;
-use crate::types::Type;
+use crate::types::{Type, TypeArguments};
 use crate::visibility::Visibility;
 
 /// ```tp
-/// public typealias Why = maybe ();
+/// public typealias Why<T: Visit> = maybe (T|some int);
 /// ```
-pub struct TypeAlias {
-    pub visibility: Visibility,
-    pub typealias_token: TypeAlias,
-    pub name: Ident,
-    pub aliased: Box<Type>
-}
+#[derive(Tokens)]
+pub struct TypeAlias(
+    pub Visibility,
+    pub Token![typealias],
+    pub TypeArguments,
+    pub Ident,
+    /// the aliased type
+    pub Box<Type>,
+);

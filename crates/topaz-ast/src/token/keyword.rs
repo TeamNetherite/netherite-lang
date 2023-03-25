@@ -17,17 +17,17 @@ impl<K: private::Keyword> Keyword for K {}
 
 macro_rules! kw {
     ($name:ident) => {
-        #[derive(Default)]
+        #[derive(Default, Tokens)]
         pub struct $name;
 
-        impl crate::private::_Tokens for $name {}
         impl private::Keyword for $name {
             const REPR: &'static str = stringify!(lowercase_ident!($name));
         }
-        impl ToString for $name {
-            fn to_string(&self) -> String {
-                use private::Keyword as _Keyword;
-                Self::REPR.into()
+
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                use private::Keyword;
+                f.write_str(Self::REPR)
             }
         }
     };

@@ -3,6 +3,7 @@ use std::default::default;
 use std::fmt::{Display, Formatter};
 use std::iter::Map;
 
+// i was brainded
 auto trait Pun {}
 impl<T: Tokens, P: Tokens> !Pun for Punctuated<T, P> {}
 
@@ -29,6 +30,7 @@ impl<T: Tokens, P: Tokens> Pair<T, P> {
     }
 }
 
+#[derive(Tokens)]
 pub struct Punctuated<T: Tokens, P: Tokens> {
     segments: Vec<Pair<T, P>>,
 }
@@ -42,6 +44,10 @@ impl<T: Tokens, P: Tokens> Punctuated<T, P> {
 
     pub fn from_segments(segments: Vec<Pair<T, P>>) -> Self {
         Punctuated { segments }
+    }
+
+    pub fn last(&self) -> Option<&T> {
+        self.segments.last().map(|a| a.value())
     }
 
     pub fn auto_push(&mut self, thing: T)
@@ -137,8 +143,6 @@ impl<T: Tokens + Display, P: Tokens + Display> Display for Punctuated<T, P> {
         f.write_str(&self.stringify())
     }
 }
-
-impl<T: Tokens, P: Tokens> crate::private::_Tokens for Punctuated<T, P> {}
 
 impl<T: Tokens, P: Tokens> Default for Punctuated<T, P> {
     fn default() -> Self {

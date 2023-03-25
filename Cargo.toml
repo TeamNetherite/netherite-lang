@@ -2,6 +2,7 @@
 members = [
     "crates/lapis",
     "crates/topaz",
+    "crates/topaz-common",
     "crates/topaz-macro",
     "crates/topaz-ast",
     "crates/topaz-ast-to-graphviz",

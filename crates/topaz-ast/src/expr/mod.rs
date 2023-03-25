@@ -1,6 +1,5 @@
-use crate::ident::Ident;
 use crate::literal::Literal;
-use crate::path::Path;
+use crate::path::{DottedPath, Path};
 use crate::Token;
 
 pub enum Expr {
@@ -10,19 +9,13 @@ pub enum Expr {
     ConstAccess(ExprConstAccess),
 }
 
-pub struct ExprLit(Literal);
+pub struct ExprLit(pub Literal);
 
-pub struct ExprConstAccess {
-    pub const_path: Path,
-}
+/// crate::THING
+pub struct ExprConstAccess(pub Path);
 
-pub struct ExprVarAccess {
-    pub variable_name: Ident,
-}
+/// thing
+pub struct ExprVarAccess(pub DottedPath);
 
 /// &thing or &mut thing
-pub struct ExprBorrow {
-    pub ref_token: Token![&],
-    pub mut_token: Option<Token![mut]>,
-    pub referenced: Box<Expr>,
-}
+pub struct ExprBorrow(pub Token![&], pub Option<Token![mut]>, pub Box<Expr>);

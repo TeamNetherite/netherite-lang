@@ -5,35 +5,24 @@ use std::fmt::{Display, Formatter};
 use string_interner::symbol::SymbolU32;
 use string_interner::StringInterner;
 
-fn why() -> &'static mut StringInterner {
+#[inline(always)]
+fn interner() -> &'static mut StringInterner {
     unsafe { Lazy::force_mut(&mut crate::INTERNER) }
 }
 
 //pub struct Ident(Cow<'static, str>);
+#[derive(Copy, Clone)]
 pub struct Ident(SymbolU32);
 
 impl Ident {
     #[must_use]
     pub fn new(ident: &str) -> Self {
-        Self(why().get_or_intern(ident))
+        Self(interner().get_or_intern(ident))
     }
     #[must_use]
     pub fn new_static(ident: &'static str) -> Self {
-        Self(why().get_or_intern_static(ident))
+        Self(interner().get_or_intern_static(ident))
     }
-    /*
-    pub fn new(parser: &mut Parser, value: impl AsRef<str>) -> Self {
-        Ident(parser.interner.get_or_intern(value), &parser.interner as *const StringInterner)
-    }
-
-    pub fn new_(value: impl AsRef<str>) -> (Parser, Self) {
-        let mut parser = Parser::new();
-
-        let this = Self::new(&mut parser, value);
-
-        (parser, this)
-    }
-     */
 
     #[must_use]
     pub fn from_keyword<K: PathPartKeyword>() -> Self {
@@ -47,7 +36,7 @@ impl Ident {
 
     #[must_use]
     pub fn maybe_value(&self) -> Option<&str> {
-        why().resolve(self.0)
+        unsafe { Lazy::force(&crate::INTERNER) }.resolve(self.0)
     }
 
     #[must_use]
@@ -56,7 +45,7 @@ impl Ident {
     /// This should never happen.
     pub fn value(&self) -> &str {
         self.maybe_value()
-            .unwrap_or_else(|| unreachable!("Symbol {:#?} was dropped", self.0))
+            .unwrap_or_else(|| unreachable!("**[unreachable]** Symbol {:#?} was dropped", self.0))
     }
 }
 
