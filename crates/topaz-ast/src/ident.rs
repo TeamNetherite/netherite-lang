@@ -1,12 +1,37 @@
-use crate::token::PathPartKeyword;
+use crate::token::{PathPartKeyword, EVERYTHING};
 use once_cell::sync::Lazy;
 use std::fmt::{Display, Formatter};
+use string_interner::backend::BufferBackend;
 use string_interner::symbol::SymbolU32;
 use string_interner::StringInterner;
 
-#[inline(always)]
-fn interner() -> &'static mut StringInterner {
-    unsafe { Lazy::force_mut(&mut crate::INTERNER) }
+pub const DENIED_CHARS: [char; 2] = ['&', '-'];
+pub const STARTING_CHARS: [char; 1] = ['_'];
+
+pub fn check_identifier(ident: &str) -> bool {
+    if ident.is_empty() {
+        return false;
+    }
+    let first = ident.chars().next().unwrap();
+    (first.is_ascii_alphabetic() || STARTING_CHARS.contains(&first))
+        && ident.chars().all(|a| {
+            EVERYTHING.keys().any(|k| {
+                if k.len() == 1 {
+                    k.chars().next().unwrap() == a
+                } else {
+                    false
+                }
+            }) && a.is_ascii()
+        })
+        && !EVERYTHING.contains_key(ident)
+}
+
+fn check_ident(ident: &str) -> &str {
+    if !check_identifier(ident) {
+        panic!("Identifier {} isn't valid!", ident);
+    }
+
+    ident
 }
 
 //pub struct Ident(Cow<'static, str>);
@@ -14,13 +39,20 @@ fn interner() -> &'static mut StringInterner {
 pub struct Ident(SymbolU32);
 
 impl Ident {
+    #[inline(always)]
+    fn interner() -> &'static mut StringInterner<BufferBackend> {
+        unsafe { Lazy::force_mut(&mut crate::INTERNER) }
+    }
+
+    /// # Panics
+    /// Panics if the identifier is not valid.
     #[must_use]
     pub fn new(ident: &str) -> Self {
-        Self(interner().get_or_intern(ident))
+        Self(Self::interner().get_or_intern(check_ident(ident)))
     }
     #[must_use]
     pub fn new_static(ident: &'static str) -> Self {
-        Self(interner().get_or_intern_static(ident))
+        Self(Self::interner().get_or_intern_static(check_ident(ident)))
     }
 
     #[must_use]

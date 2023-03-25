@@ -22,13 +22,6 @@ pub(crate) fn ast_crate() -> TokenStream2 {
     }
 }
 
-#[allow(non_snake_case)]
-#[proc_macro]
-#[doc(hidden)]
-pub fn Token(input: TokenStream) -> TokenStream {
-    token_macro::token_impl(input.into()).into_into()
-}
-
 #[proc_macro]
 pub fn lowercase_ident(input: TokenStream) -> TokenStream {
     ident_manipulation::lowercase_impl(input.into()).into_into()
@@ -37,6 +30,13 @@ pub fn lowercase_ident(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn charify(input: TokenStream) -> TokenStream {
     ident_manipulation::charify(input.into()).into()
+}
+
+#[proc_macro]
+#[doc(hidden)]
+#[deprecated]
+pub fn everything(input: TokenStream) -> TokenStream {
+    token_macro::everything_impl(input.into()).into_into()
 }
 
 #[proc_macro_derive(Tokens)]
@@ -60,6 +60,29 @@ impl<TStream: IntoInto<TokenStream>> IntoInto<TokenStream> for Result<TStream, s
             .unwrap_or_else(|e| e.to_compile_error().into_into())
     }
 }
+
+pub(crate) struct Bracketed<T>(T); // {T}
+
+impl<T: Parse> Parse for Bracketed<T> {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let content;
+
+        bracketed!(content in input);
+
+        Ok(Bracketed(T::parse(&content)?))
+    }
+}
+
+impl<T: Parse, P: Parse> Bracketed<Punctuated<T, P>> {
+    pub(crate) fn parse_punct(input: ParseStream) -> syn::Result<Self> {
+        let content;
+
+        bracketed!(content in input);
+
+        Ok(Bracketed(Punctuated::parse_terminated(&content)?))
+    }
+}
+
 
 pub(crate) struct Braced<T>(T); // {T}
 

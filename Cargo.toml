@@ -8,6 +8,7 @@ members = [
     "crates/topaz-ast-to-graphviz",
     "crates/topaz-doky",
     "crates/topaz-gcc-codegen",
+    "crates/topaz-lexer-next",
     "crates/topaz-lexer",
     "crates/topaz-llvm",
     "crates/topaz-parser",

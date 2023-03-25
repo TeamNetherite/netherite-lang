@@ -12,7 +12,7 @@ impl<T: private::Sealed> Delim for T {}
 
 macro_rules! delimiter {
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident) => {
-        #[derive(Default, Tokens)]
+        #[derive(Default, Tokens, Copy, Clone)]
         pub struct $name;
 
         impl private::Sealed for $name {
@@ -23,7 +23,7 @@ macro_rules! delimiter {
     };
 
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident $inside:ty) => {
-        #[derive(Default, Tokens)]
+        #[derive(Default, Tokens, Copy, Clone)]
         pub struct $name;
 
         impl private::Sealed for $name {

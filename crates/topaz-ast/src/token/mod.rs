@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 pub mod delim;
 pub mod keyword;
 pub mod prefix;
@@ -7,13 +8,37 @@ pub use keyword::*;
 pub use prefix::*;
 pub use punctuation::*;
 
-pub use topaz_macro::Token;
+use topaz_macro::everything;
+use crate::ident::Ident;
 
-pub(self) macro default_token_struct($($name:ident);*$(;)?) {
-    $(
-    #[derive(Default)]
-    pub struct $name;
+pub enum TokenTree {
+    Single(SingleToken),
+    Literal(crate::literal::Literal),
+    Identifier(Ident)
+}
 
-    impl crate::private::_Tokens for $name {}
-    )*
+everything! {
+    [,] => punctuation::Comma,
+    [:] => punctuation::Colon,
+    [;] => punctuation::Semi,
+    [.] => punctuation::Dot,
+    [->] => punctuation::Arrow,
+    [::] => punctuation::DoubleColon,
+    [=] => punctuation::Equal,
+    [-] => punctuation::Minus,
+    [+] => punctuation::Plus,
+    // prefixes
+    [&] => prefix::Ref,
+    // keywords
+    [mut] => keyword::Mut,
+    [func] => keyword::Func,
+    [let] => keyword::Let,
+    [maybe] => keyword::Maybe,
+    [some] => keyword::Some,
+    [nope] => keyword::Nope,
+    [typealias] => keyword::TypeAlias,
+    [this] => keyword::This,
+    [super] => keyword::Super,
+    [gem] => keyword::Gem,
+    [import] => keyword::Import
 }

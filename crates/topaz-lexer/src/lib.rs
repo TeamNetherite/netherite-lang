@@ -81,8 +81,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn eof(&self) -> bool {
+    pub fn eof(&self) -> bool {
         self.current == '\0'
+    }
+
+    pub fn eol(&self) -> bool {
+        self.eof() || self.current == '\n'
     }
 
     fn skip_over_whitespaces(&mut self) {

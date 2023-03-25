@@ -22,9 +22,10 @@ extern crate topaz_macro;
 
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use string_interner::backend::BufferBackend;
 use string_interner::StringInterner;
 
-static mut INTERNER: Lazy<StringInterner> = Lazy::new(StringInterner::new);
+static mut INTERNER: Lazy<StringInterner<BufferBackend>> = Lazy::new(StringInterner::<BufferBackend>::new);
 
 use crate::tokens::RawToken;
 use crate::util::unit_impl;

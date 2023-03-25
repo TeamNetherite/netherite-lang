@@ -17,9 +17,8 @@ impl<K: private::Keyword> Keyword for K {}
 
 macro_rules! kw {
     ($name:ident) => {
-        #[derive(Default, Tokens)]
+        #[derive(Default, Tokens, Copy, Clone)]
         pub struct $name;
-
         impl private::Keyword for $name {
             const REPR: &'static str = stringify!(lowercase_ident!($name));
         }
@@ -36,20 +35,6 @@ macro_rules! kw {
 
         impl private::PathPartKeyword for $name {}
     };
-}
-
-macro_rules! keyword {
-    ($repr:tt $name:ident) => {
-        #[derive(Default)]
-        pub struct $name;
-
-        keyword!(impl $repr $name);
-    };
-    (impl $repr:tt $name:ident) => {
-        impl private::Keyword for $name {
-            const VALUE: &'static str = stringify!($repr);
-        }
-    }
 }
 
 /// The `func` keyword used to declare a function or to use a closure/function pointer type
@@ -78,6 +63,7 @@ kw!(Some);
 /// or could be used to specify the absence of a value,
 /// for example as a function argument, or a value of a variable.
 kw!(Nope);
+kw!(Import);
 kw!(TypeAlias);
 kw!(pathpart This);
 kw!(pathpart Super);
