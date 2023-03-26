@@ -2,7 +2,6 @@ use crate::block::Block;
 use crate::expr::Expr;
 use crate::ident::Ident;
 use crate::pattern::Pattern;
-use crate::Token;
 use crate::types::Type;
 use crate::visibility::Visibility;
 

@@ -1,25 +1,4 @@
 #![allow(deprecated)]
-pub mod delim;
-pub mod keyword;
-pub mod prefix;
-pub mod punctuation;
-
-use derive_more::{Display, From};
-pub use keyword::*;
-pub use prefix::*;
-pub use punctuation::*;
-
-use topaz_macro::everything;
-use crate::ident::Ident;
-
-pub enum TokenTree {
-    Literal(crate::literal::Literal),
-    Identifier(Ident),
-    Punct(Punctuations),
-    Keyword(Keywords),
-    Prefix(Prefixes)
-}
-
 everything! {
     // delimiters
     [()] => delim::Parentheses,
@@ -52,4 +31,25 @@ everything! {
     [super] => keyword::Super,
     [gem] => keyword::Gem,
     [import] => keyword::Import
+}
+
+pub mod delim;
+pub mod keyword;
+pub mod prefix;
+pub mod punctuation;
+
+use derive_more::{Display, From};
+pub use keyword::*;
+pub use prefix::*;
+pub use punctuation::*;
+
+use topaz_macro::everything;
+use crate::ident::Ident;
+
+pub enum TokenTree {
+    Literal(crate::literal::Literal),
+    Identifier(Ident),
+    Punct(Punctuations),
+    Keyword(Keywords),
+    Prefix(Prefixes)
 }

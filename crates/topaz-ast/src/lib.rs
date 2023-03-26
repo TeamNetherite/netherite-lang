@@ -32,7 +32,6 @@ use crate::util::unit_impl;
 use location::{Span, WithSpan};
 use tokens::Token as SpannedToken;
 
-
 #[macro_use]
 pub mod token;
 
@@ -51,8 +50,6 @@ pub mod types;
 pub mod util;
 pub mod visibility;
 pub mod visit;
-
-pub use token::Token;
 
 pub(crate) mod private {
     pub trait _Tokens {}

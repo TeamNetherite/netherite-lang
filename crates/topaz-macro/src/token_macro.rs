@@ -61,11 +61,31 @@ impl Parse for EverythingRule {
     }
 }
 
+mod kw {
+    use syn::custom_keyword;
+
+    custom_keyword!(rules);
+}
+
+struct EveryThing {
+    rules: (kw::rules, Token![=], Punctuated<EverythingRule, Token![,]>),
+}
+
+impl Parse for EveryThing {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(Self {
+            rules: (
+                input.parse()?,
+                input.parse()?,
+                Punctuated::parse_terminated(input)?,
+            ),
+        })
+    }
+}
+
 pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
-    let rules = Parser::parse2(
-        Punctuated::<EverythingRule, Token![,]>::parse_terminated,
-        input,
-    )?;
+    let thing = Parser::parse2(EveryThing::parse, input)?;
+    let rules = &thing.rules.2;
     let enum_name = Ident::new("SingleToken", Span::call_site());
 
     let rules_for_phf: Vec<TokenStream> = rules
@@ -82,7 +102,10 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
     let enum_variants: Vec<TokenStream> = rules
         .iter()
         .map(|EverythingRule(repr, token, en, _)| {
-            let repr = LitStr::new(&repr.to_string().replace('{', "{{").replace('}', "}}"), repr.span());
+            let repr = LitStr::new(
+                &repr.to_string().replace('{', "{{").replace('}', "}}"),
+                repr.span(),
+            );
 
             quote! {
                 #[display(fmt = #repr)]
@@ -93,10 +116,10 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
     let token_macro: Vec<TokenStream> = rules
         .iter()
         .filter(|EverythingRule(_, _, _, a)| *a != RuleType::Delimiter)
-        .map(|EverythingRule(repr, token, _, _)| quote!([#repr] => (crate::token::#token)))
+        .map(|EverythingRule(repr, token, _, _)| quote!([#repr] => ($crate::token::#token)))
         .collect();
 
-    let rule_typed: HashMap<RuleType, Vec<EverythingRule>> = rules
+    let rule_typed: HashMap<RuleType, Vec<EverythingRule>> = thing.rules.2
         .into_iter()
         .group_by(|a| a.3)
         .into_iter()
@@ -164,9 +187,10 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
     Ok(quote! {
         #(#rule_enums)*
 
-        #[derive(Clone, Copy, derive_more::Display, derive_more::From)]
+        #[derive(Clone, Copy, derive_more::Display, derive_more::From, logos::Logos)]
         pub enum #enum_name {
             #(#enum_variants,)*
+
         }
 
         #(#phfs)*
@@ -175,8 +199,10 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
             #(#rules_for_phf,)*
         };
 
-        pub macro Token {
-            #(#token_macro,)*
+        macro_rules! Token {
+            #(#token_macro;)*
         }
+
+        pub(crate) use Token;
     })
 }
