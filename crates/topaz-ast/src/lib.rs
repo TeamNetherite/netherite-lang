@@ -32,6 +32,10 @@ use crate::util::unit_impl;
 use location::{Span, WithSpan};
 use tokens::Token as SpannedToken;
 
+
+#[macro_use]
+pub mod token;
+
 pub mod block;
 pub mod expr;
 pub mod file;
@@ -43,7 +47,6 @@ pub mod path;
 pub mod pattern;
 pub mod punctuated;
 pub mod statement;
-pub mod token;
 pub mod types;
 pub mod util;
 pub mod visibility;

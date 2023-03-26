@@ -1,5 +1,7 @@
 mod private {
-    pub trait Sealed {
+    use std::fmt::Display;
+
+    pub trait Sealed: Copy + Default + Display {
         const REPR: &'static str;
     }
 }

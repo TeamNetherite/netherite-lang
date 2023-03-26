@@ -4,6 +4,7 @@ pub mod keyword;
 pub mod prefix;
 pub mod punctuation;
 
+use derive_more::{Display, From};
 pub use keyword::*;
 pub use prefix::*;
 pub use punctuation::*;
@@ -12,12 +13,22 @@ use topaz_macro::everything;
 use crate::ident::Ident;
 
 pub enum TokenTree {
-    Single(SingleToken),
     Literal(crate::literal::Literal),
-    Identifier(Ident)
+    Identifier(Ident),
+    Punct(Punctuations),
+    Keyword(Keywords),
+    Prefix(Prefixes)
 }
 
 everything! {
+    // delimiters
+    [()] => delim::Parentheses,
+    [[]] => delim::Brackets,
+    [<>] => delim::AngleBracket,
+    [""] => delim::StringDelim,
+    [''] => delim::CharDelim,
+    [{}] => delim::Curly,
+    // punctuation
     [,] => punctuation::Comma,
     [:] => punctuation::Colon,
     [;] => punctuation::Semi,

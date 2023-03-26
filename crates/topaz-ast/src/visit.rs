@@ -1,13 +1,17 @@
+use crate::block::Block;
 use crate::expr::{Expr, ExprBorrow, ExprConstAccess, ExprLit, ExprVarAccess};
 use crate::file::TopazFile;
 use crate::ident::Ident;
 use crate::item::func::{Func, FuncArg};
+use crate::item::import::Import;
 use crate::item::type_alias::TypeAlias;
 use crate::item::Item;
 use crate::literal::number::{BinaryNumber, LiteralNumber};
 use crate::literal::{Literal, LiteralString};
 use crate::path::{DottedPath, Path};
 use crate::pattern::Pattern;
+use crate::statement::Statement;
+use crate::token::delim::Surround;
 use crate::types::{Type, TypeArguments};
 use crate::visibility::Visibility;
 
@@ -95,6 +99,19 @@ pub trait Visit: Sized {
     fn visit_binary_number_literal(&mut self, _bin: &BinaryNumber) {
         // noop
     }
+
+    fn visit_import(&mut self, import: &Import) {
+        walk_import(self, import);
+    }
+
+    //// Block & Statements
+    fn visit_block(&mut self, block: &Block) {
+        walk_block(self, block);
+    }
+
+    fn visit_statement(&mut self, statement: &Statement) {
+        walk_statement(self, statement);
+    }
 }
 
 pub fn walk_file(visitor: &mut impl Visit, file: &TopazFile) {
@@ -111,13 +128,18 @@ pub fn walk_item(visitor: &mut impl Visit, item: &Item) {
     match item {
         Item::Func(func) => visitor.visit_func(func),
         Item::TypeAlias(typealias) => visitor.visit_typealias(typealias),
+        Item::Import(import) => visitor.visit_import(import)
     }
 }
 
-pub fn walk_func(visitor: &mut impl Visit, Func(_, vis, ident, args, ty): &Func) {
+pub fn walk_func(visitor: &mut impl Visit, Func(_, vis, ident, args, _, ty, block): &Func) {
+    visitor.visit_visibility(vis);
+    visitor.visit_ident(ident);
     for arg in args {
         visitor.visit_func_arg(arg);
     }
+    visitor.visit_type(ty);
+    visitor.visit_block(block);
 }
 
 pub fn walk_type(visitor: &mut impl Visit, ty: &Type) {
@@ -190,4 +212,18 @@ pub fn walk_number_literal(visitor: &mut impl Visit, number: &LiteralNumber) {
     match number {
         LiteralNumber::Binary(bin) => visitor.visit_binary_number_literal(bin),
     }
+}
+
+pub fn walk_import(visitor: &mut impl Visit, Import(_, path): &Import) {
+    visitor.visit_path(path);
+}
+
+pub fn walk_block(visitor: &mut impl Visit, Block(Surround(_, statements, _)): &Block) {
+    for stmt in statements {
+        visitor.visit_statement(stmt);
+    }
+}
+
+pub fn walk_statement(_visitor: &mut impl Visit, _stmt: &Statement) {
+    // TODO
 }

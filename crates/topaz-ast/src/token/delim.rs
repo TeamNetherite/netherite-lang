@@ -67,7 +67,7 @@ impl<D: Delim> Delimiter<D> {
 }
 
 #[derive(Tokens)]
-pub struct Surround<D: Delim, Content: Tokens>(D, Content, D);
+pub struct Surround<D: Delim, Content: Tokens>(pub(crate) D, pub(crate) Content, pub(crate) D);
 
 #[allow(clippy::missing_const_for_fn)]
 impl<D: Delim, Content: Tokens> Surround<D, Content> {

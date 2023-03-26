@@ -56,6 +56,15 @@ impl Ident {
     }
 
     #[must_use]
+    pub fn new_checked(ident: &str) -> Option<Self> {
+        if !check_identifier(ident) {
+            None
+        } else {
+            Some(Self(Self::interner().get_or_intern(ident)))
+        }
+    }
+
+    #[must_use]
     pub fn from_keyword<K: PathPartKeyword>() -> Self {
         Self::new_static(K::REPR)
     }
