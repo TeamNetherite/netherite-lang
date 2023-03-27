@@ -1,0 +1,20 @@
+[package]
+name = "codespan-lsp"
+version = "0.11.1"
+license = "Apache-2.0"
+authors = ["Markus Westerlind <marwes91@gmail.com>"]
+description = "Conversions between codespan types and Language Server Protocol types"
+homepage = "https://github.com/brendanzab/codespan"
+repository = "https://github.com/brendanzab/codespan"
+documentation = "https://docs.rs/codespan-lsp"
+edition = "2018"
+
+[dependencies]
+codespan-reporting = { version = "0.11.1", path = "../topaz-cool-reporting" }
+# WARNING: Be extremely careful when expanding this version range.
+# We should be confident that all of the uses of `lsp-types` in `codespan-lsp`
+# will be valid for all the versions in this range. Getting this range wrong
+# could potentially break down-stream builds on a `cargo update`. This is an
+# absolute no-no, breaking much of what we enjoy about Cargo!
+lsp-types = ">=0.84, <0.92"
+url = "2"
