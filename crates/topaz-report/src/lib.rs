@@ -41,30 +41,43 @@ impl<'f> ReporterState<'f> {
         .expect("emit_global_diagnostic() failed");
     }
 
-    pub fn emit_cli(&self, msg: &str, err_code: &str, span: Range<usize>, severity: Severity) {
+    pub fn emit_cli(
+        &self,
+        msg: &str,
+        err_code: Option<&str>,
+        span: Range<usize>,
+        severity: Severity,
+    ) {
+        let mut diagnostic = Diagnostic::new(severity)
+            .with_message(msg)
+            .with_labels(vec![Label::new(
+                LabelStyle::Primary,
+                self.cli_command_id.unwrap(),
+                span,
+            )]);
+
+        diagnostic.code = err_code.map(|a| a.into());
+
         term::emit(
             &mut self.writer.lock(),
             &self.config,
             &self.files,
-            &Diagnostic::new(severity)
-                .with_message(msg)
-                .with_code(err_code)
-                .with_labels(vec![Label::new(
-                    LabelStyle::Primary,
-                    self.cli_command_id.unwrap(),
-                    span,
-                )]),
+            &diagnostic,
         )
         .expect("emit_global_diagnostic() failed")
     }
 
     pub fn emit_cli_err(&self, msg: &str, err_code: &str, span: Range<usize>) {
-        self.emit_cli(msg, err_code, span, Severity::Error)
+        self.emit_cli(msg, Some(err_code), span, Severity::Error)
     }
 
     pub fn emit_cli_fatal(&self, msg: &str, err_code: &str, span: Range<usize>) -> ! {
         self.emit_cli_err(msg, err_code, span);
         exit(1)
+    }
+
+    pub fn emit_cli_hint(&self, msg: &str, span: Range<usize>) {
+        self.emit_cli(msg, None, span, Severity::Help)
     }
 }
 

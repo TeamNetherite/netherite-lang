@@ -133,7 +133,7 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
     /// Diagnostic header, with severity, code, and message.
     ///
     /// ```text
-    /// error[E0001]: unexpected type in `+` application
+    /// E0001 unexpected type in `+` application
     /// ```
     pub fn render_header(
         &mut self,
@@ -158,6 +158,7 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
         // error
         // ```
         self.set_color(self.styles().header(severity))?;
+        /*
         match severity {
             Severity::Bug => write!(self, "bug")?,
             Severity::Error => write!(self, "error")?,
@@ -165,23 +166,24 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
             Severity::Help => write!(self, "help")?,
             Severity::Note => write!(self, "note")?,
         }
+         */
 
         // Write error code
         //
         // ```text
-        // [E0001]
+        // E0001
         // ```
         if let Some(code) = &code.filter(|code| !code.is_empty()) {
-            write!(self, "[{}]", code)?;
+            write!(self, " {} ", code)?;
         }
 
         // Write diagnostic message
         //
         // ```text
-        // : unexpected type in `+` application
+        // unexpected type in `+` application
         // ```
         self.set_color(&self.styles().header_message)?;
-        write!(self, ": {}", message)?;
+        write!(self, " {}", message)?;
         self.reset()?;
 
         writeln!(self)?;

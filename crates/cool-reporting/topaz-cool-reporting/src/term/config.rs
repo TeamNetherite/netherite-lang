@@ -180,16 +180,16 @@ impl Styles {
             header_help: header.clone().set_bg(Some(Color::Cyan)).clone(),
             header_message: header,
 
-            primary_label_bug: ColorSpec::new().set_bg(Some(Color::Red)).clone(),
-            primary_label_error: ColorSpec::new().set_bg(Some(Color::Red)).clone(),
-            primary_label_warning: ColorSpec::new().set_bg(Some(Color::Yellow)).clone(),
-            primary_label_note: ColorSpec::new().set_bg(Some(Color::Green)).clone(),
-            primary_label_help: ColorSpec::new().set_bg(Some(Color::Cyan)).clone(),
-            secondary_label: ColorSpec::new().set_bg(Some(blue)).clone(),
+            primary_label_bug: ColorSpec::new().set_fg(Some(Color::Red)).clone(),
+            primary_label_error: ColorSpec::new().set_fg(Some(Color::Red)).clone(),
+            primary_label_warning: ColorSpec::new().set_fg(Some(Color::Yellow)).clone(),
+            primary_label_note: ColorSpec::new().set_fg(Some(Color::Green)).clone(),
+            primary_label_help: ColorSpec::new().set_fg(Some(Color::Cyan)).clone(),
+            secondary_label: ColorSpec::new().set_fg(Some(blue)).clone(),
 
-            line_number: ColorSpec::new().set_bg(Some(blue)).clone(),
-            source_border: ColorSpec::new().set_bg(Some(blue)).clone(),
-            note_bullet: ColorSpec::new().set_bg(Some(blue)).clone(),
+            line_number: ColorSpec::new().set_fg(Some(blue)).clone(),
+            source_border: ColorSpec::new().set_fg(Some(blue)).clone(),
+            note_bullet: ColorSpec::new().set_fg(Some(blue)).clone(),
         }
     }
 }
