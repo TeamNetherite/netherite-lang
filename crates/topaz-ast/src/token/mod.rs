@@ -1,4 +1,6 @@
 #![allow(deprecated)]
+use topaz_macro::everything;
+
 everything! {
     // delimiters
     [()] => delim::Parentheses,
@@ -37,19 +39,6 @@ pub mod delim;
 pub mod keyword;
 pub mod prefix;
 pub mod punctuation;
-
-use derive_more::{Display, From};
 pub use keyword::*;
 pub use prefix::*;
 pub use punctuation::*;
-
-use topaz_macro::everything;
-use crate::ident::Ident;
-
-pub enum TokenTree {
-    Literal(crate::literal::Literal),
-    Identifier(Ident),
-    Punct(Punctuations),
-    Keyword(Keywords),
-    Prefix(Prefixes)
-}

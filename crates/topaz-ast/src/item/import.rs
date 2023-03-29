@@ -1,4 +1,5 @@
 use crate::path::Path;
 
-#[derive(Tokens)]
-pub struct Import(pub Token![import], pub Path);
+make_token! {
+    pub struct Import(pub import, pub Path);
+}
