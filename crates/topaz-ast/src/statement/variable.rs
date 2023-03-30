@@ -1,6 +1,6 @@
 use crate::expr::Expr;
 use crate::ident::Ident;
-use crate::{Token, Type};
+use crate::{Token, types::Type};
 
 /// ```tp
 /// let mut why: (maybe (maybe int), maybe String) = (some (some 10), some "");

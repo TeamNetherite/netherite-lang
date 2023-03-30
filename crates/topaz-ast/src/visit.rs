@@ -205,6 +205,7 @@ pub fn walk_literal(visitor: &mut impl Visit, literal: &Literal) {
     match literal {
         Literal::String(str) => visitor.visit_str_literal(str),
         Literal::Number(number) => visitor.visit_number_literal(number),
+        Literal::Char(chr) => todo!("char literals")
     }
 }
 
@@ -214,7 +215,7 @@ pub fn walk_number_literal(visitor: &mut impl Visit, number: &LiteralNumber) {
     }
 }
 
-pub fn walk_import(visitor: &mut impl Visit, Import(_, path): &Import) {
+pub fn walk_import(visitor: &mut impl Visit, Import(path): &Import) {
     visitor.visit_path(path);
 }
 

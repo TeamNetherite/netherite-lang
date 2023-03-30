@@ -1,4 +1,5 @@
 use crate::ident::Ident;
+use crate::Token;
 use crate::types::{Type, TypeArguments};
 use crate::visibility::Visibility;
 

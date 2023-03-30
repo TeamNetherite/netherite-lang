@@ -7,7 +7,7 @@ everything! {
     [[]] => delim::Brackets,
     [<>] => delim::AngleBracket,
     [""] => delim::StringDelim,
-    [''] => delim::CharDelim,
+    //[''] => delim::CharDelim,
     [{}] => delim::Curly,
     // punctuation
     [,] => punctuation::Comma,

@@ -1,8 +1,8 @@
 use crate::ident::Ident;
 use crate::path::Path;
 use crate::punctuated::Punctuated;
+use crate::Token;
 use crate::token::delim::{Parentheses, Surround};
-use topaz_macro::Token;
 
 #[derive(Default)]
 pub enum Visibility {

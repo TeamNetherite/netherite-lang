@@ -29,10 +29,15 @@ static mut INTERNER: Lazy<StringInterner<BufferBackend>> =
 use crate::util::unit_impl;
 use location::{Span, WithSpan};
 
+#[cfg(feature = "grammar")]
+mod grammar;
+
+#[cfg(feature = "parse")]
+pub mod parse;
+
 pub mod block;
 pub mod expr;
 pub mod file;
-pub mod grammar;
 pub mod ident;
 pub mod item;
 pub mod literal;
@@ -46,6 +51,8 @@ pub mod types;
 pub mod util;
 pub mod visibility;
 pub mod visit;
+
+pub use token::Token;
 
 pub(crate) mod private {
     pub trait _Tokens {}

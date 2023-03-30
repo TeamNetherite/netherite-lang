@@ -2,3 +2,4 @@
 **/target
 .idea
 .vscode
+crates/topaz-ast/src/grammar.rs

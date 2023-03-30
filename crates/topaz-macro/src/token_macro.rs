@@ -108,6 +108,19 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
         .filter(|EverythingRule(_, _, _, a)| *a != RuleType::Delimiter)
         .map(|EverythingRule(repr, token, _, _)| quote!([#repr] => (crate::token::#token)))
         .collect();
+    let rules_for_phf: Vec<TokenStream> = rules
+        .iter()
+        .map(|EverythingRule(a, token, en, _)| {
+            let repr = LitStr::new(
+                &a.to_string()
+                    .replace('{', "{{")
+                    .replace('}', "}}")
+                    .replace('"', "\\\""),
+                Span::call_site(),
+            );
+            quote!(#repr => #enum_name::#en(crate::token::#token)) // "ok" => SingleToken::Ok(topaz_ast::token::Ok)
+        })
+        .collect();
 
     let rule_typed: HashMap<RuleType, Vec<EverythingRule>> = rules
         .into_iter()
@@ -115,7 +128,6 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
         .into_iter()
         .map(|(a, b)| (a, b.collect_vec()))
         .collect();
-
     let rule_enums: Vec<TokenStream> = rule_typed
         .iter()
         .map(|(rt, rs)| {
@@ -141,6 +153,10 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
         pub enum #enum_name {
             #(#enum_variants,)*
         }
+
+        pub static EVERYTHING: phf::Map<&'static str, #enum_name> = phf::phf_map! {
+            #(#rules_for_phf,)*
+        };
 
         pub macro Token {
             #(#token_macro,)*

@@ -2,6 +2,7 @@ use crate::expr::Expr;
 use crate::ident::Ident;
 use crate::path::CallPath;
 use crate::punctuated::Punctuated;
+use crate::Token;
 use crate::token::delim::{Parentheses, Surround};
 
 #[derive(Tokens)]

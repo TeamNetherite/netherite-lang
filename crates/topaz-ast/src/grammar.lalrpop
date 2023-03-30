@@ -1,0 +1,29 @@
+use crate::item::import::Import;
+use crate::ident::Ident;
+use crate::path::*;
+use crate::token as tokens;
+use crate::punctuated::Punctuated;
+
+grammar;
+
+// Core tokens
+DOUBLECOLON: tokens::DoubleColon = <"::"> => tokens::DoubleColon;
+IMPORT: tokens::Import = <"import"> => tokens::Import;
+
+// Core stuff
+Ident: Ident = <id:r"([a-zA-Z_][a-zA-Z\d_]*)"> => Ident::new(id);
+/// Punctuated
+Punctuated<T, P>: Punctuated<T, P> = <real: (<T> <P>)*> <end:T> => {
+    let mut v: Vec<crate::punctuated::Pair<T, P>> = real.into_iter().map(|(a, b)| crate::punctuated::Pair::Punct(a, b)).collect::<Vec<_>>();
+    v.push(crate::punctuated::Pair::End(end));
+
+    Punctuated::from_segments(v)
+};
+Path: Path = <real:Punctuated<Ident, DOUBLECOLON>> => Path(real);
+
+// Items
+pub Import: Import = IMPORT <path:Path> => Import(path);
+
+pub Item: Item = {
+    <import:Import> => Item::Import(import)
+}

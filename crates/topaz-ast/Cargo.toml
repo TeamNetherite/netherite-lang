@@ -2,6 +2,7 @@
 name = "topaz-ast"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 [dependencies]
 num-traits = "0.2.15"
@@ -12,5 +13,12 @@ thiserror = "1.0.40"
 string-interner = "0"
 topaz-macro.path = "../topaz-macro"
 once_cell = "1"
-oak = "0"
-oak_runtime = "0"
+lalrpop-util = { version = "0", features = ["lexer", "regex"], optional = true }
+
+[build-dependencies]
+lalrpop = "0"
+
+[features]
+default = []
+parse = ["grammar", "dep:lalrpop-util"]
+grammar = []
