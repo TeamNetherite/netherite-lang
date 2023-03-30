@@ -1,0 +1,96 @@
+use crate::{
+    item::{Item, import::Import},
+    ident::Ident,
+    path::*,
+    types::*,
+    block::Block,
+    token as tokens,
+    token::Surround,
+    punctuated::Punctuated,
+    statement::{*, variable::*, func_call::*},
+    expr::*,
+    literal::{*, number::*},
+    pattern::*,
+    file::TopazFile,
+    visibility::Visibility
+};
+use std::default::default;
+grammar;
+pub DOUBLECOLON: tokens::DoubleColon = <"::"> => default();
+pub IMPORT: tokens::Import = <"import"> => default();
+pub COMMA: tokens::Comma = <","> => default();
+pub COLON: tokens::Colon = <":"> => default();
+pub EQ: tokens::Equal = <"="> => default();
+pub DOT: tokens::Dot = <"."> => default();
+pub OPENPAR: tokens::Parentheses = <"("> => default();
+pub CLOSEPAR: tokens::Parentheses = <")"> => default();
+pub OPENCUR: tokens::Curly = <"{"> => default();
+pub CLOSECUR: tokens::Curly = <"}"> => default();
+pub STRDELIM: tokens::StringDelim = <"\""> => default();
+pub ARROW: tokens::Arrow = <"->"> => default();
+pub FUNC: tokens::Func = <"func"> => default();
+pub LET: tokens::Let = <"let"> => default();
+pub MUT: tokens::Mut = <"mut"> => default();
+
+pub Ident: Ident = <id:r"([a-zA-Z_][a-zA-Z\d_]*)"> => Ident::new(id);
+
+Punctuated<T, P>: Punctuated<T, P> = {
+    <mut v: (<T> <P>)*> <end:T?> => {
+        v.extend(end);
+
+        Punctuated::from_segments(v)
+    }
+};
+pub Path: Path = <real:Punctuated<Ident, DOUBLECOLON>> => Path(real);
+pub CallPath: CallPath = <real:Punctuated<Ident, DOT>> => crate::path::CallPath(real);
+
+pub Import: Import = IMPORT <path:Path> => Import(path);
+
+pub Item: Item = {
+    <import:Import> => Item::Import(import),
+    <func:Func> => Item::Func(func)
+}
+
+pub Visibility: Visibility = {
+    "" => Visibility::Public,
+    "public" => Visibility::Public,
+    "private" => Visibility::Private(None),
+    "private(gem)" => Visibility::Internal()
+};
+
+pub Func: crate::item::func::Func = <func:FUNC> <vis:Visibility> <name:Ident> OPENPAR <args:FuncArg*> CLOSEPAR <arrow:ARROW> <ret:Type> <block:Block> => crate::item::func::Func(func, vis, name, args, arrow, ret, block);
+pub FuncArg: crate::item::func::FuncArg = <pat:Pattern> COLON <ty:Type> <def:(EQ Expr)?> => crate::item::func::FuncArg(pat, ty, def);
+
+pub Block: Block = <oc:OPENCUR> <stmts:(Statement)*> <cc:CLOSECUR> => Block(Surround::new_default(stmts));
+
+pub Statement: Statement = {
+    <l:LetStmt> => Statement::Let(l),
+    <call:FuncCallStmt> => Statement::FuncCall(call)
+};
+pub LetStmt: LetStmt
+    = <l:LET> <m:MUT?> <name:Ident> <infer:(COLON Type)?> <init:(EQ Expr)?> =>
+        LetStmt(l, m, name, infer, init);
+pub FuncCallStmt: FuncCallStmt =
+    <path:CallPath> OPENPAR <args:Punctuated<FuncCallArg, COMMA>> CLOSEPAR
+        => FuncCallStmt(path, Surround::new_default(args));
+pub FuncCallArg: FuncCallArg = <named:(Ident EQ)?> <expr:Expr> => FuncCallArg(named, expr);
+pub Expr: Expr = {
+    <lit:Literal> => Expr::Literal(ExprLit(lit))
+};
+pub Literal: Literal = {
+    <s:StringLiteral> => Literal::String(s)
+};
+pub StringLiteral: LiteralString = <content:r"'[^']*'"> => LiteralString(Surround::new_default(content.trim_matches('\'').to_string()));
+pub Type: Type = {
+    <primitive:PrimitiveType> => Type::Primitive(primitive),
+};
+pub PrimitiveType: PrimitiveType = {
+    <"int"> => PrimitiveType::Int,
+    <"uint"> => PrimitiveType::Uint,
+    <"string"> => PrimitiveType::String
+};
+pub Pattern: Pattern = {
+    <ident:Ident> => Pattern::Ident(ident),
+};
+
+pub File: TopazFile = <items:Item*> => TopazFile { items };

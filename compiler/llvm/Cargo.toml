@@ -1,0 +1,10 @@
+[package]
+name = "topazc-llvm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dependencies.topaz-ast]
+path = "../../scaffold/topaz-ast"
+features = ["parse"]

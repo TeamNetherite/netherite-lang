@@ -1,0 +1,7 @@
+[package]
+name = "topaz-common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+topaz-macro.path = "../topaz-macro"

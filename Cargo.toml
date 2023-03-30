@@ -1,19 +1,25 @@
 [workspace]
 members = [
-    "crates/lapis",
-    "crates/topaz",
-    "crates/topaz-common",
-    "crates/topaz-macro",
-    "crates/topaz-ast",
-    "crates/topaz-ast-to-graphviz",
-    "crates/topaz-doky",
-    "crates/topaz-gcc-codegen",
-    "crates/topaz-lexer",
-    "crates/topaz-llvm",
-    "crates/topaz-parser",
-    "crates/topaz-report",
-    "crates/topaz-type-checker",
-    "crates/cool-reporting/codespan",
-    "crates/cool-reporting/topaz-cool-reporting",
-    "crates/cool-reporting/codespan-lsp"
+    # Scaffold - tools for creating AST, working with it and checking it.
+    "scaffold/topaz",
+    "scaffold/topaz-common",
+    "scaffold/topaz-macro",
+    "scaffold/topaz-ast",
+    "scaffold/topaz-ast-to-graphviz",
+    "scaffold/topaz-doky",
+    "scaffold/topaz-gcc-codegen",
+    "scaffold/topaz-lexer",
+    "scaffold/topaz-parser",
+    "scaffold/topaz-report",
+    "scaffold/topaz-type-checker",
+    "scaffold/cool-reporting/codespan",
+    "scaffold/cool-reporting/topaz-cool-reporting",
+    "scaffold/cool-reporting/codespan-lsp",
+
+    # Tools - package managers, or the LSP server
+    "tools/lapis",
+    "tools/topaz-lsp",
+
+    # Compiler - the thing that takes AST and transforms it into B.Y.T.E.S.
+    "compiler/llvm"
 ]

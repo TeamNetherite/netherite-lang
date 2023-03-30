@@ -1,0 +1,8 @@
+[package]
+name = "topaz-lexer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+topaz-ast = {path = "../topaz-ast" }
+string-interner = "0"

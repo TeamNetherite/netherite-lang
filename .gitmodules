@@ -1,5 +1,5 @@
-[submodule "crates/lapis"]
-	path = crates/lapis
+[submodule "tools/lapis"]
+	path = tools/lapis
 	url = https://github.com/topaz-lang/lapis
 [submodule "spec"]
 	path = spec
