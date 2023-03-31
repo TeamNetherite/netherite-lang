@@ -175,6 +175,7 @@ pub fn walk_dotted_path(visitor: &mut impl Visit, path: &DottedPath) {
 
 pub fn walk_expr(visitor: &mut impl Visit, expr: &Expr) {
     match expr {
+        Expr::FuncCall(call) => (),
         Expr::Literal(literal) => visitor.visit_expr_literal(literal),
         Expr::Borrow(borrow) => visitor.visit_expr_borrow(borrow),
         Expr::ConstAccess(const_access) => visitor.visit_expr_const_access(const_access),

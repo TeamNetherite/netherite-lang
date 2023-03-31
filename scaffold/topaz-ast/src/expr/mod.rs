@@ -1,5 +1,6 @@
 use crate::literal::Literal;
 use crate::path::{DottedPath, Path};
+use crate::statement::func_call::FuncCallStmt;
 use crate::Token;
 
 pub enum Expr {
@@ -7,6 +8,7 @@ pub enum Expr {
     Borrow(ExprBorrow),
     VariableAccess(ExprVarAccess),
     ConstAccess(ExprConstAccess),
+    FuncCall(FuncCallStmt)
 }
 
 pub struct ExprLit(pub Literal);

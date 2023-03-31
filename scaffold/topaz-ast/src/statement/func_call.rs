@@ -11,4 +11,4 @@ pub struct FuncCallStmt(pub CallPath, pub Surround<Parentheses, Punctuated<FuncC
 /// arg_name = some 8uexplod \
 /// Some(8u128)
 #[derive(Tokens)]
-pub struct FuncCallArg(pub Option<(Ident, Token![=])>, Expr);
+pub struct FuncCallArg(pub Option<(Ident, Token![=])>, pub Expr);

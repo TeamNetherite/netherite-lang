@@ -1,0 +1,14 @@
+[package]
+name = "topaz-parser-next"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+topaz-ast.path = "../topaz-ast"
+lalrpop-util = { version = "0", features = ["regex"] }
+logos = "0"
+thiserror = "1"
+
+[build-dependencies]
+lalrpop = "0"

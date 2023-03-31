@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Build AST" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="command" value="build --package topaz-ast --all-features" />
+  <configuration default="false" name="Test parser" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+    <option name="command" value="test --package topaz-parser-next" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <option name="emulateTerminal" value="false" />
     <option name="channel" value="DEFAULT" />
     <option name="requiredFeatures" value="true" />
-    <option name="allFeatures" value="false" />
+    <option name="allFeatures" value="true" />
     <option name="withSudo" value="false" />
     <option name="buildTarget" value="REMOTE" />
     <option name="backtrace" value="SHORT" />

@@ -1,0 +1,152 @@
+use topaz_ast::{
+    item::{import::*, func::*, *},
+    ident::Ident,
+    path::{Path, DottedPath, CallPath},
+    types::*,
+    block::Block,
+    token as tokens,
+    token::Surround,
+    punctuated::Punctuated,
+    statement::{*, variable::*, func_call::*},
+    expr::*,
+    literal::{*, number::*},
+    pattern::*,
+    file::TopazFile,
+    visibility::Visibility,
+    location::{WithSpan, Span},
+    WithSpannable
+};
+use lalrpop_util::ParseError;
+use crate::{
+    lex::{Token, LexError},
+    TopazParseError,
+    make_real
+};
+use std::default::default;
+
+grammar;
+
+extern {
+    type Error = TopazParseError;
+    type Location = usize;
+
+    enum Token {
+        "func" => Token::Func,
+        "::" => Token::DoubleColon,
+        "import" => Token::Import,
+        "," => Token::Comma,
+        ":" => Token::Colon,
+        "=" => Token::Equal,
+        "." => Token::Dot,
+        "(" => Token::OpenParentheses,
+        ")" => Token::CloseParentheses,
+        "{" => Token::OpenCurly,
+        "}" => Token::CloseCurly,
+        "\"" => Token::StrDelim,
+        "->" => Token::Arrow,
+        ";" => Token::Semi,
+        "func" => Token::Func,
+        "let" => Token::Let,
+        "mut" => Token::Mut,
+        "ident" => Token::Ident(<Ident>),
+        "public" => Token::Public,
+        "private" => Token::Private,
+        "gem" => Token::Gem,
+        "this" => Token::This,
+        "lit_str" => Token::LitStr(<String>),
+
+        "ty_byte" => Token::TypeByte,
+        "ty_ubyte" => Token::TypeUbyte,
+        "ty_int" => Token::TypeInt,
+        "ty_uint" => Token::TypeUint,
+        "ty_string" => Token::TypeString
+    }
+}
+
+pub DOUBLECOLON: tokens::DoubleColon = <"::"> => default();
+pub IMPORT: tokens::Import = <"import"> => default();
+pub COMMA: tokens::Comma = <","> => default();
+pub COLON: tokens::Colon = <":"> => default();
+pub EQ: tokens::Equal = <"="> => default();
+pub DOT: tokens::Dot = <"."> => default();
+pub OPENPAR: tokens::Parentheses = <"("> => default();
+pub CLOSEPAR: tokens::Parentheses = <")"> => default();
+pub OPENCUR: tokens::Curly = <"{"> => default();
+pub CLOSECUR: tokens::Curly = <"}"> => default();
+pub STRDELIM: tokens::StringDelim = <"\""> => default();
+pub ARROW: tokens::Arrow = <"->"> => default();
+pub FUNC: tokens::Func = <"func"> => default();
+pub LET: tokens::Let = <"let"> => default();
+pub MUT: tokens::Mut = <"mut"> => default();
+pub GEM: tokens::Gem = <"gem"> => default();
+pub THIS: tokens::This = <"this"> => default();
+
+pub Ident: Ident = <"ident">;
+Parenthesized<T>: T =
+    "(" <real:T> ")" => real;
+
+pub Path: Path = <mut real:((Ident "::")* Ident)> => Path(make_real(real));
+pub DottedPath: DottedPath = <mut real:((Ident ".")* Ident)> => DottedPath(make_real(real));
+pub CallPath: CallPath = {
+    <Path> => CallPath::OnModule(<>),
+    <DottedPath> => CallPath::OnObject(<>)
+};
+
+pub Import: Import = IMPORT <path:Path> => Import(path);
+
+pub Item: Item = {
+    <import:Import> => Item::Import(import),
+    <func:Func> => Item::Func(func)
+};
+
+pub Visibility: Visibility = {
+    "public" => Visibility::Public,
+    "private" => Visibility::Private(None),
+    "private" Parenthesized<"gem"> => Visibility::Internal()
+};
+
+pub Func: Func = <func:FUNC> <vis:Visibility> <name:Ident> OPENPAR <args:FuncArg*> CLOSEPAR <arrow:ARROW> <ret:Type> <block:Block> => Func(func, vis, name, args, arrow, ret, block);
+pub FuncArg: FuncArg = <pat:Pattern> COLON <ty:Type> <def:(EQ Expr)?> => FuncArg(pat, ty, def);
+
+pub Block: Block = <oc:OPENCUR> <stmts:(Statement)*> <cc:CLOSECUR> => Block(Surround::new_default(stmts));
+
+pub Statement: Statement = {
+    <l:LetStmt> => Statement::Let(l),
+    <call:FuncCallStmt> ";" => Statement::FuncCall(call)
+};
+pub LetStmt: LetStmt
+    = <l:LET> <m:MUT?> <name:Ident> <infer:(COLON Type)?> <init:(EQ Expr)?> ";" =>
+        LetStmt(l, m, name, infer, init);
+pub FuncCallStmt: FuncCallStmt =
+    <path:CallPath> "(" <args:((FuncCallArg ",")* FuncCallArg)>
+        => FuncCallStmt(path, Surround::new_default(make_real(args)));
+pub FuncCallArg: FuncCallArg = <named:(Ident EQ)?> <expr:Expr> => FuncCallArg(named, expr);
+pub Expr: Expr = {
+    <lit:Literal> => Expr::Literal(ExprLit(lit)),
+    <call:FuncCallStmt> => Expr::FuncCall(call)
+};
+pub Literal: Literal = {
+    <s:StringLiteral> => Literal::String(s)
+};
+pub StringLiteral: LiteralString = <content:"lit_str"> =>?
+    Ok(LiteralString(
+        Surround::new_default(
+            content
+        )
+    ));
+
+pub Type: Type = {
+    <primitive:PrimitiveType> => Type::Primitive(primitive)
+};
+pub PrimitiveType: PrimitiveType = {
+    "ty_byte" => PrimitiveType::Byte,
+    "ty_ubyte" => PrimitiveType::Ubyte,
+    "ty_int" => PrimitiveType::Int,
+    "ty_uint" => PrimitiveType::Uint,
+    "ty_string" => PrimitiveType::String
+};
+pub Pattern: Pattern = {
+    <ident:Ident> => Pattern::Ident(ident),
+};
+
+pub File: TopazFile = <items:Item*> => TopazFile { items };

@@ -30,12 +30,6 @@ static mut INTERNER: Lazy<StringInterner<BufferBackend>> =
 use crate::util::unit_impl;
 use location::{Span, WithSpan};
 
-#[cfg(feature = "grammar")]
-lalrpop_util::lalrpop_mod!(#[cfg(feature = "grammar")] pub(crate) grammar, "/src/grammar.rs");
-
-#[cfg(feature = "parse")]
-pub mod parse;
-
 pub mod block;
 pub mod expr;
 pub mod file;
@@ -65,6 +59,10 @@ pub trait Tokens: private::_Tokens {}
 impl<T: private::_Tokens> Tokens for T {}
 
 impl<T: Tokens> private::_Tokens for Vec<T> {}
+
+pub trait CustomTokens {}
+
+impl<T: CustomTokens> private::_Tokens for T {}
 
 unit_impl!(crate::private::_Tokens [char, String, i32, u8]);
 

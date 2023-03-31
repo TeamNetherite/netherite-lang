@@ -8,37 +8,36 @@ use string_interner::StringInterner;
 pub const DENIED_CHARS: [char; 2] = ['&', '-'];
 pub const STARTING_CHARS: [char; 1] = ['_'];
 
-pub fn check_identifier(ident: &str) -> bool {
-    if ident.is_empty() {
-        return false;
-    }
-    let first = ident.chars().next().unwrap();
-    (first.is_ascii_alphabetic() || STARTING_CHARS.contains(&first))
-        && ident.chars().all(|a| {
-            EVERYTHING.keys().any(|k| {
-                if k.len() == 1 {
-                    k.chars().next().unwrap() == a
-                } else {
-                    false
-                }
-            }) && a.is_ascii()
-        })
-        && !EVERYTHING.contains_key(ident)
+#[must_use] pub fn check_identifier(ident: &str) -> bool {
+    ident.chars().next().map_or(false, |first| {
+        (first.is_ascii_alphabetic() || STARTING_CHARS.contains(&first))
+            && ident.chars().all(|a| {
+                EVERYTHING.keys().any(|k| {
+                    if k.len() == 1 {
+                        k.chars().next().unwrap_or('\0') == a
+                    } else {
+                        false
+                    }
+                }) && a.is_ascii()
+            })
+            && !EVERYTHING.contains_key(ident)
+    })
 }
 
+#[allow(clippy::inline_always)]
+#[inline(always)]
 fn check_ident(ident: &str) -> &str {
-    if !check_identifier(ident) {
-        panic!("Identifier {} isn't valid!", ident);
-    }
+    assert!(check_identifier(ident), "Identifier {ident} isn't valid!");
 
     ident
 }
 
 //pub struct Ident(Cow<'static, str>);
-#[derive(Copy, Clone, Tokens)]
+#[derive(Copy, Clone, Tokens, PartialEq, Eq, Debug)]
 pub struct Ident(SymbolU32);
 
 impl Ident {
+    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn interner() -> &'static mut StringInterner<BufferBackend> {
         unsafe { Lazy::force_mut(&mut crate::INTERNER) }
@@ -58,10 +57,9 @@ impl Ident {
     #[must_use]
     pub fn new_checked(ident: &str) -> Option<Self> {
         if !check_identifier(ident) {
-            None
-        } else {
-            Some(Self(Self::interner().get_or_intern(ident)))
+            return None;
         }
+        Some(Self(Self::interner().get_or_intern(ident)))
     }
 
     #[must_use]

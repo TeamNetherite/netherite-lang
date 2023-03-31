@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies.topaz-ast]
 path = "../../scaffold/topaz-ast"
-features = ["parse"]
+
+[dependencies.topaz-parser-next]
+path = "../../scaffold/topaz-parser-next"
