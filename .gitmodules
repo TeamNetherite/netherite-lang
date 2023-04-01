@@ -1,7 +1,3 @@
-[submodule "tools/lapis"]
-	path = tools/lapis
-	url = https://github.com/topaz-lang/lapis.git
-	branch = main
 [submodule "spec"]
 	path = spec
 	url = https://github.com/topaz-lang/spec
