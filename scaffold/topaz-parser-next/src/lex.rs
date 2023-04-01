@@ -1,6 +1,8 @@
+use crate::TopazParseError;
+use lalrpop_util::state_machine::TokenTriple;
 use logos::{Logos, Span, SpannedIter};
 use topaz_ast::ident::Ident;
-use topaz_ast::CustomTokens;
+use topaz_ast::{CustomTokens, WithSpannable};
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
@@ -47,6 +49,8 @@ pub enum Token {
     StrDelim,
     #[token("->")]
     Arrow,
+    #[token(";")]
+    Semi,
 
     #[regex(r"[a-zA-Z_][a-zA-Z\d_]*", |lex| Ident::new(lex.slice()))]
     Ident(Ident),
@@ -91,11 +95,13 @@ impl<'w> Lexer<'w> {
 }
 
 impl<'w> Iterator for Lexer<'w> {
-    type Item = Spanned<Token, usize, LexError>;
+    type Item = Spanned<Token, usize, TopazParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.tokens.next().map(|token| match token {
-            Token::Error => Err(LexError::Invalid(self.tokens.slice().to_owned())),
+            Token::Error => Err(TopazParseError::Lexer(
+                self.tokens.slice().to_owned().with_span(self.tokens.span()),
+            )),
             token => {
                 let Span { start, end } = self.tokens.span();
                 Ok((start, token, end))

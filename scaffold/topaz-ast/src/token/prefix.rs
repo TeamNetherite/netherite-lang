@@ -11,7 +11,7 @@ use private::PrefixToken as _PrefixToken;
 
 macro_rules! prefix {
     ($repr:literal $name:ident) => {
-        #[derive(Default, derive_more::Display, Copy, Clone)]
+        #[derive(Default, derive_more::Display, Copy, Clone, Debug)]
         #[display(fmt = $repr)]
         pub struct $name;
         impl _PrefixToken for $name {

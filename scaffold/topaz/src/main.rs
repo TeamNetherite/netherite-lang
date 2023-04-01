@@ -1,11 +1,12 @@
 use clap::{arg, Command};
 use codespan_reporting::files::SimpleFiles;
 use std::{fs, process::exit};
-use topaz_ast::tokens::RawToken;
-use topaz_lexer::Lexer;
-use topaz_parser::Parser;
+use std::fmt::Debug;
+use topaz_ast::file::TopazFile;
+use topaz_ast::location::WithSpan;
+use topaz_parser_next::lex::{Lexer, Token};
+use topaz_parser_next::Parse;
 use topaz_report::{Reporter, ReporterState};
-use topaz_type_checker::StaticAnalyzer;
 
 fn cli() -> Command {
     Command::new("topaz")
@@ -56,18 +57,15 @@ fn main() {
                     let mut token_index = 0;
 
                     loop {
-                        let token = lexer.next().unwrap();
+                        let token = lexer.next();
+                        if let Some(Ok(token)) = token {
+                            let token: WithSpan<Token> = token.into();
+                            println!(
+                                "{token_index}: {token:#?}",
+                            );
 
-                        if token.value.is(RawToken::EndOfFile) {
-                            break;
+                            token_index += 1;
                         }
-
-                        println!(
-                            "{token_index}: [{}]@{}..{}",
-                            token.value, token.span.start, token.span.end,
-                        );
-
-                        token_index += 1;
                     }
                 }
                 Err(_) => {
@@ -82,17 +80,14 @@ fn main() {
             match fs::read_to_string(filepath) {
                 Ok(contents) => {
                     let file_id = files.add(filepath, &contents);
-                    let mut parser = Parser::new(&contents);
-
-                    let ast = parser.parse();
+                    let mut ast = TopazFile::parse(&contents);
 
                     match ast {
-                        Ok(program_unit) => {
-                            println!("{:?}", program_unit);
+                        Ok(file) => {
+                            println!("{:#?}", file);
                         }
                         Err(e) => {
-                            e.emit_diagnostic(&reporter, &files, file_id);
-
+                            println!("{e}");
                             reporter
                                 .emit_global_error("cannot output AST due to the previous errors");
 
@@ -107,6 +102,7 @@ fn main() {
             }
         }
         Some(("analyze", sub_matches)) => {
+            /*
             let filepath = sub_matches.get_one::<String>("PATH").unwrap();
 
             match fs::read_to_string(filepath) {
@@ -139,8 +135,11 @@ fn main() {
                     exit(1);
                 }
             }
+             */
+            println!("no analyze for you :))))))))))0")
         }
         Some(("graphviz", sub_matches)) => {
+            /*
             let filepath = sub_matches.get_one::<String>("PATH").unwrap();
             match fs::read_to_string(filepath) {
                 Ok(contents) => {
@@ -170,6 +169,9 @@ fn main() {
                     exit(1);
                 }
             }
+             */
+
+            println!("graphviz is dead")
         }
         _ => {}
     }

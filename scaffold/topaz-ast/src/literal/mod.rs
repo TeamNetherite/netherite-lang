@@ -1,14 +1,14 @@
 use crate::token::delim::{CharLit, StringLit};
 pub mod number;
 
-#[derive(Tokens)]
+#[tokens]
 pub enum Literal {
     String(LiteralString),
     Number(number::LiteralNumber),
     Char(LiteralChar)
 }
 
-#[derive(Tokens)]
+#[tokens]
 pub struct LiteralString(pub StringLit);
 
 impl<S: ToString> From<S> for LiteralString {
@@ -17,7 +17,7 @@ impl<S: ToString> From<S> for LiteralString {
     }
 }
 
-#[derive(Tokens)]
+#[tokens]
 pub struct LiteralChar(pub CharLit);
 
 impl<C: Into<char>> From<C> for LiteralChar {

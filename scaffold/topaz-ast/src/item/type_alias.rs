@@ -6,7 +6,7 @@ use crate::visibility::Visibility;
 /// ```tp
 /// public typealias Why<T: Visit> = maybe (T|some int);
 /// ```
-#[derive(Tokens)]
+#[tokens]
 pub struct TypeAlias(
     pub Visibility,
     pub Token![typealias],

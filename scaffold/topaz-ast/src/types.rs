@@ -3,8 +3,10 @@ use crate::punctuated::Punctuated;
 use crate::token::delim::{AngleBracket, Parentheses, Surround};
 use crate::util::unit_impl;
 use crate::Token;
-
+#[tokens]
 pub enum PrimitiveType {
+    /// `()`
+    Void,
     // Numbers
     Usize,
     Isize,
@@ -24,35 +26,40 @@ pub enum PrimitiveType {
     Char,
     String
 }
-
+#[tokens]
 pub struct TypePath {
     pub path: Path,
     pub arguments: Box<TypeArguments>,
 }
+#[tokens]
 pub struct TypeReference {
     pub ref_token: Token![&],
     pub mutability: Option<Token![mut]>,
     pub referenced: Box<Type>,
 }
+#[tokens]
 pub struct TypeFunc {
     pub func_token: Token![func],
     pub arguments: Box<TypeArguments>,
 }
-
+#[tokens]
 pub struct TypeMaybeUnknown {
     pub maybe_token: Token![maybe],
     pub real_type: Box<Type>,
 }
+#[tokens]
 pub struct TypeMaybeSome {
     pub some_token: Token![some],
     pub real_type: Box<Type>,
 }
+#[tokens]
 pub enum TypeMaybe {
     Unknown(TypeMaybeUnknown),
     Some(TypeMaybeSome),
     Nope,
 }
 
+#[tokens]
 pub enum Type {
     Primitive(PrimitiveType),
     Path(TypePath),
@@ -78,12 +85,7 @@ impl Type {
     }
 }
 
-unit_impl!(crate::private::_Tokens [
-    Type, TypePath, TypeReference, TypeFunc,
-    TypeMaybe, TypeMaybeUnknown, TypeMaybeSome,
-    TypeArguments, ParenthesizedTypeArguments, NormalTypeArguments
-]);
-
+#[tokens]
 pub enum TypeArguments {
     /// No type arguments
     None,
@@ -97,10 +99,12 @@ pub enum TypeArguments {
 
 pub type TypeArgs = Punctuated<Type, Token![,]>;
 
+#[tokens]
 pub struct ParenthesizedTypeArguments {
     pub arguments: Surround<Parentheses, TypeArgs>,
     pub arrow_token: Token![->],
     pub return_type: Type,
 }
 
+#[tokens]
 pub struct NormalTypeArguments(pub Surround<AngleBracket, TypeArgs>);

@@ -64,3 +64,9 @@ impl From<Span> for Range<usize> {
         value.start..value.end
     }
 }
+
+impl<T> From<(usize, T, usize)> for WithSpan<T> {
+    fn from((s_a, t, s_b): (usize, T, usize)) -> Self {
+        Self::new(t, Span::new(s_a, s_b))
+    }
+}

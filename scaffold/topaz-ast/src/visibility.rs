@@ -4,6 +4,7 @@ use crate::punctuated::Punctuated;
 use crate::Token;
 use crate::token::delim::{Parentheses, Surround};
 
+#[tokens]
 #[derive(Default)]
 pub enum Visibility {
     #[default]

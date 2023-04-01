@@ -8,13 +8,14 @@ use std::marker::PhantomData;
 auto trait Pun {}
 impl<T: Tokens, P: Tokens> !Pun for Punctuated<T, P> {}
 
-#[derive(Tokens)]
+#[tokens]
 pub struct Punctuated<T: Tokens, P: Tokens> {
     segments: Vec<T>,
     phantom: PhantomData<P>,
 }
 
 impl<T: Tokens, P: Tokens> Punctuated<T, P> {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             segments: Vec::new(),
@@ -22,13 +23,22 @@ impl<T: Tokens, P: Tokens> Punctuated<T, P> {
         }
     }
 
+    pub fn single(single: T) -> Self {
+        Self {
+            segments: vec![single],
+            phantom: PhantomData,
+        }
+    }
+
+    #[must_use]
     pub fn from_segments(segments: Vec<T>) -> Self {
-        Punctuated {
+        Self {
             segments,
             phantom: PhantomData,
         }
     }
 
+    #[must_use]
     pub fn last(&self) -> Option<&T> {
         self.segments.last()
     }
@@ -37,16 +47,17 @@ impl<T: Tokens, P: Tokens> Punctuated<T, P> {
     where
         P: Default,
     {
-        self.segments.push(thing)
+        self.segments.push(thing);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
-        (self.segments.iter())
+        self.segments.iter()
     }
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        (self.segments.iter_mut())
+        self.segments.iter_mut()
     }
 
+    #[must_use]
     pub fn stringify(&self) -> String
     where
         T: Display,
@@ -67,7 +78,7 @@ impl<T: Tokens, P: Tokens> IntoIterator for Punctuated<T, P> {
 
 impl<T: Tokens, P: Tokens + Default> FromIterator<T> for Punctuated<T, P> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        Punctuated::from_segments(iter.into_iter().collect())
+        Self::from_segments(iter.into_iter().collect())
     }
 }
 
@@ -78,7 +89,7 @@ where
     P: Tokens,
 {
     fn from(value: I) -> Self {
-        Punctuated::from_segments(
+        Self::from_segments(
             vec![value.into()], // into T
         )
     }

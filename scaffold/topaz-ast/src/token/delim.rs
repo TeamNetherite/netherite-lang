@@ -2,7 +2,9 @@ use crate::Tokens;
 use std::default::default;
 
 mod private {
-    pub trait Sealed {
+    use crate::Tokens;
+
+    pub trait Sealed: Tokens {
         const REPR: (char, char);
     }
 }
@@ -12,7 +14,8 @@ impl<T: private::Sealed> Delim for T {}
 
 macro_rules! delimiter {
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident) => {
-        #[derive(Default, Tokens, Copy, Clone)]
+        #[tokens]
+        #[derive(Default, Copy, Clone)]
         pub struct $name;
 
         impl private::Sealed for $name {
@@ -23,7 +26,8 @@ macro_rules! delimiter {
     };
 
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident $inside:ty) => {
-        #[derive(Default, Tokens, Copy, Clone)]
+        #[tokens]
+        #[derive(Default, Copy, Clone)]
         pub struct $name;
 
         impl private::Sealed for $name {
@@ -66,7 +70,7 @@ impl<D: Delim> Delimiter<D> {
     }
 }
 
-#[derive(Tokens)]
+#[Tokens]
 pub struct Surround<D: Delim, Content: Tokens>(pub(crate) D, pub(crate) Content, pub(crate) D);
 
 #[allow(clippy::missing_const_for_fn)]
