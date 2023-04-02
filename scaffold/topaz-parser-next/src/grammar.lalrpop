@@ -1,7 +1,7 @@
 use topaz_ast::{
     item::{import::*, func::*, *},
     ident::Ident,
-    path::{Path, DottedPath, CallPath},
+    path::{Path, CallPath},
     types::*,
     block::Block,
     token as tokens,
@@ -85,11 +85,19 @@ pub Ident: Ident = <"ident">;
 Parenthesized<T>: T =
     "(" <real:T> ")" => real;
 
-pub Path: Path = <mut real:((Ident "::")* Ident)> => Path(make_real(real));
-pub DottedPath: DottedPath = <mut real:((Ident ".")* Ident)> => DottedPath(make_real(real));
-pub CallPath: CallPath = {
-    <Path> => CallPath::OnModule(<>),
-    <DottedPath> => CallPath::OnObject(<>)
+pub Path: Path = Dot<Ident> => Path(<>);
+
+Comma<T>: Punctuated<T, tokens::Comma> = {
+    <mut v:(<T> ",")*> <e:T?> => {
+        v.extend(e);
+        Punctuated::from_segments(v)
+    }
+};
+Dot<T>: Punctuated<T, tokens::Dot> = {
+    <mut v:(<T> ",")*> <e:T?> => {
+        v.extend(e);
+        Punctuated::from_segments(v)
+    }
 };
 
 pub Import: Import = IMPORT <path:Path> => Import(path);
@@ -105,7 +113,7 @@ pub Visibility: Visibility = {
     "private" Parenthesized<"gem"> => Visibility::Internal()
 };
 
-pub Func: Func = <func:FUNC> <vis:Visibility> <name:Ident> OPENPAR <args:FuncArg*> CLOSEPAR <arrow:ARROW> <ret:Type> <block:Block> => Func(func, vis, name, args, arrow, ret, block);
+pub Func: Func = <vis:Visibility> <func:FUNC> <name:Ident> OPENPAR <args:FuncArg*> CLOSEPAR <ret:(ARROW Type)?> <block:Block> => Func(func, vis, name, args, ret, block);
 pub FuncArg: FuncArg = <pat:Pattern> COLON <ty:Type> <def:(EQ Expr)?> => FuncArg(pat, ty, def);
 
 pub Block: Block = <oc:OPENCUR> <stmts:(Statement)*> <cc:CLOSECUR> => Block(Surround::new_default(stmts));
@@ -118,9 +126,11 @@ pub LetStmt: LetStmt
     = <l:LET> <m:MUT?> <name:Ident> <infer:(COLON Type)?> <init:(EQ Expr)?> ";" =>
         LetStmt(l, m, name, infer, init);
 pub FuncCallStmt: FuncCallStmt =
-    <path:CallPath> "(" <args:((FuncCallArg ",")* FuncCallArg)>
-        => FuncCallStmt(path, Surround::new_default(make_real(args)));
+    <path:Path> <args:Parenthesized<Comma<FuncCallArg>>>
+        => FuncCallStmt(path, Surround::new_default(args));
 pub FuncCallArg: FuncCallArg = <named:(Ident EQ)?> <expr:Expr> => FuncCallArg(named, expr);
+
+
 pub Expr: Expr = {
     <lit:Literal> => Expr::Literal(ExprLit(lit)),
     <call:FuncCallStmt> => Expr::FuncCall(call)

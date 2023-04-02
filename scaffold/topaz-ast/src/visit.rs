@@ -8,7 +8,7 @@ use crate::item::type_alias::TypeAlias;
 use crate::item::Item;
 use crate::literal::number::{BinaryNumber, LiteralNumber};
 use crate::literal::{Literal, LiteralString};
-use crate::path::{DottedPath, Path};
+use crate::path::Path;
 use crate::pattern::Pattern;
 use crate::statement::Statement;
 use crate::token::delim::Surround;
@@ -80,7 +80,7 @@ pub trait Visit: Sized {
         walk_expr_var_access(self, expr_var);
     }
 
-    fn visit_dotted_path(&mut self, path: &DottedPath) {
+    fn visit_dotted_path(&mut self, path: &Path) {
         walk_dotted_path(self, path);
     }
 
@@ -132,13 +132,15 @@ pub fn walk_item(visitor: &mut impl Visit, item: &Item) {
     }
 }
 
-pub fn walk_func(visitor: &mut impl Visit, Func(_, vis, ident, args, _, ty, block): &Func) {
+pub fn walk_func(visitor: &mut impl Visit, Func(_, vis, ident, args, ty, block): &Func) {
     visitor.visit_visibility(vis);
     visitor.visit_ident(ident);
     for arg in args {
         visitor.visit_func_arg(arg);
     }
-    visitor.visit_type(ty);
+    if let Some((_, ty)) = ty {
+        visitor.visit_type(ty);
+    }
     visitor.visit_block(block);
 }
 
@@ -169,8 +171,8 @@ pub fn walk_pattern(visitor: &mut impl Visit, pattern: &Pattern) {
     }
 }
 
-pub fn walk_dotted_path(visitor: &mut impl Visit, path: &DottedPath) {
-    path.0.iter().for_each(|a| visitor.visit_ident(a))
+pub fn walk_dotted_path(visitor: &mut impl Visit, path: &Path) {
+    path.0.iter().for_each(|a| visitor.visit_ident(a));
 }
 
 pub fn walk_expr(visitor: &mut impl Visit, expr: &Expr) {

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", features = ["llvm15-0", "target-all"] }
 
 [dependencies.topaz-ast]
 path = "../../scaffold/topaz-ast"

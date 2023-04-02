@@ -11,7 +11,7 @@ pub const STARTING_CHARS: [char; 1] = ['_'];
 #[must_use] pub fn check_identifier(ident: &str) -> bool {
     ident.chars().next().map_or(false, |first| {
         (first.is_ascii_alphabetic() || STARTING_CHARS.contains(&first))
-            && ident.chars().all(|a| {
+            && !ident.chars().all(|a| {
                 EVERYTHING.keys().any(|k| {
                     if k.len() == 1 {
                         k.chars().next().unwrap_or('\0') == a
@@ -33,7 +33,8 @@ fn check_ident(ident: &str) -> &str {
 }
 
 //pub struct Ident(Cow<'static, str>);
-#[derive(Copy, Clone, Tokens, PartialEq, Eq, Debug)]
+#[tokens]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Ident(SymbolU32);
 
 impl Ident {

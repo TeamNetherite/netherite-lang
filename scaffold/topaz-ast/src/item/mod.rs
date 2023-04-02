@@ -2,7 +2,7 @@ pub mod func;
 pub mod type_alias;
 pub mod import;
 
-#[derive(Tokens)]
+#[tokens]
 pub enum Item {
     Import(import::Import),
     Func(func::Func),

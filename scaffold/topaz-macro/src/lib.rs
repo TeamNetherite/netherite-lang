@@ -39,10 +39,10 @@ pub fn everything(input: TokenStream) -> TokenStream {
     token_macro::everything_impl(input.into()).into_into()
 }
 
-#[proc_macro_derive(Tokens)]
+#[proc_macro_attribute]
 #[doc(hidden)]
-pub fn derive_tokens(input: TokenStream) -> TokenStream {
-    tokens::derive_impl(input.into()).into_into()
+pub fn tokens(args: TokenStream, input: TokenStream) -> TokenStream {
+    tokens::tokens_impl(input.into(), args.into()).into_into()
 }
 
 pub(crate) trait IntoInto<T> {

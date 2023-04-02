@@ -16,7 +16,6 @@ members = [
     "scaffold/cool-reporting/codespan-lsp",
 
     # Tools - package managers, or the LSP server
-    "tools/lapis",
     "tools/topaz-lsp",
 
     # Compiler - the thing that takes AST and transforms it into B.Y.T.E.S.

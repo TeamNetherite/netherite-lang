@@ -21,6 +21,7 @@ extern crate topaz_macro;
 
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use string_interner::backend::BufferBackend;
 use string_interner::StringInterner;
 
@@ -50,17 +51,19 @@ pub mod visit;
 pub use token::Token;
 
 pub(crate) mod private {
-    pub trait _Tokens {}
+    use std::fmt::Debug;
+
+    pub trait _Tokens: Debug {}
 }
 
-pub(crate) use topaz_macro::Tokens;
+pub(crate) use topaz_macro::tokens as Tokens;
 pub trait Tokens: private::_Tokens {}
 
 impl<T: private::_Tokens> Tokens for T {}
 
 impl<T: Tokens> private::_Tokens for Vec<T> {}
 
-pub trait CustomTokens {}
+pub trait CustomTokens: Debug {}
 
 impl<T: CustomTokens> private::_Tokens for T {}
 

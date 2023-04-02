@@ -2,12 +2,14 @@ use crate::token::B;
 use derive_more::Display;
 use std::fmt::Display;
 
+#[tokens]
 pub enum LiteralNumber {
     Binary(BinaryNumber),
 }
 
 impl crate::private::_Tokens for () {}
 
+#[tokens]
 #[derive(Default, Display)]
 pub enum NumberSign {
     #[default]
@@ -23,6 +25,7 @@ impl NumberSign {
     }
 }
 
+#[tokens]
 #[derive(Display)]
 pub enum NumberSuffix {
     /// No suffix.
@@ -68,6 +71,7 @@ pub enum NumberSuffix {
 macro_rules! digits {
     ($($name:ident ::: $($number:literal $variant:ident),*);*$(;)?) => {
         $(
+        #[tokens]
         #[derive(Display)]
         pub enum $name {
             $(
@@ -152,6 +156,7 @@ pub fn concat_digits<T: Display>(digits: &[T]) -> String {
 
 #[derive(Display)]
 #[display(fmt = "{}{}{}", "self.0", "concat_digits(&self.1)", "self.2")]
+#[tokens]
 pub struct NormalNumber(pub NumberSign, pub Vec<DecimalDigit>, pub NumberSuffix);
 
 #[derive(Display)]
@@ -162,6 +167,7 @@ pub struct NormalNumber(pub NumberSign, pub Vec<DecimalDigit>, pub NumberSuffix)
     "concat_digits(&self.2)",
     "self.3"
 )]
+#[tokens]
 pub struct BinaryNumber(
     pub NumberSign,
     pub B,
