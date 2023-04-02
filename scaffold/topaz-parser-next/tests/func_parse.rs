@@ -23,8 +23,9 @@ func main() {
 
 #[test]
 pub fn test_func_parse() {
+    println!("INPUT: {EXAMPLE_FILE}");
     let parsed = TopazFile::parse(EXAMPLE_FILE);
-    println!("{parsed:#?}");
+    println!("PARSED: {parsed:#?}");
     assert!(parsed.is_ok());
     assert_eq!(
         parsed.unwrap(),

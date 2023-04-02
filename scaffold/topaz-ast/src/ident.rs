@@ -71,6 +71,14 @@ impl Ident {
         Self(Self::interner().get_or_intern_static(check_ident(ident)))
     }
 
+    /// # Safety
+    /// This function does not execute any unsafe code,
+    /// it is marked so because creating unchecked identifiers could lead to undefined behavior.
+    #[must_use]
+    pub unsafe fn new_unchecked(ident: &str) -> Self {
+        Self(Self::interner().get_or_intern(ident))
+    }
+
     #[must_use]
     pub fn new_checked(ident: &str) -> Option<Self> {
         if !check_identifier(ident) {

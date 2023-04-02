@@ -10,6 +10,7 @@ members = [
     "scaffold/topaz-gcc-codegen",
     "scaffold/topaz-parser-next",
     "scaffold/topaz-report",
+    "scaffold/topaz-resolve",
     "scaffold/topaz-type-checker",
     "scaffold/cool-reporting/codespan",
     "scaffold/cool-reporting/topaz-cool-reporting",

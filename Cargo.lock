@@ -1278,6 +1278,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "topaz-resolve"
+version = "0.1.0"
+dependencies = [
+ "string-interner",
+ "thiserror",
+ "topaz-ast",
+]
+
+[[package]]
 name = "topaz-type-checker"
 version = "0.1.0"
 dependencies = [
