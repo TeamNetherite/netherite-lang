@@ -155,7 +155,7 @@ dependencies = [
 name = "codespan"
 version = "0.11.1"
 dependencies = [
- "codespan-reporting 0.11.1",
+ "codespan-reporting",
  "serde",
  "termcolor",
 ]
@@ -164,7 +164,7 @@ dependencies = [
 name = "codespan-lsp"
 version = "0.11.1"
 dependencies = [
- "codespan-reporting 0.11.1",
+ "codespan-reporting",
  "lsp-types",
  "url",
 ]
@@ -183,16 +183,6 @@ dependencies = [
  "termcolor",
  "unicode-width",
  "unindent",
-]
-
-[[package]]
-name = "codespan-reporting"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3538270d33cc669650c4b093848450d380def10c331d38c768e34cac80576e6e"
-dependencies = [
- "termcolor",
- "unicode-width",
 ]
 
 [[package]]
@@ -512,15 +502,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5c1f7869c94d214466c5fd432dfed12c379fd87786768d36455892d46b18edd"
 dependencies = [
  "regex",
-]
-
-[[package]]
-name = "lapis"
-version = "0.1.0"
-dependencies = [
- "clap 4.1.11",
- "codespan-reporting 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "topaz-report",
 ]
 
 [[package]]
@@ -1218,7 +1199,7 @@ name = "topaz"
 version = "0.1.0"
 dependencies = [
  "clap 4.1.11",
- "codespan-reporting 0.11.1",
+ "codespan-reporting",
  "topaz-ast",
  "topaz-parser-next",
  "topaz-report",
@@ -1290,7 +1271,7 @@ dependencies = [
 name = "topaz-parser"
 version = "0.1.0"
 dependencies = [
- "codespan-reporting 0.11.1",
+ "codespan-reporting",
  "num-traits",
  "thiserror",
  "topaz-ast",
@@ -1313,14 +1294,14 @@ dependencies = [
 name = "topaz-report"
 version = "0.1.0"
 dependencies = [
- "codespan-reporting 0.11.1",
+ "codespan-reporting",
 ]
 
 [[package]]
 name = "topaz-type-checker"
 version = "0.1.0"
 dependencies = [
- "codespan-reporting 0.11.1",
+ "codespan-reporting",
  "num-traits",
  "thiserror",
  "topaz-ast",
