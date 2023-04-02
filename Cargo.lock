@@ -1224,7 +1224,7 @@ name = "topaz-ast-to-graphviz"
 version = "0.1.0"
 dependencies = [
  "topaz-ast",
- "topaz-parser",
+ "topaz-parser-next",
  "topaz-report",
 ]
 
@@ -1244,14 +1244,6 @@ name = "topaz-gcc-codegen"
 version = "0.1.0"
 
 [[package]]
-name = "topaz-lexer"
-version = "0.1.0"
-dependencies = [
- "string-interner",
- "topaz-ast",
-]
-
-[[package]]
 name = "topaz-lsp"
 version = "0.1.0"
 
@@ -1265,18 +1257,6 @@ dependencies = [
  "quote",
  "syn 1.0.109",
  "titlecase",
-]
-
-[[package]]
-name = "topaz-parser"
-version = "0.1.0"
-dependencies = [
- "codespan-reporting",
- "num-traits",
- "thiserror",
- "topaz-ast",
- "topaz-lexer",
- "topaz-report",
 ]
 
 [[package]]
@@ -1305,8 +1285,7 @@ dependencies = [
  "num-traits",
  "thiserror",
  "topaz-ast",
- "topaz-lexer",
- "topaz-parser",
+ "topaz-parser-next",
  "topaz-report",
 ]
 

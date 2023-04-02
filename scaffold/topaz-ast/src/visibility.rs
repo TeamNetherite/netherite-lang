@@ -5,7 +5,7 @@ use crate::Token;
 use crate::token::delim::{Parentheses, Surround};
 
 #[tokens]
-#[derive(Default)]
+#[derive(Default, Eq, PartialEq)]
 pub enum Visibility {
     #[default]
     Public,

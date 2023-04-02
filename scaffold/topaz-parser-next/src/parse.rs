@@ -25,5 +25,6 @@ fn deparse<T>(result: std::result::Result<T, ParseError<usize, crate::lex::Token
 
 impl_parse! {
     FileParser as ast::file::TopazFile,
-    VisibilityParser as ast::visibility::Visibility
+    VisibilityParser as ast::visibility::Visibility,
+    PathParser as ast::path::Path
 }

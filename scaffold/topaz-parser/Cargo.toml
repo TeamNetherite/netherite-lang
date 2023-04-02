@@ -9,4 +9,4 @@ topaz-lexer = {path = "../topaz-lexer" }
 topaz-report = {path = "../topaz-report" }
 codespan-reporting.path = "../cool-reporting/topaz-cool-reporting"
 num-traits = "0.2.15"
-thiserror = "1.0.40"
+thiserror = "1"

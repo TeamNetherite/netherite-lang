@@ -1,6 +1,6 @@
 use crate::token::{PathPartKeyword, EVERYTHING};
 use once_cell::sync::Lazy;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use string_interner::backend::BufferBackend;
 use string_interner::symbol::SymbolU32;
 use string_interner::StringInterner;
@@ -8,7 +8,8 @@ use string_interner::StringInterner;
 pub const DENIED_CHARS: [char; 2] = ['&', '-'];
 pub const STARTING_CHARS: [char; 1] = ['_'];
 
-#[must_use] pub fn check_identifier(ident: &str) -> bool {
+#[must_use]
+pub fn check_identifier(ident: &str) -> bool {
     ident.chars().next().map_or(false, |first| {
         (first.is_ascii_alphabetic() || STARTING_CHARS.contains(&first))
             && !ident.chars().all(|a| {
@@ -33,9 +34,18 @@ fn check_ident(ident: &str) -> &str {
 }
 
 //pub struct Ident(Cow<'static, str>);
-#[tokens]
+#[tokens(_)]
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Ident(SymbolU32);
+
+impl Debug for Ident {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Ident")
+            .field("symbol", &self.0)
+            .field("value", &self.maybe_value().unwrap_or("__BROKEN_SYMBOL__"))
+            .finish()
+    }
+}
 
 impl Ident {
     #[allow(clippy::inline_always)]
@@ -46,6 +56,12 @@ impl Ident {
 
     /// # Panics
     /// Panics if the identifier is not valid.
+    ///
+    /// A valid identifier conforms to this regex:
+    ///
+    /// `[a-zA-Z_][a-zA-Z\d_]*`
+    /// (first character is an alphabetic or an underscore,
+    /// others are alphanumeric or underscore)
     #[must_use]
     pub fn new(ident: &str) -> Self {
         Self(Self::interner().get_or_intern(check_ident(ident)))

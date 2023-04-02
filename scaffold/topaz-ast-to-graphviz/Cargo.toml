@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 topaz-ast = {path = "../topaz-ast" }
 topaz-report = {path = "../topaz-report" }
-topaz-parser = {path = "../topaz-parser" }
+topaz-parser-next = {path = "../topaz-parser-next" }

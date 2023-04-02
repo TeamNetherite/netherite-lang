@@ -4,10 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-topaz-ast = {path = "../topaz-ast" }
-topaz-lexer = {path = "../topaz-lexer" }
-topaz-parser = {path = "../topaz-parser" }
-topaz-report = {path = "../topaz-report" }
+topaz-ast = { path = "../topaz-ast" }
+topaz-parser-next = { path = "../topaz-parser-next" }
+topaz-report = { path = "../topaz-report" }
 codespan-reporting.path = "../cool-reporting/topaz-cool-reporting"
 num-traits = "0.2.15"
-thiserror = "1.0.40"
+thiserror = "1"

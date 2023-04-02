@@ -4,6 +4,7 @@ use crate::token::delim::{AngleBracket, Parentheses, Surround};
 use crate::util::unit_impl;
 use crate::Token;
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub enum PrimitiveType {
     /// `()`
     Void,
@@ -27,32 +28,38 @@ pub enum PrimitiveType {
     String
 }
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct TypePath {
     pub path: Path,
     pub arguments: Box<TypeArguments>,
 }
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct TypeReference {
     pub ref_token: Token![&],
     pub mutability: Option<Token![mut]>,
     pub referenced: Box<Type>,
 }
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct TypeFunc {
     pub func_token: Token![func],
     pub arguments: Box<TypeArguments>,
 }
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct TypeMaybeUnknown {
     pub maybe_token: Token![maybe],
     pub real_type: Box<Type>,
 }
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct TypeMaybeSome {
     pub some_token: Token![some],
     pub real_type: Box<Type>,
 }
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub enum TypeMaybe {
     Unknown(TypeMaybeUnknown),
     Some(TypeMaybeSome),
@@ -60,6 +67,7 @@ pub enum TypeMaybe {
 }
 
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub enum Type {
     Primitive(PrimitiveType),
     Path(TypePath),
@@ -86,6 +94,7 @@ impl Type {
 }
 
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub enum TypeArguments {
     /// No type arguments
     None,
@@ -100,6 +109,7 @@ pub enum TypeArguments {
 pub type TypeArgs = Punctuated<Type, Token![,]>;
 
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct ParenthesizedTypeArguments {
     pub arguments: Surround<Parentheses, TypeArgs>,
     pub arrow_token: Token![->],
@@ -107,4 +117,5 @@ pub struct ParenthesizedTypeArguments {
 }
 
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct NormalTypeArguments(pub Surround<AngleBracket, TypeArgs>);

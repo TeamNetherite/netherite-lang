@@ -14,7 +14,7 @@ macro_rules! punctuation {
     ($($repr:literal $name:ident;)*) => {
         $(
         #[tokens]
-        #[derive(Default, derive_more::Display, Copy, Clone)]
+        #[derive(Default, derive_more::Display, Copy, Clone, Eq, PartialEq)]
         #[display(fmt = $repr)]
         pub struct $name;
         impl private::Sealed for $name {

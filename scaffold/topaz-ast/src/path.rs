@@ -4,6 +4,7 @@ use crate::Token;
 use std::string::ToString;
 
 #[tokens]
+#[derive(Eq)]
 pub struct Path(pub Punctuated<Ident, Token![.]>);
 
 impl From<Ident> for Path {

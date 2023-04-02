@@ -15,7 +15,7 @@ impl<T: private::Sealed> Delim for T {}
 macro_rules! delimiter {
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident) => {
         #[tokens]
-        #[derive(Default, Copy, Clone)]
+        #[derive(Default, Copy, Clone, Eq, PartialEq)]
         pub struct $name;
 
         impl private::Sealed for $name {
@@ -27,7 +27,7 @@ macro_rules! delimiter {
 
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident $inside:ty) => {
         #[tokens]
-        #[derive(Default, Copy, Clone)]
+        #[derive(Default, Copy, Clone, Eq, PartialEq)]
         pub struct $name;
 
         impl private::Sealed for $name {
@@ -75,7 +75,7 @@ pub struct Surround<D: Delim, Content: Tokens>(pub(crate) D, pub(crate) Content,
 
 #[allow(clippy::missing_const_for_fn)]
 impl<D: Delim, Content: Tokens> Surround<D, Content> {
-    pub const fn new(delim_start: D, content: Content, delim_end: D) -> Self {
+    pub const fn new_specific(delim_start: D, content: Content, delim_end: D) -> Self {
         Self(delim_start, content, delim_end)
     }
 
@@ -101,7 +101,7 @@ impl<D: Delim, Content: Tokens> Surround<D, Content> {
 }
 
 impl<D: Delim + Default, Content: Tokens> Surround<D, Content> {
-    pub fn new_default(content: Content) -> Self {
+    pub fn new(content: Content) -> Self {
         Self(default(), content, default())
     }
 }
@@ -113,11 +113,22 @@ impl<D: Delim + Default, Content: Tokens, Real: Into<Content> + Sn> From<Real>
     for Surround<D, Content>
 {
     fn from(real: Real) -> Self {
-        Self::new_default(real.into())
+        Self::new(real.into())
     }
 }
 impl<D: Delim + Default, Content: Tokens + Default> Default for Surround<D, Content> {
     fn default() -> Self {
-        Self::new_default(default())
+        Self::new(default())
     }
 }
+
+impl<D: Delim, Content: PartialEq<Rhs> + Tokens, Rhs: Tokens> PartialEq<Surround<D, Rhs>> for Surround<D, Content> {
+    fn eq(&self, other: &Surround<D, Rhs>) -> bool {
+        self.1 == other.1
+    }
+    fn ne(&self, other: &Surround<D, Rhs>) -> bool {
+        self.1 != other.1
+    }
+}
+
+impl<D: Delim, Content: Eq + Tokens> Eq for Surround<D, Content> {}

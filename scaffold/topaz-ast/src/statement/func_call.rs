@@ -6,9 +6,11 @@ use crate::Token;
 use crate::token::delim::{Parentheses, Surround};
 
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct FuncCallStmt(pub Path, pub Surround<Parentheses, Punctuated<FuncCallArg, Token![,]>>);
 
 /// arg_name = some 8uexplod \
 /// Some(8u128)
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct FuncCallArg(pub Option<(Ident, Token![=])>, pub Expr);

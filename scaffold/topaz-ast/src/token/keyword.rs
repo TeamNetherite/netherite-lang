@@ -18,7 +18,7 @@ impl<K: private::Keyword> Keyword for K {}
 macro_rules! kw {
     ($name:ident) => {
         #[tokens]
-        #[derive(Default, Copy, Clone)]
+        #[derive(Default, Copy, Clone, Eq, PartialEq)]
         pub struct $name;
         impl private::Keyword for $name {
             const REPR: &'static str = stringify!(lowercase_ident!($name));

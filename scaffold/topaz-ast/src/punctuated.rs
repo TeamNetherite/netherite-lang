@@ -106,3 +106,15 @@ impl<T: Tokens, P: Tokens> Default for Punctuated<T, P> {
         Self::new()
     }
 }
+
+impl<T: Tokens + PartialEq<Rhs>, P: Tokens, Rhs: Tokens> PartialEq<Punctuated<Rhs, P>> for Punctuated<T, P> {
+    fn eq(&self, other: &Punctuated<Rhs, P>) -> bool {
+        self.segments.eq(&other.segments)
+    }
+
+    fn ne(&self, other: &Punctuated<Rhs, P>) -> bool {
+        self.segments.ne(&other.segments)
+    }
+}
+
+impl<T: Tokens + Eq, P: Tokens> Eq for Punctuated<T, P> {}

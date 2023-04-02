@@ -113,10 +113,10 @@ pub Visibility: Visibility = {
     "private" Parenthesized<"gem"> => Visibility::Internal()
 };
 
-pub Func: Func = <vis:Visibility> <func:FUNC> <name:Ident> OPENPAR <args:FuncArg*> CLOSEPAR <ret:(ARROW Type)?> <block:Block> => Func(func, vis, name, args, ret, block);
+pub Func: Func = <vis:Visibility?> <func:FUNC> <name:Ident> OPENPAR <args:FuncArg*> CLOSEPAR <ret:(ARROW Type)?> <block:Block> => Func(func, vis.unwrap_or(Visibility::Public), name, args, ret, block);
 pub FuncArg: FuncArg = <pat:Pattern> COLON <ty:Type> <def:(EQ Expr)?> => FuncArg(pat, ty, def);
 
-pub Block: Block = <oc:OPENCUR> <stmts:(Statement)*> <cc:CLOSECUR> => Block(Surround::new_default(stmts));
+pub Block: Block = <oc:OPENCUR> <stmts:(Statement)*> <cc:CLOSECUR> => Block(Surround::new(stmts));
 
 pub Statement: Statement = {
     <l:LetStmt> => Statement::Let(l),
@@ -127,7 +127,7 @@ pub LetStmt: LetStmt
         LetStmt(l, m, name, infer, init);
 pub FuncCallStmt: FuncCallStmt =
     <path:Path> <args:Parenthesized<Comma<FuncCallArg>>>
-        => FuncCallStmt(path, Surround::new_default(args));
+        => FuncCallStmt(path, Surround::new(args));
 pub FuncCallArg: FuncCallArg = <named:(Ident EQ)?> <expr:Expr> => FuncCallArg(named, expr);
 
 
@@ -140,7 +140,7 @@ pub Literal: Literal = {
 };
 pub StringLiteral: LiteralString = <content:"lit_str"> =>?
     Ok(LiteralString(
-        Surround::new_default(
+        Surround::new(
             content
         )
     ));

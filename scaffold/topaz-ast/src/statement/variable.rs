@@ -6,6 +6,7 @@ use crate::{Token, types::Type};
 /// let mut why: (maybe (maybe int), maybe String) = (some (some 10), some "");
 /// ```
 #[tokens]
+#[derive(Eq, PartialEq)]
 pub struct LetStmt(
     pub Token![let],
     pub Option<Token![mut]>, // mutability
