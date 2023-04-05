@@ -69,3 +69,4 @@ kw!(TypeAlias);
 kw!(pathpart This);
 kw!(pathpart Super);
 kw!(pathpart Gem);
+kw!(As);

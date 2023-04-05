@@ -61,28 +61,6 @@ impl Parse for EverythingRule {
     }
 }
 
-mod kw {
-    use syn::custom_keyword;
-
-    custom_keyword!(rules);
-}
-
-struct EveryThing {
-    rules: (kw::rules, Token![=], Punctuated<EverythingRule, Token![,]>),
-}
-
-impl Parse for EveryThing {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        Ok(Self {
-            rules: (
-                input.parse()?,
-                input.parse()?,
-                Punctuated::parse_terminated(input)?,
-            ),
-        })
-    }
-}
-
 pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
     let rules = Parser::parse2(
         Punctuated::<EverythingRule, Token![,]>::parse_terminated,
@@ -138,18 +116,37 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
                 .collect();
 
             quote! {
-                #[derive(Copy, Clone)]
+                #[derive(Copy, Clone, derive_more::Display)]
                 pub enum #en_name {
                     #(#variants,)*
                 }
             }
         })
         .collect();
+    let to_tokens_impls: TokenStream = rule_typed
+        .into_iter()
+        .filter(|(a, _)| {
+            !matches!(a, RuleType::Delimiter)
+        })
+        .map(|(_, a)| a)
+        .map(|r| {
+            r.into_iter().map(|EverythingRule(repr, path, id, _)| {
+                let n = repr.to_string().len();
+                quote! {
+                    impl crate::token::stream::ToTokens for #path {
+                        fn write_tokens(&self, real: &mut crate::token::stream::TokenStream) {
+                            real.append_single(SingleToken::#id(*self), #n);
+                        }
+                    }
+                }
+            }).collect::<TokenStream>()
+        })
+        .collect();
 
     Ok(quote! {
         #(#rule_enums)*
 
-        #[derive(Clone, Copy, derive_more::Display, derive_more::From)]
+        #[derive(Clone, Copy, derive_more::Display, derive_more::From, Debug)]
         pub enum #enum_name {
             #(#enum_variants,)*
         }
@@ -161,5 +158,7 @@ pub fn everything_impl(input: TokenStream) -> syn::Result<TokenStream> {
         pub macro Token {
             #(#token_macro,)*
         }
+
+        #to_tokens_impls
     })
 }

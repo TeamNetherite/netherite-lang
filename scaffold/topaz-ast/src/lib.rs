@@ -4,6 +4,7 @@
 #![feature(auto_traits)]
 #![feature(negative_impls)]
 #![feature(concat_idents)]
+#![feature(const_trait_impl)]
 #![warn(
     clippy::pedantic,
     clippy::nursery,

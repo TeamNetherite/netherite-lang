@@ -3,7 +3,7 @@ use derive_more::Display;
 use std::fmt::Display;
 
 #[tokens]
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone, Display)]
 pub enum LiteralNumber {
     Binary(BinaryNumber),
 }
@@ -11,7 +11,7 @@ pub enum LiteralNumber {
 impl crate::private::_Tokens for () {}
 
 #[tokens]
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 #[derive(Default, Display)]
 pub enum NumberSign {
     #[default]
@@ -28,7 +28,7 @@ impl NumberSign {
 }
 
 #[tokens]
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 #[derive(Display)]
 pub enum NumberSuffix {
     /// No suffix.
@@ -75,7 +75,7 @@ macro_rules! digits {
     ($($name:ident ::: $($number:literal $variant:ident),*);*$(;)?) => {
         $(
         #[tokens]
-        #[derive(Eq, PartialEq)]
+        #[derive(Eq, PartialEq, Clone)]
         #[derive(Display)]
         pub enum $name {
             $(
@@ -161,7 +161,7 @@ pub fn concat_digits<T: Display>(digits: &[T]) -> String {
 #[derive(Display)]
 #[display(fmt = "{}{}{}", "self.0", "concat_digits(&self.1)", "self.2")]
 #[tokens]
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub struct NormalNumber(pub NumberSign, pub Vec<DecimalDigit>, pub NumberSuffix);
 
 #[derive(Display)]
@@ -173,7 +173,7 @@ pub struct NormalNumber(pub NumberSign, pub Vec<DecimalDigit>, pub NumberSuffix)
     "self.3"
 )]
 #[tokens]
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub struct BinaryNumber(
     pub NumberSign,
     pub B,

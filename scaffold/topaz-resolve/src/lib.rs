@@ -1,6 +1,6 @@
 use topaz_ast::ident::Ident;
 use string_interner::{StringInterner, symbol::SymbolU32};
-use topaz_ast::path::Path;
+use topaz_ast::path::{AsClause, Path};
 
 pub enum Namespace {
     Core,
@@ -8,12 +8,12 @@ pub enum Namespace {
     Gem(SymbolU32)
 }
 
-pub struct ResolvedPath(Namespace, Vec<Ident>);
+pub enum ResolvedPath { Path(Namespace, Vec<Ident>, Option<AsClause>) }
 
 #[derive(thiserror::Error, Debug)]
 pub enum ResolveError {
     #[error("Namespace not found: {0}")]
-    NamespaceNotFound(Ident),
+    NamespaceNotFound(String),
     #[error("Empty path")]
     EmptyPath,
     #[error("Reference to stdlib path in a no-std context")]
@@ -22,15 +22,10 @@ pub enum ResolveError {
 
 pub struct ResolveContext {
     intern: StringInterner,
-    has_std: bool
+    has_std: bool,
+    gems: Vec<SymbolU32>
 }
 
 pub fn resolve(cx: &mut ResolveContext, path: Path) -> Result<ResolvedPath, ResolveError> {
-    let namespace = match path.0.iter().next().ok_or_else(|| ResolveError::EmptyPath)?.value() {
-        "std" => if cx.has_std { Namespace::Std } else { return Err(ResolveError::NoStd) },
-        "core" => Namespace::Core,
-        other => Namespace::Gem(cx.intern.get_or_intern(other))
-    };
 
-    
 }

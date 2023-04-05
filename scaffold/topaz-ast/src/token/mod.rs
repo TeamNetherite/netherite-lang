@@ -32,14 +32,27 @@ everything! {
     [this] => keyword::This,
     [super] => keyword::Super,
     [gem] => keyword::Gem,
-    [import] => keyword::Import
+    [import] => keyword::Import,
+    [as] => keyword::As
+}
+
+#[tokens]
+#[derive(Clone, derive_more::Display)]
+pub enum TokenTree {
+    Single(SingleToken),
+    Ident(Ident),
+    Literal(Literal),
 }
 
 pub mod delim;
 pub mod keyword;
 pub mod prefix;
 pub mod punctuation;
+pub mod stream;
+
+use crate::ident::Ident;
+use crate::literal::Literal;
+pub use delim::*;
 pub use keyword::*;
 pub use prefix::*;
 pub use punctuation::*;
-pub use delim::*;

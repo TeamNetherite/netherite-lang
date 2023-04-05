@@ -51,6 +51,13 @@ impl<T> WithSpan<T> {
     pub const fn new(value: T, span: Span) -> Self {
         Self { value, span }
     }
+
+    pub fn map<R>(self, map: impl Fn(T) -> R) -> WithSpan<R> {
+        WithSpan {
+            span: self.span,
+            value: map(self.value)
+        }
+    }
 }
 
 impl<T> From<(T, Span)> for WithSpan<T> {

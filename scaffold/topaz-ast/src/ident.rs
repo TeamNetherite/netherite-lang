@@ -1,4 +1,5 @@
-use crate::token::{PathPartKeyword, EVERYTHING};
+use crate::token::stream::{ToTokens, TokenStream};
+use crate::token::{PathPartKeyword, SingleToken, TokenTree, EVERYTHING};
 use once_cell::sync::Lazy;
 use std::fmt::{Debug, Display, Formatter};
 use string_interner::backend::BufferBackend;
@@ -44,6 +45,15 @@ impl Debug for Ident {
             .field("symbol", &self.0)
             .field("value", &self.maybe_value().unwrap_or("__BROKEN_SYMBOL__"))
             .finish()
+    }
+}
+
+impl ToTokens for Ident {
+    fn write_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append_token(
+            TokenTree::Ident(*self),
+            tokens.next_span(self.value().len()),
+        )
     }
 }
 

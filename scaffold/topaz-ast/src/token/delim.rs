@@ -1,5 +1,7 @@
 use crate::Tokens;
 use std::default::default;
+use std::fmt::{Display, Formatter};
+use derive_more::Display;
 
 mod private {
     use crate::Tokens;
@@ -15,7 +17,8 @@ impl<T: private::Sealed> Delim for T {}
 macro_rules! delimiter {
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident) => {
         #[tokens]
-        #[derive(Default, Copy, Clone, Eq, PartialEq)]
+        #[derive(Default, Copy, Clone, Eq, PartialEq, derive_more::Display)]
+        #[display(fmt = topaz_macro::char_concat!($repr_a, $repr_b))]
         pub struct $name;
 
         impl private::Sealed for $name {
@@ -27,7 +30,8 @@ macro_rules! delimiter {
 
     ($repr_a:literal $repr_b:literal $name:ident $ized:ident $inside:ty) => {
         #[tokens]
-        #[derive(Default, Copy, Clone, Eq, PartialEq)]
+        #[derive(Default, Copy, Clone, Eq, PartialEq, derive_more::Display)]
+        #[display(fmt = topaz_macro::char_concat!($repr_a, $repr_b))]
         pub struct $name;
 
         impl private::Sealed for $name {
@@ -71,6 +75,7 @@ impl<D: Delim> Delimiter<D> {
 }
 
 #[Tokens]
+#[derive(Clone)]
 pub struct Surround<D: Delim, Content: Tokens>(pub(crate) D, pub(crate) Content, pub(crate) D);
 
 #[allow(clippy::missing_const_for_fn)]
@@ -122,7 +127,9 @@ impl<D: Delim + Default, Content: Tokens + Default> Default for Surround<D, Cont
     }
 }
 
-impl<D: Delim, Content: PartialEq<Rhs> + Tokens, Rhs: Tokens> PartialEq<Surround<D, Rhs>> for Surround<D, Content> {
+impl<D: Delim, Content: PartialEq<Rhs> + Tokens, Rhs: Tokens> PartialEq<Surround<D, Rhs>>
+    for Surround<D, Content>
+{
     fn eq(&self, other: &Surround<D, Rhs>) -> bool {
         self.1 == other.1
     }
@@ -132,3 +139,9 @@ impl<D: Delim, Content: PartialEq<Rhs> + Tokens, Rhs: Tokens> PartialEq<Surround
 }
 
 impl<D: Delim, Content: Eq + Tokens> Eq for Surround<D, Content> {}
+
+impl<D: Delim + Display, Content: Tokens + Display> Display for Surround<D, Content> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <D as Display>::fmt(&self.0, f).and_then(|_| <Content as Display>::fmt(&self.1, f)).and_then(|_| <D as Display>::fmt(&self.2, f))
+    }
+}

@@ -7,12 +7,12 @@ mod tokens;
 
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use proc_macro_crate::{crate_name, FoundCrate};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::parse::{Parse, ParseStream, Parser};
 use syn::punctuated::Punctuated;
-use syn::{braced, bracketed, parse_macro_input, Block, DeriveInput, Path};
+use syn::{braced, bracketed, parse_macro_input, Block, DeriveInput, Path, LitChar, Token, Lit, LitStr};
 
 pub(crate) fn ast_crate() -> TokenStream2 {
     match crate_name("topaz-ast").ok() {
@@ -43,6 +43,13 @@ pub fn everything(input: TokenStream) -> TokenStream {
 #[doc(hidden)]
 pub fn tokens(args: TokenStream, input: TokenStream) -> TokenStream {
     tokens::tokens_impl(input.into(), args.into()).into_into()
+}
+
+#[proc_macro]
+pub fn char_concat(chars: TokenStream) -> TokenStream {
+    let chars = parse_macro_input!(chars with Punctuated::<LitChar, Token![,]>::parse_terminated);
+    let chars = chars.into_iter().map(|a| a.value()).collect::<String>();
+    LitStr::new(&chars, Span::call_site()).into_token_stream().into()
 }
 
 pub(crate) trait IntoInto<T> {
@@ -82,7 +89,6 @@ impl<T: Parse, P: Parse> Bracketed<Punctuated<T, P>> {
         Ok(Bracketed(Punctuated::parse_terminated(&content)?))
     }
 }
-
 
 pub(crate) struct Braced<T>(T); // {T}
 
